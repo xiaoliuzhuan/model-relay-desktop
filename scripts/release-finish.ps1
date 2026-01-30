@@ -62,6 +62,26 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
   }
 }
 
+# 预检查：本地/远程 tag 是否已存在（存在则中断）
+# 约定：git-flow release finish <Version> 会创建 tag "v<Version>"
+$expectedTag = if ($Version -match '^[vV]') { $Version } else { "v$Version" }
+$expectedRef = "refs/tags/$expectedTag"
+
+# 本地 tag 检查
+& git show-ref --tags --verify --quiet $expectedRef
+if ($LASTEXITCODE -eq 0) {
+  Fail "本地已存在 tag：$expectedTag（$expectedRef）。请更换版本号或先删除该 tag 后再试。" 30
+}
+
+# 远程 tag 检查（同时查轻量/附注 tag 的对象解引用）
+$remoteHit = & git ls-remote --tags $Remote $expectedRef "$expectedRef^{}"
+if ($LASTEXITCODE -ne 0) {
+  Fail "无法查询远程 tag：git ls-remote --tags $Remote ...（请检查远程名/网络/权限）" 31
+}
+if ($remoteHit) {
+  Fail "远程 '$Remote' 已存在 tag：$expectedTag。请更换版本号，或在远程删除该 tag 后再试。" 32
+}
+
 Write-Host "▶ 当前分支: $branch"
 Write-Host "▶ 将执行: git-flow release finish $Version"
 Write-Host "▶ 完成后推送: $Remote $MainBranch $DevBranch + (HEAD tag if exists)"
