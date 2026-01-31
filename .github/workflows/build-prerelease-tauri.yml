@@ -449,7 +449,7 @@ jobs:
         run: |
           $version = "${{ needs.prepare-version.outputs.version }}"
           $tag = "windows"
-          $escaped = [regex]::Escape("_$version_")
+          $escaped = [regex]::Escape("_${version}_")
           Get-ChildItem "src-tauri/target/bundle-release/bundle/nsis" -Filter *.exe | ForEach-Object {
             $name = $_.Name
             if ($name -match $escaped) {
