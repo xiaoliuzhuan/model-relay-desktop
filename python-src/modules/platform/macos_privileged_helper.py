@@ -55,7 +55,7 @@ class MacPrivilegeSession:
     def __init__(self) -> None:
         self.owner_uid = getattr(os, "getuid", lambda: 0)()
         self.owner_gid = getattr(os, "getgid", lambda: 0)()
-        base_dir = Path("/tmp/mtga_gui_privileged") / str(self.owner_uid)
+        base_dir = Path("/tmp/mtga_privileged") / str(self.owner_uid)
         base_dir.mkdir(parents=True, exist_ok=True)
         base_dir.chmod(0o700)
         unique = f"{os.getpid()}_{uuid.uuid4().hex}"
