@@ -485,7 +485,7 @@ export const useMtgaStore = () => {
       appendLog("      2. 检查 Trae 的代理设置。\n" + "⚠️".repeat(21))
     }
 
-    appendLog("MTGA GUI 已启动")
+    appendLog("MTGA 已启动")
     appendLog("请选择操作或直接使用一键启动...")
   }
 

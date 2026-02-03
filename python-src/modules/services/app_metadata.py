@@ -13,9 +13,9 @@ class AppMetadata:
 
 
 DEFAULT_METADATA = AppMetadata(
-    display_name="MTGA GUI",
+    display_name="MTGA",
     github_repo="BiFangKNT/mtga",
-    error_log_filename="mtga_gui_error.log",
+    error_log_filename="mtga_error.log",
     ca_common_name="MTGA_CA",
     api_key_visible_chars=4,
 )

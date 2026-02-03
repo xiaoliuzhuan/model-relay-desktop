@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-HOSTS_ENTRY_MARKER = "# Added by MTGA GUI"
+HOSTS_ENTRY_MARKER = "# Added by MTGA"
 DEFAULT_HOSTS_IPS = ("127.0.0.1", "::1")
 
 
