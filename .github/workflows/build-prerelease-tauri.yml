@@ -274,13 +274,14 @@ jobs:
       - name: 🏷️ 重命名 macOS 安装包
         run: |
           set -euo pipefail
-          VERSION="${{ needs.prepare-version.outputs.version }}"
+          VERSION_RAW="${{ needs.prepare-version.outputs.version }}"
+          VERSION_WITH_V="v${VERSION_RAW}"
           PLATFORM_TAG="apple"
           for file in src-tauri/target/bundle-release/bundle/dmg/*.dmg; do
             [ -e "$file" ] || continue
             base=$(basename "$file")
-            if [[ "$base" == *"_${VERSION}_"* ]]; then
-              new="${base/_${VERSION}_/_${VERSION}_${PLATFORM_TAG}_}"
+            if [[ "$base" == *"_${VERSION_RAW}_"* ]]; then
+              new="${base/_${VERSION_RAW}_/_${VERSION_WITH_V}_${PLATFORM_TAG}_}"
               if [ "$new" != "$base" ]; then
                 mv "$file" "$(dirname "$file")/$new"
               fi
@@ -447,13 +448,14 @@ jobs:
 
       - name: 🏷️ 重命名 Windows 安装包
         run: |
-          $version = "${{ needs.prepare-version.outputs.version }}"
+          $versionRaw = "${{ needs.prepare-version.outputs.version }}"
+          $versionWithV = "v$versionRaw"
           $tag = "windows"
-          $escaped = [regex]::Escape("_$version_")
+          $escaped = [regex]::Escape("_${versionRaw}_")
           Get-ChildItem "src-tauri/target/bundle-release/bundle/nsis" -Filter *.exe | ForEach-Object {
             $name = $_.Name
             if ($name -match $escaped) {
-              $newName = $name -replace $escaped, "_${version}_${tag}_"
+              $newName = $name -replace $escaped, "_${versionWithV}_${tag}_"
               if ($newName -ne $name) {
                 Rename-Item -Path $_.FullName -NewName $newName
               }

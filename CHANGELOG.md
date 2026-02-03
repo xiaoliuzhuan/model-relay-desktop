@@ -1,4 +1,24 @@
-## v1.6.0 (Latest)
+## v1.7.1 (Latest)
+## :sparkles: 新功能
+- 暂无新功能
+
+## :bug: 修复
+- fix(macos_privileged_helper): 修正模块搜索路径的父级目录层级 (b7737e9c918bd68260fbaa55bdd13e20b36990b4)
+- fix(proxy_orchestration): 修改hosts文件失败时继续启动代理服务器 (72a115d0d020a51abdf2ab512b3c487e885d8cdf)
+
+## v1.7.0
+## :sparkles: 新功能
+- feat(gui): 启动后自动检查更新 (2c9b233ee6636b7fc35b30714943cd1e1066924d)
+- feat(update_checker): 添加对GitHub表情符号的渲染支持 (3e5e3b1acd612181bf70ae10acd108706131b8fd)
+- feat(runtime): 引入错误码枚举并重构错误处理逻辑 (953fbb69fe8328ae76b4f967a3e0106993ffe6e6)
+- feat: 统一使用describe_result处理操作结果消息 (65b5a889d48fa65afa348b7d147a57b30965bbae)
+- feat(proxy): 添加中间路由支持并更新相关测试和UI (37db2643f22117ae29109a60f120844bed7f6b6b)
+
+## :bug: 修复
+- fix(actions): 用 /v1/models 列表校验模型并修正文案 (2e34fae2a4b9b8b582b4224b8c35f11bc91a6dde)
+- fix(ui): 修复macOS下Notebook标签切换时的焦点问题 (eaf8d2d8b6cc1f0ed269750b6bb8ea4d10ae7f0d)
+
+## v1.6.0
 ## :sparkles: 新功能
 - feat(hosts_manager): 添加 hosts 文件写入预检和受限模式支持 (47c2b8f14d3e9e7126b08c45df153e7435f24983)
 - feat(网络检查): 添加网络环境检测功能以识别显式代理配置 (ae3e5042d1b700105bbce7f093c533f75b42fbc8)
