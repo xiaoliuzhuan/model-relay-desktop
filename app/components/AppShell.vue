@@ -7,13 +7,13 @@
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-slate-400">
-              MTGA Console
+              Console
             </p>
             <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
-              <slot name="title">MTGA - 代理服务器管理工具</slot>
+              <slot name="title">MTGA</slot>
             </h1>
             <div class="mt-2 text-sm text-slate-500">
-              <slot name="subtitle">一站式代理与证书管理面板</slot>
+              <slot name="subtitle">一站式 AI 代理服务器管理面板</slot>
             </div>
           </div>
         </div>
