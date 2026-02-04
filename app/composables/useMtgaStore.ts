@@ -132,6 +132,7 @@ export const useMtgaStore = () => {
   const logStreamActive = useState<boolean>("mtga-log-stream-active", () => false)
   const appInfo = useState<AppInfo>("mtga-app-info", () => ({ ...DEFAULT_APP_INFO }))
   const initialized = useState<boolean>("mtga-initialized", () => false)
+  const hasNewVersion = useState<boolean>("mtga-has-new-version", () => false)
   const updateDialogOpen = useState<boolean>("mtga-update-dialog-open", () => false)
   const updateVersionLabel = useState<string>("mtga-update-version-label", () => "")
   const updateNotesHtml = useState<string>("mtga-update-notes-html", () => "")
@@ -626,11 +627,13 @@ export const useMtgaStore = () => {
       : result.details
     const status = coerceText(updateResult["status"])
     if (status === "new_version") {
+      hasNewVersion.value = true
       updateVersionLabel.value = coerceText(updateResult["latest_version"])
       updateNotesHtml.value = coerceText(updateResult["release_notes"])
       updateReleaseUrl.value = coerceText(updateResult["release_url"])
       updateDialogOpen.value = true
     } else if (status === "up_to_date") {
+      hasNewVersion.value = false
       const latestVersion = coerceText(updateResult["latest_version"])
       if (latestVersion) {
         appendLog(`已是最新版本：${latestVersion}`)
@@ -686,6 +689,7 @@ export const useMtgaStore = () => {
     logs,
     logCursor,
     appInfo,
+    hasNewVersion,
     updateDialogOpen,
     updateVersionLabel,
     updateNotesHtml,

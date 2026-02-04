@@ -31,6 +31,12 @@
   --color-mtga-warn: #f59e0b;
   --color-mtga-text: #0f172a;
   --color-mtga-text-muted: #64748b;
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+  --animate-bounce-subtle: bounce-subtle 2s ease-in-out infinite;
 }
 
 @layer base {
@@ -114,6 +120,18 @@
   /* 3. 次要/检查操作按钮 (Outline with Amber hover) */
   @utility mtga-btn-outline {
     @apply btn btn-outline btn-sm rounded-xl border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-600 w-full;
+  }
+
+  /* 4. NEW 标签样式 (用于版本更新提醒) */
+  @utility mtga-badge-new {
+    @apply absolute flex h-3.5 px-1.5 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white animate-bounce-subtle antialiased;
+    /* 使用 tabular-nums 保持字符宽度一致 */
+    font-variant-numeric: tabular-nums;
+    padding-top: 1px; /* 视觉补偿：解决小字号大写字母偏上的问题 */
+    
+    /* 强制硬件加速以减少动画过程中的模糊 */
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
 
 @layer components {

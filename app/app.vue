@@ -5,6 +5,7 @@ const {
   logs,
   init,
   appInfo,
+  hasNewVersion,
   updateDialogOpen,
   updateVersionLabel,
   updateNotesHtml,
@@ -167,16 +168,21 @@ onBeforeUnmount(() => {
           <!-- 关于与更新 -->
           <div class="mt-auto pt-4 border-t border-slate-200/50 flex flex-col gap-2 px-1">
             <div class="flex flex-col gap-0.5">
-              <div class="text-[13px] font-bold text-slate-700 truncate">
-                {{ appInfo.display_name }}
-              </div>
-              <div class="text-[11px] font-medium text-slate-400">
-                {{ appInfo.version }}
+              <div class="relative w-fit">
+                <div class="text-[11px] font-medium text-slate-400">
+                  {{ appInfo.version }}
+                </div>
+                <span 
+                  v-if="hasNewVersion" 
+                  class="mtga-badge-new -top-1.5! -right-9!"
+                >
+                  NEW
+                </span>
               </div>
             </div>
             
             <button 
-              class="btn btn-xs btn-outline rounded-lg border-slate-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600 font-bold"
+              class="btn btn-xs btn-outline rounded-lg border-slate-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600 font-bold w-full"
               @click="runCheckUpdates"
             >
               检查更新
