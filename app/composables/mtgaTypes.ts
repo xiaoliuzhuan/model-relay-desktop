@@ -47,6 +47,6 @@ export type MainTabKey = "cert" | "hosts" | "proxy"
 
 export type ProxyStartStepEvent = {
   step: MainTabKey
-  status: "ok" | "skipped" | "failed"
+  status: "ok" | "skipped" | "failed" | "started"
   message?: string | null
 }

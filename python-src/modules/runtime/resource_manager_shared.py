@@ -310,6 +310,10 @@ class ResourceManager:
         """获取 CA 私钥文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, "ca.key")
 
+    def get_ca_info_file(self):
+        """获取 CA 元数据文件路径（用户数据目录）"""
+        return os.path.join(self.ca_path, "ca_info.json")
+
     def get_config_file(self, filename):
         """获取配置文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, filename)

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from contextlib import suppress
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Any, Literal
 
 from pydantic import BaseModel
 from pytauri import Commands
 
+from modules.cert.ca_metadata import load_ca_info
 from modules.network.network_environment import check_network_environment
 from modules.runtime.log_bus import push_log as default_push_log
 from modules.runtime.operation_result import OperationResult
@@ -17,8 +19,9 @@ from modules.runtime.thread_manager import ThreadManager
 from modules.services import proxy_orchestration
 from modules.services.app_metadata import DEFAULT_METADATA
 from modules.services.cert_service import (
+    check_existing_ca_cert,
+    clear_ca_cert_result,
     generate_certificates_result,
-    has_existing_ca_cert,
     install_ca_cert_result,
 )
 from modules.services.config_service import ConfigStore
@@ -36,7 +39,7 @@ class ProxyStartPayload(BaseModel):
 
 class ProxyStartStepEvent(BaseModel):
     step: Literal["cert", "hosts", "proxy"]
-    status: Literal["ok", "skipped", "failed"]
+    status: Literal["ok", "skipped", "failed", "started"]
     message: str | None = None
 
 
@@ -191,7 +194,7 @@ def _push_proxy_step(
     log_func,
     *,
     step: Literal["cert", "hosts", "proxy"],
-    status: Literal["ok", "skipped", "failed"],
+    status: Literal["ok", "skipped", "failed", "started"],
     message: str | None = None,
 ) -> None:
     try:
@@ -200,6 +203,59 @@ def _push_proxy_step(
     except Exception as exc:
         with suppress(Exception):
             log_func(f"⚠️ proxy-step 事件写入失败: {exc}")
+
+
+def _decide_ca_action(
+    check_result: OperationResult,
+    *,
+    log_func,
+) -> tuple[str, str]:
+    if not check_result.ok:
+        log_func("⚠️ CA 证书检查失败，按规则清理并生成新证书")
+        return "clear_and_generate", "CA 证书检查失败"
+
+    match_count = check_result.details.get("match_count")
+    if isinstance(match_count, int) and match_count > 1:
+        return "clear_and_generate", "检测到多个匹配证书"
+
+    installed_certs = check_result.details.get("certs") or []
+    if not installed_certs:
+        return "clear_and_generate", "未检测到系统 CA 证书"
+
+    return _decide_ca_action_with_certs(installed_certs, log_func=log_func)
+
+
+def _decide_ca_action_with_certs(
+    installed_certs: list[dict[str, object]],
+    *,
+    log_func,
+) -> tuple[str, str]:
+    resource_manager = _get_resource_manager()
+    ca_info = load_ca_info(resource_manager, log_func=log_func)
+    if not ca_info:
+        return "clear_and_generate", "未找到有效的 CA 元数据"
+
+    target_fingerprint = ca_info.get("fingerprint_sha1")
+    matched_cert = next(
+        (
+            cert
+            for cert in installed_certs
+            if cert.get("fingerprint_sha1") == target_fingerprint
+        ),
+        None,
+    )
+    if not matched_cert:
+        return "clear_and_generate", "系统 CA 证书与本地记录不一致"
+
+    not_after_unix = matched_cert.get("not_after_unix") or ca_info.get("not_after_unix")
+    if not isinstance(not_after_unix, int):
+        return "clear_and_generate", "无法读取 CA 证书到期时间"
+
+    now_unix = int(datetime.now(UTC).timestamp())
+    if not_after_unix <= now_unix:
+        return "clear_and_generate", "系统 CA 证书已过期"
+
+    return "skip", ""
 
 
 def _proxy_start_all_precheck(
@@ -230,48 +286,70 @@ def _proxy_start_all_precheck(
 
 
 def _proxy_start_all_cert(log_func) -> OperationResult | None:
-    has_existing = has_existing_ca_cert(
+    _push_proxy_step(log_func, step="cert", status="started")
+    def _generate_and_install() -> OperationResult | None:
+        log_func("步骤 1/4: 生成证书")
+        gen_result = generate_certificates_result(
+            log_func=log_func,
+            ca_common_name=DEFAULT_METADATA.ca_common_name,
+        )
+        if not gen_result.ok:
+            _push_proxy_step(
+                log_func,
+                step="cert",
+                status="failed",
+                message=gen_result.message,
+            )
+            return gen_result
+
+        log_func("步骤 2/4: 安装CA证书")
+        install_result = install_ca_cert_result(log_func=log_func)
+        if not install_result.ok:
+            _push_proxy_step(
+                log_func,
+                step="cert",
+                status="failed",
+                message=install_result.message,
+            )
+            return install_result
+
+        _push_proxy_step(log_func, step="cert", status="ok")
+        return None
+
+    check_result = check_existing_ca_cert(
         DEFAULT_METADATA.ca_common_name,
         log_func=log_func,
     )
-    if has_existing:
+    action, reason = _decide_ca_action(check_result, log_func=log_func)
+
+    if action == "skip":
         log_func(
-            f"检测到系统已存在 CA 证书 ({DEFAULT_METADATA.ca_common_name})，"
+            f"检测到系统已存在且有效的 CA 证书 ({DEFAULT_METADATA.ca_common_name})，"
             "跳过证书生成和安装"
         )
         _push_proxy_step(log_func, step="cert", status="skipped")
         return None
 
-    log_func("步骤 1/4: 生成证书")
-    gen_result = generate_certificates_result(
-        log_func=log_func,
-        ca_common_name=DEFAULT_METADATA.ca_common_name,
-    )
-    if not gen_result.ok:
-        _push_proxy_step(
-            log_func,
-            step="cert",
-            status="failed",
-            message=gen_result.message,
+    if action == "clear_and_generate":
+        log_func(f"{reason}，准备清理并重新生成")
+        clear_result = clear_ca_cert_result(
+            DEFAULT_METADATA.ca_common_name,
+            log_func=log_func,
         )
-        return gen_result
+        if not clear_result.ok:
+            _push_proxy_step(
+                log_func,
+                step="cert",
+                status="failed",
+                message=clear_result.message,
+            )
+            return clear_result
 
-    log_func("步骤 2/4: 安装CA证书")
-    install_result = install_ca_cert_result(log_func=log_func)
-    if not install_result.ok:
-        _push_proxy_step(
-            log_func,
-            step="cert",
-            status="failed",
-            message=install_result.message,
-        )
-        return install_result
-
-    _push_proxy_step(log_func, step="cert", status="ok")
-    return None
+    return _generate_and_install()
 
 
 def _proxy_start_all_hosts(log_func) -> OperationResult | None:
+    _push_proxy_step(log_func, step="hosts", status="started")
     log_func("步骤 3/4: 修改hosts文件")
     hosts_result = modify_hosts_file_result(log_func=log_func)
     if not hosts_result.ok:
@@ -287,6 +365,7 @@ def _proxy_start_all_hosts(log_func) -> OperationResult | None:
 
 
 def _proxy_start_all_proxy(config: dict[str, Any], log_func) -> OperationResult:
+    _push_proxy_step(log_func, step="proxy", status="started")
     log_func("步骤 4/4: 启动代理服务器")
     start_result = _restart_proxy_result(
         config=config,

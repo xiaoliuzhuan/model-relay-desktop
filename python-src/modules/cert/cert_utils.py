@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import UTC, datetime
 
 
 def log_lines(lines: str | None, log_func=print) -> None:
@@ -15,6 +16,42 @@ def log_lines(lines: str | None, log_func=print) -> None:
     for line in lines.splitlines():
         if line.strip():
             log_func(line.strip())
+
+
+def normalize_fingerprint(value: str | None) -> str | None:
+    """规范化证书指纹（去空白/冒号，转小写）。"""
+    if not value:
+        return None
+    return value.replace(":", "").replace(" ", "").strip().lower()
+
+
+def parse_openssl_fingerprint(output: str | None) -> str | None:
+    """解析 OpenSSL 指纹输出，返回规范化 SHA1 指纹。"""
+    if not output:
+        return None
+    for line in output.splitlines():
+        if "fingerprint=" in line.lower():
+            return normalize_fingerprint(line.split("=", 1)[1])
+    return None
+
+
+def parse_openssl_enddate_to_unix(output: str | None) -> int | None:
+    """解析 OpenSSL notAfter 输出并转换为 Unix 时间戳（秒）。"""
+    if not output:
+        return None
+    for line in output.splitlines():
+        lower = line.lower()
+        if lower.startswith("notafter="):
+            date_str = line.split("=", 1)[1].strip()
+            if date_str.endswith(" GMT"):
+                date_str = date_str[:-4].strip()
+            normalized = " ".join(date_str.split())
+            try:
+                parsed = datetime.strptime(normalized, "%b %d %H:%M:%S %Y")
+            except ValueError:
+                return None
+            return int(parsed.replace(tzinfo=UTC).timestamp())
+    return None
 
 
 def parse_certutil_store(output: str) -> list[dict[str, str]]:
@@ -68,4 +105,11 @@ def filter_certs_by_name(
     return matched
 
 
-__all__ = ["filter_certs_by_name", "log_lines", "parse_certutil_store"]
+__all__ = [
+    "filter_certs_by_name",
+    "log_lines",
+    "normalize_fingerprint",
+    "parse_certutil_store",
+    "parse_openssl_enddate_to_unix",
+    "parse_openssl_fingerprint",
+]

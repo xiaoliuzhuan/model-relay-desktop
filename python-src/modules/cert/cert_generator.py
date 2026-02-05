@@ -7,6 +7,11 @@ import atexit
 import os
 import tempfile
 
+from modules.cert.ca_metadata import save_ca_info
+from modules.cert.cert_utils import (
+    parse_openssl_enddate_to_unix,
+    parse_openssl_fingerprint,
+)
 from modules.runtime.process_utils import run_subprocess
 from modules.runtime.resource_manager import ResourceManager
 
@@ -40,6 +45,43 @@ def run_openssl_command(command, error_message, log_func=print):
     if result.stdout:
         log_func(result.stdout.strip())
     return True, result.stdout
+
+
+def _record_ca_cert_metadata(
+    resource_manager: ResourceManager,
+    ca_cert_path: str,
+    log_func=print,
+) -> bool:
+    """读取 CA 证书指纹/到期时间并写入元数据文件。"""
+    success, output = run_openssl_command(
+        [
+            resource_manager.openssl_path,
+            "x509",
+            "-noout",
+            "-fingerprint",
+            "-sha1",
+            "-enddate",
+            "-in",
+            ca_cert_path,
+        ],
+        "读取 CA 证书信息失败",
+        log_func,
+    )
+    if not success:
+        return False
+
+    fingerprint = parse_openssl_fingerprint(output)
+    not_after_unix = parse_openssl_enddate_to_unix(output)
+    if not fingerprint or not_after_unix is None:
+        log_func("无法解析 CA 证书指纹或到期时间")
+        return False
+
+    return save_ca_info(
+        resource_manager,
+        fingerprint_sha1=fingerprint,
+        not_after_unix=not_after_unix,
+        log_func=log_func,
+    )
 
 
 def create_default_config_files(resource_manager, log_func=print):
@@ -200,6 +242,9 @@ def generate_ca_cert(resource_manager, log_func=print, *, ca_common_name="MTGA_C
         return False
 
     log_func("CA证书已生成: ca.crt")
+    if not _record_ca_cert_metadata(resource_manager, ca_crt_path, log_func):
+        log_func("CA 证书元数据写入失败")
+        return False
     return True
 
 

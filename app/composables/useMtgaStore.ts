@@ -47,7 +47,10 @@ const isMainTabKey = (value: unknown): value is MainTabKey =>
 const isProxyStepStatus = (
   value: unknown
 ): value is ProxyStartStepEvent["status"] =>
-  value === "ok" || value === "skipped" || value === "failed"
+  value === "ok" ||
+  value === "skipped" ||
+  value === "failed" ||
+  value === "started"
 
 const isProxyStartStepEvent = (
   value: unknown
@@ -209,7 +212,9 @@ export const useMtgaStore = () => {
     appendLog(
       `[proxy-step] step=${normalized.step} status=${normalized.status}${normalized.message ? ` message=${normalized.message}` : ""}`
     )
-    enqueueProxyStep(normalized.step)
+    if (normalized.status === "started") {
+      enqueueProxyStep(normalized.step)
+    }
   }
 
   const appendLogs = (entries?: string[]) => {
