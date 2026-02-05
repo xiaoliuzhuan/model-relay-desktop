@@ -197,6 +197,10 @@ def _push_proxy_step(
     status: Literal["ok", "skipped", "failed", "started"],
     message: str | None = None,
 ) -> None:
+    if message:
+        log_func(f"[proxy-step] step={step} status={status} message={message}")
+    else:
+        log_func(f"[proxy-step] step={step} status={status}")
     try:
         payload = ProxyStartStepEvent(step=step, status=status, message=message)
         push_proxy_step(payload.model_dump_json())

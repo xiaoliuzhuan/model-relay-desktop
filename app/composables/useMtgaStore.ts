@@ -209,9 +209,6 @@ export const useMtgaStore = () => {
     if (!normalized || !isMainTabKey(normalized.step)) {
       return
     }
-    appendLog(
-      `[proxy-step] step=${normalized.step} status=${normalized.status}${normalized.message ? ` message=${normalized.message}` : ""}`
-    )
     if (normalized.status === "started") {
       enqueueProxyStep(normalized.step)
     }
