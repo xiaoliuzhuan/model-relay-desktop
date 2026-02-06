@@ -134,6 +134,21 @@
     transform: translateZ(0);
   }
 
+  /* 5. 弹窗操作按钮基础样式 (用于 MtgaDialog 页脚) */
+  @utility mtga-btn-dialog {
+    @apply btn btn-sm h-10 px-6 rounded-xl transition-all active:scale-[0.98];
+  }
+
+  /* 品牌色弹窗按钮 */
+  @utility mtga-btn-dialog-primary {
+    @apply mtga-btn-dialog btn-primary font-bold shadow-lg shadow-primary/20;
+  }
+
+  /* 幽灵态弹窗按钮 (通常用于取消) */
+  @utility mtga-btn-dialog-ghost {
+    @apply mtga-btn-dialog btn-ghost text-slate-500;
+  }
+
 @layer components {
   /**
    * MTGA 标准输入框组件

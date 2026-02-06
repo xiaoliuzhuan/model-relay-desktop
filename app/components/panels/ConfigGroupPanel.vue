@@ -421,87 +421,23 @@ const moveDown = async () => {
     </div>
   </div>
 
-  <dialog class="modal" :open="editorOpen">
-    <div class="modal-box mtga-card">
-      <div class="mtga-card-body">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h3 class="text-lg font-semibold text-slate-900">
-              {{ editorMode === "add" ? "新增配置组" : "修改配置组" }}
-            </h3>
-            <p class="text-xs text-slate-500">配置代理目标与鉴权参数</p>
-          </div>
-          <span class="mtga-chip">配置编辑</span>
-        </div>
-      </div>
-      <div class="mt-2 px-5 pb-5 space-y-4">
-        <MtgaInput 
-          v-model="form.name" 
-          label="配置组名称" 
-          placeholder="例如：我的常用配置"
-          icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-        />
-        
-        <MtgaInput 
-          v-model="form.api_url" 
-          label="API URL" 
-          required 
-          placeholder="https://api.openai.com"
-          icon="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-        />
-
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="flex cursor-pointer items-center gap-2">
-              <input
-                v-model="middleRouteEnabled"
-                type="checkbox"
-                class="checkbox checkbox-primary checkbox-xs"
-              />
-              <span class="label-text text-xs font-medium text-slate-500">修改中间路由</span>
-            </label>
-            <span v-if="middleRouteEnabled" class="text-[10px] text-slate-400">通常为 /v1</span>
-          </div>
-          <MtgaInput 
-            v-if="middleRouteEnabled"
-            v-model="form.middle_route"
-            :placeholder="DEFAULT_MIDDLE_ROUTE"
-            size="sm"
-          />
-        </div>
-
-        <MtgaInput 
-          v-model="form.model_id" 
-          label="实际模型ID" 
-          required 
-          show-dropdown
-          :loading="modelLoading"
-          :options="availableModels"
-          placeholder="例如：gpt-5"
-          icon="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"
-          @dropdown="handleFetchModels"
-        />
-
-        <MtgaInput 
-          v-model="form.api_key" 
-          label="API Key" 
-          required 
-          type="password" 
-          placeholder="sk-..."
-          icon="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-        />
-
-        <div v-if="formError" class="alert alert-error py-2 px-3 rounded-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span class="text-xs">{{ formError }}</span>
-        </div>
-      </div>
-      <div class="modal-action px-5 pb-5">
-        <button class="btn btn-ghost rounded-xl" @click="closeEditor">取消</button>
-        <button class="btn btn-primary rounded-xl px-8 shadow-sm" @click="handleSave">保存</button>
-      </div>
-    </div>
-  </dialog>
+  <ConfigGroupEditorDialog
+    v-model:open="editorOpen"
+    v-model:name="form.name"
+    v-model:api-url="form.api_url"
+    v-model:model-id="form.model_id"
+    v-model:api-key="form.api_key"
+    v-model:middle-route="form.middle_route"
+    v-model:middle-route-enabled="middleRouteEnabled"
+    :mode="editorMode"
+    :form-error="formError"
+    :default-middle-route="DEFAULT_MIDDLE_ROUTE"
+    :available-models="availableModels"
+    :model-loading="modelLoading"
+    @fetch-models="handleFetchModels"
+    @save="handleSave"
+    @cancel="closeEditor"
+  />
 
   <ConfirmDialog
     :open="confirmOpen"
