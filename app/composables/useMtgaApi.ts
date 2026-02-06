@@ -43,7 +43,8 @@ export const useMtgaApi = () => {
   const generateCertificates = () =>
     safeInvoke<InvokeResult>("generate_certificates")
   const installCaCert = () => safeInvoke<InvokeResult>("install_ca_cert")
-  const clearCaCert = () => safeInvoke<InvokeResult>("clear_ca_cert")
+  const clearCaCert = (payload: { ca_common_name?: string } = {}) =>
+    safeInvoke<InvokeResult>("clear_ca_cert", payload)
   const proxyStart = (payload: {
     debug_mode: boolean
     disable_ssl_strict_mode: boolean

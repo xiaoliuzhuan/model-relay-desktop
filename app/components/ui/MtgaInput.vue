@@ -31,6 +31,8 @@ interface Props {
   clearable?: boolean
   /** 错误信息，存在时 color 强制为 error */
   error?: string
+  /** 传递给 input 元素的类名 */
+  inputClass?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,7 +46,8 @@ const props = withDefaults(defineProps<Props>(), {
   icon: '',
   trailingIcon: '',
   options: () => [],
-  error: ''
+  error: '',
+  inputClass: ''
 })
 
 const emit = defineEmits<{
@@ -257,7 +260,8 @@ const handleClear = (e: MouseEvent) => {
           inputSizeClass,
           suffixPaddingClass,
           ($slots.leading || icon) ? 'pl-10' : 'pl-3.5',
-          size === 'xs' ? 'h-7 text-xs' : size === 'sm' ? 'h-8 text-sm' : 'h-10 text-sm'
+          size === 'xs' ? 'h-7 text-xs' : size === 'sm' ? 'h-8 text-sm' : 'h-10 text-sm',
+          inputClass
         ]"
         @input="handleInput"
       />
@@ -359,12 +363,20 @@ const handleClear = (e: MouseEvent) => {
     <!-- 底部描述/错误信息 -->
     <div v-if="description || error" class="label py-1 min-h-[24px]">
       <span 
-        class="label-text-alt transition-all duration-300 ease-out"
+        class="label-text-alt transition-all duration-300 ease-out flex items-center gap-1"
         :class="[
-          error ? 'text-error font-medium' : 'text-slate-400'
+          error ? 'text-error font-medium text-[11px]' : 'text-slate-400'
         ]"
       >
-        {{ error || description }}
+        <template v-if="error">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          {{ error }}
+        </template>
+        <template v-else>
+          {{ description }}
+        </template>
       </span>
     </div>
   </div>

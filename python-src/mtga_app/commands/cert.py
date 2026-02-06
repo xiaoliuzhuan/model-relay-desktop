@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel
 from pytauri import Commands
 
 from modules.services.app_metadata import DEFAULT_METADATA
@@ -12,6 +13,10 @@ from modules.services.cert_service import (
 )
 
 from .common import build_result_payload, collect_logs
+
+
+class ClearCaCertPayload(BaseModel):
+    ca_common_name: str | None = None
 
 
 def register_cert_commands(commands: Commands) -> None:
@@ -31,10 +36,10 @@ def register_cert_commands(commands: Commands) -> None:
         return build_result_payload(result, logs, "CA 证书安装完成")
 
     @commands.command()
-    async def clear_ca_cert() -> dict[str, Any]:
+    async def clear_ca_cert(body: ClearCaCertPayload) -> dict[str, Any]:
         logs, log_func = collect_logs()
         result = clear_ca_cert_result(
-            DEFAULT_METADATA.ca_common_name,
+            body.ca_common_name or DEFAULT_METADATA.ca_common_name,
             log_func=log_func,
         )
         return build_result_payload(result, logs, "CA 证书清除完成")

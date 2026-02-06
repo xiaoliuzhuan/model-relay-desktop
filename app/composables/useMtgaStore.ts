@@ -533,8 +533,13 @@ export const useMtgaStore = () => {
     return applyInvokeResult(result, "安装 CA 证书")
   }
 
-  const runClearCaCert = async () => {
-    const result = await api.clearCaCert()
+  const runClearCaCert = async (caCommonName?: string) => {
+    const normalizedCaCommonName = caCommonName?.trim()
+    const result = await api.clearCaCert(
+      normalizedCaCommonName
+        ? { ca_common_name: normalizedCaCommonName }
+        : {}
+    )
     return applyInvokeResult(result, "清除 CA 证书")
   }
 
