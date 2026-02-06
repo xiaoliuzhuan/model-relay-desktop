@@ -4,6 +4,22 @@
     "yaml.format.singleQuote": false,
     "yaml.format.bracketSpacing": true,
     "yaml.format.proseWrap": "preserve",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "vue"
+    ],
     "css.customData": [".vscode/tailwind-data.json"],
     "files.associations": {
         "*.css": "tailwindcss"

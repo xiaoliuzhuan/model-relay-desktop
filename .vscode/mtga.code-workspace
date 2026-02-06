@@ -5,6 +5,22 @@
 		}
 	],
 	"settings": {
+		"editor.formatOnSave": true,
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		},
+		"eslint.workingDirectories": [
+			{
+				"mode": "auto"
+			}
+		],
+		"eslint.validate": [
+			"javascript",
+			"javascriptreact",
+			"typescript",
+			"typescriptreact",
+			"vue"
+		],
 		"yaml.format.enable": true,
 		"yaml.format.printWidth": 150,
 		"yaml.format.singleQuote": false,
