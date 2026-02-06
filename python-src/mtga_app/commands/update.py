@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -27,7 +28,9 @@ def register_update_commands(commands: Commands) -> None:
     async def check_updates() -> dict[str, Any]:
         logs, log_func = collect_logs()
         version = resolve_app_version(project_root=_get_project_root())
-        result = check_for_updates_result(
+        # Run sync network I/O off the main event loop to avoid blocking other commands.
+        result = await asyncio.to_thread(
+            check_for_updates_result,
             repo=DEFAULT_METADATA.github_repo,
             app_version=version,
         )
