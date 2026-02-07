@@ -9,6 +9,7 @@ interface Props {
   modelValue: string | number
   label?: string
   description?: string
+  descriptionClass?: string
   placeholder?: string
   type?: string
   required?: boolean
@@ -41,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
   clearable: true,
   label: '',
   description: '',
+  descriptionClass: '',
   placeholder: '',
   color: 'neutral',
   icon: '',
@@ -54,6 +56,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'dropdown'): void
   (e: 'select', value: string): void
+  (e: 'focus'): void
+  (e: 'blur'): void
 }>()
 
 const dropdownOpen = ref(false)
@@ -228,7 +232,7 @@ const handleClear = (e: MouseEvent) => {
       ref="dropdownRef" 
       class="relative flex items-center group transition-all duration-150 ease-out border rounded-xl shadow-sm"
       :class="[
-        error ? 'border-error/50 bg-error/5' : 'border-slate-200 bg-white/50 focus-within:bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20',
+        error ? 'border-error/50 bg-error/5' : 'border-slate-200 bg-slate-100/70 focus-within:bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20',
         disabled || loading ? 'opacity-60 cursor-not-allowed' : 'hover:border-primary/40 hover:bg-white'
       ]"
     >
@@ -264,6 +268,8 @@ const handleClear = (e: MouseEvent) => {
           inputClass
         ]"
         @input="handleInput"
+        @focus="emit('focus')"
+        @blur="emit('blur')"
       />
 
       <!-- 清空按钮 (独立于操作区，在分割线左侧) -->
@@ -365,7 +371,7 @@ const handleClear = (e: MouseEvent) => {
       <span 
         class="label-text-alt transition-all duration-300 ease-out flex items-center gap-1"
         :class="[
-          error ? 'text-error font-medium text-[11px]' : 'text-slate-400'
+          error ? 'text-error font-medium text-[11px]' : ['text-slate-400', descriptionClass]
         ]"
       >
         <template v-if="error">
@@ -397,4 +403,3 @@ const handleClear = (e: MouseEvent) => {
   background: var(--color-primary, #f0bb32);
 }
 </style>
-

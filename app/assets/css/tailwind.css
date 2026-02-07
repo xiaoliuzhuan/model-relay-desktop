@@ -41,6 +41,18 @@
 
 @layer base {
   /* 
+     仅对输入控件移除默认粗黑外边框 (Focus Outline)
+     保留按钮/链接等元素的可见焦点，避免键盘可访问性回退
+  */
+  .input:focus,
+  .textarea:focus,
+  .input:focus-within,
+  .textarea:focus-within {
+    outline: 2px solid transparent !important;
+    outline-offset: 2px !important;
+  }
+
+  /* 
      显式覆盖 daisyUI 注入的主题变量。
      通过 :root 和 [data-theme] 确保在任何模式（浅色/深色）下都能强制生效。
   */

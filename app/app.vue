@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ICONS } from './composables/icons'
+import { applyThemeConfig, loadThemeFromStorage } from './composables/themeConfig'
 
 const {
   logs,
@@ -19,6 +20,13 @@ const {
   panelNavTarget,
   panelNavSignal,
 } = useMtgaStore()
+
+if (import.meta.client) {
+  const savedTheme = loadThemeFromStorage()
+  if (savedTheme) {
+    applyThemeConfig(savedTheme)
+  }
+}
 
 /**
  * 当前选中的左侧面板 ID

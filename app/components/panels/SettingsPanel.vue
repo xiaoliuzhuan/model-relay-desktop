@@ -3,6 +3,15 @@
  * 设置面板组件
  * 提供用户数据管理、备份、还原及清理功能
  */
+import {
+  type ThemeConfig,
+  DEFAULT_THEME_CONFIG,
+  applyThemeConfig,
+  copyThemeConfig,
+  loadThemeFromStorage,
+  sanitizeThemeConfig,
+  saveThemeToStorage,
+} from "~/composables/themeConfig"
 
 const store = useMtgaStore()
 const appInfo = store.appInfo
@@ -10,6 +19,15 @@ const appInfo = store.appInfo
 const clearConfirmOpen = ref(false)
 const clearConfirmTitle = "确认清除数据"
 const clearConfirmMessage = "确定要清除用户数据吗？该操作将删除配置文件、SSL 证书和 hosts 备份（历史 backups 保留）。"
+const themeDialogOpen = ref(false)
+
+const themeConfig = reactive<ThemeConfig>({ ...DEFAULT_THEME_CONFIG })
+if (import.meta.client) {
+  const savedTheme = loadThemeFromStorage()
+  if (savedTheme) {
+    copyThemeConfig(themeConfig, savedTheme)
+  }
+}
 
 /**
  * 打开目录的工具提示内容
@@ -92,6 +110,22 @@ const confirmClear = () => {
   clearConfirmOpen.value = false
   store.runUserDataClear()
 }
+
+const openThemeDialog = () => {
+  themeDialogOpen.value = true
+}
+
+const handleThemeSave = (value: ThemeConfig) => {
+  const normalized = sanitizeThemeConfig(value)
+  copyThemeConfig(themeConfig, normalized)
+  applyThemeConfig(themeConfig)
+  const saveResult = saveThemeToStorage(themeConfig)
+  if (saveResult.ok) {
+    store.appendLog("主题配置已保存")
+    return
+  }
+  store.appendLog(`主题配置已应用，但本地保存失败：${saveResult.error}`)
+}
 </script>
 
 <template>
@@ -143,6 +177,12 @@ const confirmClear = () => {
         </button>
       </div>
     </div>
+    <button class="mtga-clickable-row" @click="openThemeDialog">
+      <span class="flex flex-col items-start gap-0.5 text-left">
+        <span class="font-semibold text-slate-800">主题配置</span>
+        <span class="text-xs font-normal text-slate-500">自定义颜色、字体与背景</span>
+      </span>
+    </button>
   </div>
 
   <ConfirmDialog
@@ -153,5 +193,11 @@ const confirmClear = () => {
     type="error"
     @cancel="cancelClear"
     @confirm="confirmClear"
+  />
+
+  <ThemeSettingsDialog
+    v-model:open="themeDialogOpen"
+    :config="themeConfig"
+    @save="handleThemeSave"
   />
 </template>
