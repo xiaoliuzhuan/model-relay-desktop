@@ -65,7 +65,7 @@ const handleEscape = () => {
     >
       <div class="mtga-card-body p-0 flex flex-col">
         <!-- 头部插槽：统一由基础组件提供底部分割线 -->
-        <div v-if="$slots.header" class="px-6 py-4 border-b border-slate-100/50">
+        <div v-if="$slots.header" class="px-6 py-5 border-b border-slate-100/50">
           <slot name="header"></slot>
         </div>
         
@@ -75,7 +75,7 @@ const handleEscape = () => {
         </div>
         
         <!-- 底部插槽：操作按钮区 -->
-        <div v-if="$slots.footer" class="px-6 py-2 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
+        <div v-if="$slots.footer" class="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center gap-3">
           <slot name="footer"></slot>
         </div>
       </div>

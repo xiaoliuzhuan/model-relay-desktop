@@ -7,6 +7,10 @@
 const store = useMtgaStore()
 const appInfo = store.appInfo
 
+const clearConfirmOpen = ref(false)
+const clearConfirmTitle = "确认清除数据"
+const clearConfirmMessage = "确定要清除用户数据吗？该操作将删除配置文件、SSL 证书和 hosts 备份（历史 backups 保留）。"
+
 /**
  * 打开目录的工具提示内容
  */
@@ -77,6 +81,15 @@ const handleRestore = () => {
  * 处理清除数据
  */
 const handleClear = () => {
+  clearConfirmOpen.value = true
+}
+
+const cancelClear = () => {
+  clearConfirmOpen.value = false
+}
+
+const confirmClear = () => {
+  clearConfirmOpen.value = false
   store.runUserDataClear()
 }
 </script>
@@ -131,4 +144,14 @@ const handleClear = () => {
       </div>
     </div>
   </div>
+
+  <ConfirmDialog
+    :open="clearConfirmOpen"
+    :title="clearConfirmTitle"
+    :message="clearConfirmMessage"
+    confirm-text="确认清除"
+    type="error"
+    @cancel="cancelClear"
+    @confirm="confirmClear"
+  />
 </template>

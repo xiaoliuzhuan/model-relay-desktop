@@ -443,6 +443,7 @@ const moveDown = async () => {
     :open="confirmOpen"
     :title="confirmTitle"
     :message="confirmMessage"
+    type="error"
     @cancel="cancelDelete"
     @confirm="confirmDelete"
   />

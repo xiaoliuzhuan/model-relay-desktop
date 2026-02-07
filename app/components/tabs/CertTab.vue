@@ -77,14 +77,16 @@ watch(inputCommonName, (val) => {
   </div>
 
   <!-- 二次确认弹窗 -->
-  <FormConfirmDialog
+  <ConfirmDialog
     v-model:open="isConfirmOpen"
     v-model="inputCommonName"
     title="确认清除 CA 证书"
     message="将从系统信任存储中删除匹配的 CA 证书，是否继续？"
+    show-input
     label="Common Name:"
     placeholder="请输入证书 Common Name"
     :error="showInputError ? '请输入有效的 Common Name' : ''"
+    input-class="font-mono"
     confirm-text="确认清除"
     type="error"
     @confirm="confirmClear"
