@@ -26,23 +26,16 @@
   - [目录](#目录)
   - [更新日志](#更新日志)
   - [快速开始](#快速开始)
-    - [Windows 用户（GUI一键启动方式）](#windows-用户gui一键启动方式)
-    - [macOS 用户（应用程序安装）](#macos-用户应用程序安装)
-      - [安装方式](#安装方式)
-      - [使用方法](#使用方法)
+    - [安装](#安装)
+      - [Windows](#windows)
+      - [macOS](#macos)
+    - [使用](#使用)
   - [macOS 解决 “包已损坏” 问题](#macos-解决-包已损坏-问题)
     - [图形化解决方案](#图形化解决方案)
     - [cli 解决方案](#cli-解决方案)
   - [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
-  - [从脚本启动](#从脚本启动)
-    - [第 0 步：环境准备](#第-0-步环境准备)
-      - [Windows](#windows)
-        - [第 1 步：生成自签名证书](#第-1-步生成自签名证书)
-        - [第 2 步：让 Windows 信任你的 CA 证书](#第-2-步让-windows-信任你的-ca-证书)
-        - [第 3 步：修改 Hosts 文件](#第-3-步修改-hosts-文件)
-        - [第 4 步：运行本地代理服务器 (Python)](#第-4-步运行本地代理服务器-python)
         - [第 5 步：配置 Trae IDE](#第-5-步配置-trae-ide)
-      - [macOS](#macos)
+      - [macOS](#macos-1)
   - [😎 保持更新](#-保持更新)
   - [架构与依赖约束](#架构与依赖约束)
   - [引用](#引用)
@@ -60,16 +53,36 @@
 
 ## 快速开始
 
-### Windows 用户（GUI一键启动方式）
+### 安装
 
-1. 从 [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) 下载最新版本的 `MTGA_GUI-v{版本号}-x64.exe`
-2. 双击运行下载的 exe 文件（需要管理员权限）
-3. 在打开的图形界面中，填写 API URL 和模型 ID
+#### Windows
+
+1. 从 [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) 下载最新版本的 `MTGA_v{version}_windows_x64-setup.exe`
+2. 双击安装
+
+#### macOS
+
+1. 从 [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) 下载最新版本的 `MTGA_v{version}_apple_{arch}.dmg`
+  - `{arch}` 为指令集架构：
+    - `x64`：Intel 处理器
+    - `aarch64`：Apple Silicon 处理器（M 系列）
+2. 双击 DMG 文件，系统会自动挂载安装包
+3. 将 `MTGA_GUI.app` 拖拽到 `Applications` 文件夹
+
+### 使用
+1. 启动 MTGA 应用程序
+2. 添加代理配置组
    - **API URL 只需要填域名（端口号可选，不懂的就不要填），不需要填后面的路由，例如：`https://your-api.example.com`**
+   - 如果你的接口不是标准 `/v1` 路由，可以自定义中间路由
+     <img width="70%" alt="modify middle route" src="./images/modify-middle-route.png?raw=true" />
+3. 填写全局配置
    - **如果希望启用多模态能力，可以将模型名映射到内置多模态模型名上：**
-   - <img width="247" height="76" alt="model mapping" src="./images/model-mapping.png?raw=true" />
-   - <img width="380" height="141" alt="model mapping effects" src="./images/model-mapping-effects.png?raw=true" />
-4. 点击"一键启动全部服务"按钮
+     - <div style="display:flex;flex-direction:column;font-size:0">
+        <img width="70%" alt="model mapping" src="./images/model-mapping-above.png?raw=true" />
+        <img width="70%" alt="model mapping" src="./images/model-mapping-below.png?raw=true" />
+       </div>
+     - <img width="70%" alt="model mapping effects" src="./images/model-mapping-effects.png?raw=true" />
+4. 点击"一键启动全部服务"按钮（macOS 需要管理员权限）
 5. 等待程序自动完成以下操作：
    - 生成并安装证书
    - 修改hosts文件
@@ -77,38 +90,11 @@
 6. 完成后，按照[第 5 步：配置 Trae IDE](#第-5-步配置-trae-ide)进行IDE配置
 
 > [!NOTE]
-> - 首次运行可能需要允许防火墙访问权限
-> - 单文件版本支持用户数据持久化存储，配置和证书会自动保存
-> - 如 trae 端添加模型失败，请参考 [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
+> - 支持用户数据持久化存储，代理配置组和证书会自动保存
 
-### macOS 用户（应用程序安装）
-
-#### 安装方式
-
-1. 从 [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) 下载最新版本的 `MTGA_GUI-v{版本号}-aarch64.dmg`
-2. 双击 DMG 文件，系统会自动挂载安装包
-3. 将 `MTGA_GUI.app` 拖拽到 `Applications` 文件夹
-4. 从启动台或 Applications 文件夹启动应用程序
-
-#### 使用方法
-
-1. 启动 `MTGA_GUI.app`（首次运行可能需要在系统偏好设置中允许运行）
-2. 在图形界面中填写：
-   - **API URL**：你的 API 服务地址（例如：`https://your-api.example.com`）
-   - **如果希望启用多模态能力，可以将模型名映射到内置多模态模型名上：**
-   - <img width="247" height="76" alt="model mapping" src="./images/model-mapping.png?raw=true" />
-   - <img width="380" height="141" alt="model mapping effects" src="./images/model-mapping-effects.png?raw=true" />
-3. 点击"一键启动全部服务"按钮
-4. 程序会自动完成：
-   - 生成并安装 SSL 证书到系统钥匙串
-   - 修改 `/etc/hosts` 文件（需要管理员权限）
-5. 需要手动在打开的钥匙串窗口中信任生成的证书，默认名称为 `MTGA_CA`
-6. 启动本地代理服务器
-7. 按照下方的 [Trae IDE 配置](#第-5-步配置-trae-ide) 完成设置
-
-> [!NOTE]
-> - 证书安装和 hosts 修改需要管理员权限
-> - 如提示“包已损坏”，请参考 [macOS 解决 “包已损坏” 问题](#macos-解决-包已损坏-问题)
+> [!WARNING]
+> - 需要管理员权限
+> - macOS 端如提示“包已损坏”，请参考 [macOS 解决 “包已损坏” 问题](#macos-解决-包已损坏-问题)
 > - 如 trae 端添加模型失败，请参考 [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
 
 ## macOS 解决 “包已损坏” 问题
@@ -142,8 +128,11 @@
 
 ## trae 端提示 “添加模型失败” 的排查方案
 
+如果一切顺利，你应该会在日志区看到收到请求的日志：
+
+
 请检查：
-- hosts 是否包含 `127.0.0.1 api.openai.com` 这一行，且未被注释掉（# 开头）。
+- 确保 hosts 包含 `127.0.0.1 api.openai.com` 这一行，且未被注释掉（# 开头）。
 - 确保没有其他程序正在使用端口 443（如浏览器、VPN 等）。
   - 可以使用以下命令检查：
     ```
@@ -154,94 +143,12 @@
     netstat -lnp tcp | grep :443
     ```
   - 如果有进程在监听 443 端口，建议关闭该进程。
+- 确保没有其他代理软件正在运行，它们可能会干扰 MTGA 的代理功能。
+  - 如需科学上网，请使用 TUN 模式而非系统代理。有条件的请在 **本机之外** 部署其他代理服务。
+  - 如果 DNS 配置错误，也可能导致无法解析。
+  - 不懂的请保持网络环境干净。
 
 ---
-
-## 从脚本启动
-
-### 第 0 步：环境准备
-
-#### Windows
-
-- 系统为 windows 10 以上
-- 拥有管理员权限
-- 安装 python 环境，推荐 python 3.10 以上
-- 安装 git
-
-##### 第 1 步：生成自签名证书
-
-打开 Git Bash:
-
-```bash
-# 切换到 ca 目录
-cd "mtga/ca"
-
-# 1. 生成 CA 证书 (ca.crt 和 ca.key)
-./genca.sh
-```
-
-执行 `./genca.sh` 时，它会问你 "Do you want to generate ca cert and key? [yes/no]"，输入 `y` 并按回车。之后会要求填写一些信息：
-*   `Country Name (2 letter code) []`: 填 `CN` (或其他国家代码)
-*   其他字段（如 State, Locality, Organization, Common Name for CA）可以按需填写或留空，建议填`X`。Common Name 可以填 `MTGA_CA` 之类的。邮箱可以留空。
-
-```bash
-# 2. 生成 api.openai.com 的服务器证书 (api.openai.com.crt 和 api.openai.com.key)
-# 这个脚本会使用同目录下的 api.openai.com.subj 和 api.openai.com.cnf 配置文件
-./gencrt.sh api.openai.com
-```
-
-执行完毕后，在 `mtga\ca` 目录下你会找到以下重要文件：
-*   `ca.crt` (你的自定义 CA 证书)
-*   `ca.key` (你的自定义 CA 私钥 - **请勿泄露**)
-*   `api.openai.com.crt` (用于本地代理服务器的 SSL 证书)
-*   `api.openai.com.key` (用于本地代理服务器的 SSL 私钥 - **请勿泄露**)
-
-##### 第 2 步：让 Windows 信任你的 CA 证书
-
-1.  找到 `mtga\ca\ca.crt` 文件。
-2.  双击 `ca.crt` 文件，打开证书查看器。
-3.  点击"安装证书..."按钮。
-4.  选择"当前用户"或"本地计算机"。推荐选择"本地计算机"（这需要管理员权限），这样对所有用户生效。
-5.  在下一个对话框中，选择"将所有的证书都放入下列存储"，然后点击"浏览..."。
-6.  选择"受信任的根证书颁发机构"，然后点击"确定"。
-7.  点击"下一步"，然后"完成"。如果弹出安全警告，选择"是"。
-
-##### 第 3 步：修改 Hosts 文件
-
-**⚠️警告：执行这一步之后，你将无法访问原来的 openai 的api。网页使用不影响。**
-
-你需要用管理员权限修改 Hosts 文件，将 `api.openai.com` 指向你的本地机器。
-
-1.  Hosts 文件路径: `C:\Windows\System32\drivers\etc\hosts`
-2.  以管理员身份，使用记事本（或其他文本编辑器）打开此文件。
-3.  在文件末尾添加一行：
-    ```
-    127.0.0.1 api.openai.com
-    ```
-4.  保存文件。  
-
-##### 第 4 步：运行本地代理服务器 (Python)
-
-**运行代理服务器之前：**
-
-1.  **安装依赖**:
-    ```bash
-    pip install Flask requests
-    ```
-2.  **配置脚本**:
-    *   打开 `trae_proxy.py` 文件。
-    *   **修改 `TARGET_API_BASE_URL`**: 将其替换为你实际要连接的那个站点的 OpenAI 格式 API 的基础 URL (例如: `"https://your-api.example.com"`)。
-    *   **确认证书路径**: 脚本默认会从 `mtga\ca` 读取 `api.openai.com.crt` 和 `api.openai.com.key`。如果你的证书不在此路径，请修改 `CERT_FILE` 和 `KEY_FILE` 的值，或者将这两个文件复制到脚本指定的 `CERT_DIR`。
-
-**运行代理服务器：**
-
-打开命令提示符 (cmd) 或 PowerShell **以管理员身份运行** (因为要监听 443 端口)，然后执行：
-
-```bash
-python trae_proxy.py
-```
-
-如果一切顺利，你应该会看到服务器启动的日志。
 
 ##### 第 5 步：配置 Trae IDE
 
