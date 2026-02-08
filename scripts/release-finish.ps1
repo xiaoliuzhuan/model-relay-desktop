@@ -1,4 +1,4 @@
-# scripts/release-finish.ps1
+﻿# scripts/release-finish.ps1
 # 用法：
 #   .\scripts\release-finish.ps1                 # 在 release/<ver> 分支上时自动解析 ver
 #   .\scripts\release-finish.ps1 -v 2.0.0-beta.10
