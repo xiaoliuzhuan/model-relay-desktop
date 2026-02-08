@@ -34,8 +34,7 @@
     - [图形化解决方案](#图形化解决方案)
     - [cli 解决方案](#cli-解决方案)
   - [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
-        - [第 5 步：配置 Trae IDE](#第-5-步配置-trae-ide)
-      - [macOS](#macos-1)
+  - [配置 Trae IDE](#配置-trae-ide)
   - [😎 保持更新](#-保持更新)
   - [架构与依赖约束](#架构与依赖约束)
   - [引用](#引用)
@@ -87,7 +86,7 @@
    - 生成并安装证书
    - 修改hosts文件
    - 启动代理服务器
-6. 完成后，按照[第 5 步：配置 Trae IDE](#第-5-步配置-trae-ide)进行IDE配置
+6. 完成后，按照[配置 Trae IDE](#配置-trae-ide)进行IDE配置
 
 > [!NOTE]
 > - 支持用户数据持久化存储，代理配置组和证书会自动保存
@@ -130,10 +129,11 @@
 
 如果一切顺利，你应该会在日志区看到收到请求的日志：
 
+<img width="40%" alt="received list request" src="./images/received-list-request.png?raw=true" />
 
-请检查：
-- 确保 hosts 包含 `127.0.0.1 api.openai.com` 这一行，且未被注释掉（# 开头）。
-- 确保没有其他程序正在使用端口 443（如浏览器、VPN 等）。
+如无日志，请检查：
+- **hosts**：确保包含 `127.0.0.1 api.openai.com` 这一行，且未被注释掉（# 开头）。
+- **端口监听**：确保没有其他程序正在使用端口 443（如浏览器、VPN 等）。
   - 可以使用以下命令检查：
     ```
     # windows
@@ -143,40 +143,36 @@
     netstat -lnp tcp | grep :443
     ```
   - 如果有进程在监听 443 端口，建议关闭该进程。
-- 确保没有其他代理软件正在运行，它们可能会干扰 MTGA 的代理功能。
+- **网络代理**：确保没有其他代理软件正在运行，它们可能会干扰 MTGA 的代理功能。
   - 如需科学上网，请使用 TUN 模式而非系统代理。有条件的请在 **本机之外** 部署其他代理服务。
   - 如果 DNS 配置错误，也可能导致无法解析。
   - 不懂的请保持网络环境干净。
+- **证书问题**：如果 Trae 报错 SSL/TLS 相关错误，请检查 CA 证书是否已正确安装到"受信任的根证书颁发机构"。
+- **防火墙**：确保防火墙允许监听 443 端口的入站连接 (尽管是本地连接 `127.0.0.1`，通常不需要特别配置防火墙，但值得检查)。
+- **进阶排查方法**：
+  - MTGA 配置好，`主要流程 - 代理服务器操作 - 勾选 “关闭SSL严格模式”`，启动全部服务。
+  - 安装并打开 [Reqable](https://reqable.com/) 工具，根据其提示安装其证书。
+  - 其启动默认会打开调试，在右上角关闭它：
+    <img width="40%" alt="reqable debug mode off" src="./images/reqable-debug-mode-off.png?raw=true" />
+  - 打开一个 http 测试页：
+    <img width="55%" alt="reqable http create" src="./images/reqable-http-create.png?raw=true" />
+  - 填写 list api 的 url，授权选择 “Bearer Token”，并填写你在 MTGA 全局配置处的 Key：
+    <img width="70%" alt="reqable fill in config" src="./images/reqable-fill-in-config.png?raw=true" />
+  - 点击发送并观察响应体。
 
 ---
 
-##### 第 5 步：配置 Trae IDE
+## 配置 Trae IDE
 
 1.  打开并登录 Trae IDE。
 2.  在 AI 对话框中，点击右下角的模型图标，选择末尾的"添加模型"。
 3.  **服务商**：选择 `OpenAI`。
-4.  **模型**：选择"自定义模型"。
-5.  **模型 ID**：填写你在 Python 脚本中 `CUSTOM_MODEL_ID` 定义的值 (例如: `my-custom-local-model`)。
-6.  **API 密钥**：
-    *   如果你的目标 API 需要 API 密钥，并且 Trae 会将其通过 `Authorization: Bearer <key>` 传递，那么这里填写的密钥会被 Python 代理转发。
-    *   Trae 配置 OpenAI 时，API 密钥与 `remove_reasoning_content` 配置相关。我们的 Python 代理不处理这个逻辑，它只是简单地转发 Authorization 头部。你可以尝试填写你的目标 API 所需的密钥，或者一个任意的 `sk-xxxx` 格式的密钥。
+4.  **模型**：按你在全局配置中填写的模型 ID，如果是 `gpt-5`，则选择 `GPT-5`。
+5.  **API 密钥**：全局配置中填写的 Key。
+6.  点击"添加模型"。
+7.  回到 AI 聊天框，右下角选择你刚刚添加的自定义模型。
 
-7.  点击"添加模型"。
-8.  回到 AI 聊天框，右下角选择你刚刚添加的自定义模型。
-
-现在，当你通过 Trae 与这个自定义模型交互时，请求应该会经过你的本地 Python 代理，并被转发到你配置的 `TARGET_API_BASE_URL`。
-
-**故障排除提示：**
-*   **端口冲突**：如果 443 端口已被占用 (例如被 IIS、Skype 或其他服务占用)，Python 脚本会启动失败。你需要停止占用该端口的服务，或者修改 Python 脚本和 Nginx (如果使用) 监听其他端口 (但这会更复杂，因为 Trae 硬编码访问 `https://api.openai.com` 的 443 端口)。
-*   **防火墙**：确保 Windows 防火墙允许 Python 监听 443 端口的入站连接 (尽管是本地连接 `127.0.0.1`，通常不需要特别配置防火墙，但值得检查)。
-*   **证书问题**：如果 Trae 报错 SSL/TLS 相关错误，请仔细检查 CA 证书是否已正确安装到"受信任的根证书颁发机构"，以及 Python 代理是否正确加载了 `api.openai.com.crt` 和 `.key`。
-*   **代理日志**：Python 脚本会打印一些日志，可以帮助你诊断问题。
-
-这个方案比直接使用 vproxy + nginx 的方式更集成一些，将 TLS 终止和代理逻辑都放在了一个 Python 脚本中，更适合快速在 Windows 上进行原型验证。
-
-#### macOS
-
--> [Mac OS 脚本启动方法](https://github.com/BiFangKNT/mtga/blob/gui/docs/README_macOS_cli.md)
+现在，当你通过 Trae 与这个自定义模型交互时，请求应该会经过你的本地 MTGA 代理，并被转发到你配置的 `API URL`。
 
 ---
 
