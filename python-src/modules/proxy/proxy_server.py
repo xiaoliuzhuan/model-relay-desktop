@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from modules.proxy.proxy_app import ProxyApp
 from modules.proxy.proxy_runtime import ProxyRuntime
+from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 from modules.runtime.thread_manager import ThreadManager
 
@@ -46,9 +47,10 @@ class ProxyServer:
         )
         return result.ok
 
-    def stop(self) -> None:
-        self.runtime.stop()
+    def stop(self) -> OperationResult:
+        stop_result = self.runtime.stop()
         self.app_layer.close()
+        return stop_result
 
     def is_running(self) -> bool:
         return self.runtime.is_running()

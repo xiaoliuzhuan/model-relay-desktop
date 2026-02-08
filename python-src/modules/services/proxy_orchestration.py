@@ -77,7 +77,11 @@ def restart_proxy_result(
     stream_mode_value = config.get("stream_mode")
     if stream_mode_value is not None:
         deps.log(f"启用强制流模式: {stream_mode_value}")
-    deps.stop_proxy_instance(reason="restart")
+    stop_result = deps.stop_proxy_instance(reason="restart")
+    if not stop_result.ok:
+        message = stop_result.message or "旧代理实例停止失败"
+        deps.log(f"❌ {message}，已取消本次重启")
+        return OperationResult.failure(message, code=stop_result.code)
     start_result = deps.start_proxy_instance(
         config,
         success_message=success_message,
@@ -115,22 +119,42 @@ def stop_proxy_instance_result(
     show_idle_message: bool = False,
 ) -> OperationResult:
     instance = get_proxy_instance()
-    if instance and instance.is_running():
+    if instance:
         if reason == "restart":
-            log("检测到代理服务器正在运行，正在停止旧实例...")
+            if instance.is_running():
+                log("检测到代理服务器正在运行，正在停止旧实例...")
+            else:
+                log("检测到代理实例残留，正在尝试清理...")
         else:
             log("正在停止代理服务器...")
-        try:
-            instance.stop()
-            log("✅ 代理服务器已停止")
-        except Exception as exc:  # noqa: BLE001
-            log(f"停止代理服务器时出错: {exc}")
-        finally:
+        stop_result = _stop_instance_result(instance=instance, log=log)
+        if stop_result.ok:
             set_proxy_instance(None)
-        return OperationResult.success()
+        return stop_result
     if show_idle_message:
         log("代理服务器未运行")
     return OperationResult.success()
+
+
+def _stop_instance_result(
+    *,
+    instance: Any,
+    log: Callable[[str], None],
+) -> OperationResult:
+    try:
+        raw_stop_result = instance.stop()
+    except Exception as exc:  # noqa: BLE001
+        log(f"停止代理服务器时出错: {exc}")
+        return OperationResult.failure("停止代理服务器时出错")
+
+    if not isinstance(raw_stop_result, OperationResult):
+        return OperationResult.failure("停止代理服务器返回结果无效")
+
+    if raw_stop_result.ok:
+        log("✅ 代理服务器已停止")
+    else:
+        log(f"⚠️ {raw_stop_result.message or '代理服务器未完全停止'}")
+    return raw_stop_result
 
 
 def stop_proxy_instance(

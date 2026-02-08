@@ -63,6 +63,18 @@ class ProxyRuntime:
     def is_running(self) -> bool:
         return self._state.running
 
+    def _log_task_diagnostics(self, prefix: str) -> None:
+        task_id = self._state.server_task_id
+        if task_id:
+            status = self._thread_manager.get_status(task_id=task_id)
+            if status:
+                self._log(f"{prefix} task_status={status}")
+            else:
+                self._log(f"{prefix} task_status=<missing task_id={task_id}>")
+        active_tasks = self._thread_manager.get_active_tasks()
+        if active_tasks:
+            self._log(f"{prefix} active_tasks={active_tasks}")
+
     def start(  # noqa: PLR0911, PLR0912, PLR0913, PLR0915
         self,
         *,
@@ -103,6 +115,19 @@ class ProxyRuntime:
             if stream_mode:
                 self._log(f"强制流模式: {stream_mode}")
 
+            if self._state.server_task_id:
+                previous_finished = self._thread_manager.wait(
+                    self._state.server_task_id,
+                    timeout=5,
+                )
+                if not previous_finished:
+                    self._log("旧服务器线程仍在退出，暂时无法启动新实例")
+                    self._log_task_diagnostics("启动前等待旧线程超时诊断:")
+                    return OperationResult.failure(
+                        "旧服务器线程仍在退出",
+                        code=ErrorCode.UNKNOWN,
+                    )
+
             try:
                 self._state.server = StoppableWSGIServer(
                     host,
@@ -135,9 +160,6 @@ class ProxyRuntime:
                     self._state.server_thread = None
                     self._log("服务器线程已退出")
 
-            if self._state.server_task_id:
-                self._thread_manager.wait(self._state.server_task_id, timeout=5)
-
             self._state.server_task_id = self._thread_manager.run(
                 "proxy_server",
                 run_server,
@@ -147,6 +169,7 @@ class ProxyRuntime:
 
             if not server_ready_event.wait(timeout=5):
                 self._log("代理服务器启动超时")
+                self._log_task_diagnostics("启动超时诊断:")
                 return OperationResult.failure("代理服务器启动超时", code=ErrorCode.UNKNOWN)
 
             if self._state.running:
@@ -170,7 +193,8 @@ class ProxyRuntime:
             return OperationResult.failure("启动代理服务器时发生意外错误", code=ErrorCode.UNKNOWN)
 
     def stop(self) -> OperationResult:
-        if not self._state.running:
+        has_pending_task = bool(self._state.server_task_id)
+        if not self._state.running and not has_pending_task:
             self._log("代理服务器未运行")
             return OperationResult.success()
 
@@ -189,27 +213,34 @@ class ProxyRuntime:
             self._log("未检测到可停止的服务器实例")
 
         clean_stop = True
+        wait_finished = True
         if self._state.server_task_id:
             try:
                 finished = self._thread_manager.wait(self._state.server_task_id, timeout=5)
+                wait_finished = finished
                 if finished:
                     self._log("服务器线程已安全停止")
+                    self._state.server_task_id = None
                 else:
                     clean_stop = False
                     self._log("服务器线程未能在 5 秒内停止")
+                    self._log_task_diagnostics("停止超时诊断:")
             except Exception as exc:
+                wait_finished = False
                 clean_stop = False
                 self._log(f"等待线程结束时出错: {exc}")
-            finally:
-                self._state.server_task_id = None
+                self._log_task_diagnostics("停止异常诊断:")
 
-        self._state.server = None
-        self._state.server_thread = None
+        if wait_finished:
+            self._state.server = None
+            self._state.server_thread = None
 
-        if clean_stop or not stop_requested:
+        if clean_stop:
             self._log("代理服务器已完全停止")
             return OperationResult.success()
 
+        if not stop_requested:
+            self._log("未发送停止指令，代理线程可能仍在运行")
         self._log("代理服务器仍在后台清理，请稍后关注日志")
         return OperationResult.failure("代理服务器未完全停止", code=ErrorCode.UNKNOWN)
 
