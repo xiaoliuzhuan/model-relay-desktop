@@ -189,9 +189,7 @@
 
 - UI -> actions -> services -> 领域模块（cert/hosts/network/proxy/update）-> runtime/platform
 - UI 不得直接依赖领域模块，所有操作通过 actions/services 统一编排。
-- 平台相关逻辑放在 `modules/platform`（或显式平台子模块）。
-
-更多细节与错误处理规范见：`docs/ARCHITECTURE.md`。
+- 平台相关逻辑放在 `modules/platform`。
 
 ## 引用
 
