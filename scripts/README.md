@@ -24,7 +24,7 @@
 
 - `gitflow.mjs`
   - `setup`：清理本地旧 `gitflow.*` 配置，重新初始化 git-flow，并配置 release 默认打 tag。
-  - `finish`：执行 release finish 全流程校验、finish、推送分支与 tag。
+  - `finish`：执行 release finish 全流程校验、finish、推送分支与 tag，最后签回开发分支。
 
 - `setup-gitflow.ps1` / `setup-gitflow.sh`
   - 兼容脚本（与 `gitflow.mjs setup` 目标一致）。

@@ -260,6 +260,13 @@ function finishRelease(argv) {
     console.log("ℹ️ HEAD 上没有 tag，跳过 tag push");
   }
 
+  const checkoutDevResult = run("git", ["checkout", options.devBranch], { check: false });
+  if ((checkoutDevResult.status ?? 1) !== 0) {
+    const code = checkoutDevResult.status ?? 1;
+    fail(`切回开发分支失败：git checkout ${options.devBranch}`, code);
+  }
+  console.log(`✅ 已切回分支: ${options.devBranch}`);
+
   console.log("✅ 完成");
 }
 
