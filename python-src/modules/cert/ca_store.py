@@ -137,7 +137,10 @@ def _filetime_to_unix(filetime) -> int | None:
 
 @lru_cache(maxsize=1)
 def _get_crypt32():
-    crypt32 = ctypes.WinDLL("crypt32", use_last_error=True)
+    windll_factory = getattr(ctypes, "WinDLL", None)
+    if windll_factory is None:
+        raise RuntimeError("WinDLL is not available on this platform")
+    crypt32 = windll_factory("crypt32", use_last_error=True)
     crypt32.CertOpenStore.argtypes = [
         wintypes.LPCSTR,
         wintypes.DWORD,
