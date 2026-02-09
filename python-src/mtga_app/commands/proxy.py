@@ -41,6 +41,7 @@ class ProxyStartStepEvent(BaseModel):
     step: Literal["cert", "hosts", "proxy"]
     status: Literal["ok", "skipped", "failed", "started"]
     message: str | None = None
+    panel_target: Literal["config-group", "global-config"] | None = None
 
 
 @dataclass
@@ -197,12 +198,25 @@ def _push_proxy_step(
     status: Literal["ok", "skipped", "failed", "started"],
     message: str | None = None,
 ) -> None:
+    panel_target: Literal["config-group", "global-config"] | None = None
+    if status == "failed":
+        normalized = (message or "").strip()
+        if "全局配置缺失" in normalized:
+            panel_target = "global-config"
+        elif "没有可用的配置组" in normalized:
+            panel_target = "config-group"
+
     if message:
         log_func(f"[proxy-step] step={step} status={status} message={message}")
     else:
         log_func(f"[proxy-step] step={step} status={status}")
     try:
-        payload = ProxyStartStepEvent(step=step, status=status, message=message)
+        payload = ProxyStartStepEvent(
+            step=step,
+            status=status,
+            message=message,
+            panel_target=panel_target,
+        )
         push_proxy_step(payload.model_dump_json())
     except Exception as exc:
         with suppress(Exception):
@@ -390,10 +404,22 @@ async def proxy_start(body: ProxyStartPayload) -> dict[str, Any]:
     logs, log_func = collect_logs()
     ready = _ensure_global_config_ready(log_func=log_func)
     if not ready.ok:
+        _push_proxy_step(
+            log_func,
+            step="proxy",
+            status="failed",
+            message=ready.message or "全局配置缺失",
+        )
         return build_result_payload(ready, logs, "代理服务器启动失败")
 
     config = _build_proxy_config(body, log_func=log_func)
     if not config:
+        _push_proxy_step(
+            log_func,
+            step="proxy",
+            status="failed",
+            message="没有可用的配置组",
+        )
         return build_result_payload(
             OperationResult.failure("没有可用的配置组"),
             logs,

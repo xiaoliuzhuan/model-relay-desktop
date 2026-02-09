@@ -49,4 +49,5 @@ export type ProxyStartStepEvent = {
   step: MainTabKey
   status: "ok" | "skipped" | "failed" | "started"
   message?: string | null
+  panel_target?: "config-group" | "global-config" | null
 }

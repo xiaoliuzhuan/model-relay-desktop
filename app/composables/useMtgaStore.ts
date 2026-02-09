@@ -19,6 +19,8 @@ type RuntimeOptions = {
   streamMode: "true" | "false"
 }
 
+type PanelTarget = "config-group" | "global-config" | "main-tabs" | "settings"
+
 const DEFAULT_APP_INFO: AppInfo = {
   display_name: "MTGA",
   version: "v0.0.0",
@@ -51,6 +53,12 @@ const isProxyStepStatus = (
   value === "skipped" ||
   value === "failed" ||
   value === "started"
+
+const isPanelTarget = (value: unknown): value is PanelTarget =>
+  value === "config-group" ||
+  value === "global-config" ||
+  value === "main-tabs" ||
+  value === "settings"
 
 const isProxyStartStepEvent = (
   value: unknown
@@ -196,6 +204,22 @@ export const useMtgaStore = () => {
     void drainProxyStepQueue()
   }
 
+  const navigateProxyMissingConfigPanel = (message?: string | null) => {
+    const normalized = (message || "").trim()
+    if (!normalized) {
+      return
+    }
+    if (normalized.includes("全局配置缺失")) {
+      panelNavTarget.value = "global-config"
+      panelNavSignal.value += 1
+      return
+    }
+    if (normalized.includes("没有可用的配置组")) {
+      panelNavTarget.value = "config-group"
+      panelNavSignal.value += 1
+    }
+  }
+
   const appendLog = (message: string) => {
     logs.value.push(message)
     const overflow = logs.value.length - FRONTEND_LOG_LIMIT
@@ -208,6 +232,12 @@ export const useMtgaStore = () => {
     const normalized = normalizeProxyStepPayload(payload)
     if (!normalized || !isMainTabKey(normalized.step)) {
       return
+    }
+    if (isPanelTarget(normalized.panel_target)) {
+      panelNavTarget.value = normalized.panel_target
+      panelNavSignal.value += 1
+    } else {
+      navigateProxyMissingConfigPanel(normalized.message)
     }
     if (normalized.status === "started") {
       enqueueProxyStep(normalized.step)
@@ -557,6 +587,7 @@ export const useMtgaStore = () => {
 
   const runProxyStart = async () => {
     const result = await api.proxyStart(buildProxyPayload())
+    navigateProxyMissingConfigPanel(result?.message)
     return applyInvokeResult(result, "启动代理服务器")
   }
 
@@ -581,6 +612,7 @@ export const useMtgaStore = () => {
       }
     }
     const result = await api.proxyStartAll(buildProxyPayload())
+    navigateProxyMissingConfigPanel(result?.message)
     return applyInvokeResult(result, "一键启动全部服务")
   }
 
