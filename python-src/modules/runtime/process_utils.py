@@ -64,9 +64,10 @@ def run_subprocess(  # noqa: PLR0913
         "capture_output": capture_output,
         "text": text,
         "shell": shell,
-        "stdin": subprocess.DEVNULL,
     }
     run_kwargs.update(kwargs)
+    if "stdin" not in run_kwargs and run_kwargs.get("input") is None:
+        run_kwargs["stdin"] = subprocess.DEVNULL
 
     creationflags = _get_creationflags(hide_window)
     if creationflags:

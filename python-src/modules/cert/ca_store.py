@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ctypes
 import shlex
-import subprocess
 from ctypes import wintypes
 from functools import lru_cache
 from typing import Any, cast
@@ -422,7 +421,6 @@ def _check_ca_on_macos(ca_common_name: str, log_func=print) -> OperationResult:
                 "-subject",
                 "-issuer",
             ],
-            stdin=subprocess.PIPE,
             input=pem_block,
             text=True,
             capture_output=True,
