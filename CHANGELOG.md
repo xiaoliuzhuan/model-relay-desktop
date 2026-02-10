@@ -1,42 +1,135 @@
-## v1.7.1 (Latest)
-## :sparkles: 新功能
-- 暂无新功能
+# CHANGELOG
 
-## :bug: 修复
+## v2.1.0 (Latest)
+### :sparkles: 新功能
+- feat(proxy): 添加配置缺失时的自动面板导航 (cf6d81dfafba699e4344b7a09f79db10d9b01c7a)
+### :bug: 修复
+- fix(gitflow): 执行 release finish 后自动签回开发分支 (b8ed6e5d05cd474926903afa80ddad8302d88681)
+### :art: 界面样式
+- 暂无界面样式
+
+## v2.0.1
+### :sparkles: 新功能
+- 暂无新功能
+### :bug: 修复
+- fix: 仅在未指定stdin和input时设置stdin为DEVNULL (0662356818131976af11100fe0300c9c5c12429a)
+- fix: 修复非 Windows 平台加载 WinDLL 时的类型检查错误 (7a7604ee5d57fe1e700946f65c0220460d6741e9)
+### :art: 界面样式
+- 暂无界面样式
+
+## v2.0.0
+### :sparkles: 新功能
+- feat: 初始化Tauri项目基础配置和文件结构 (1edafe6bb8ed012a3176171899affaf4bf79e78b)
+- feat(tauri): 更新应用配置和权限设置 (c78eb8eb0827b9b873721839d6be8ebde598c327)
+- feat: 添加Tauri Python后端基础结构 (40a9ae0530450cba63b351da735cc6659e360870)
+- feat: 添加mtga-app模块的初始实现 (2025cac672669254ebd10453d95d297497a8896c)
+- feat: 实现基础UI框架并添加组件库 (01025bd83f264dd69a740fbc31645251c18bf49f)
+- feat(ui): 初始化主标签页组件并优化nuxt配置 (660f5c8ad3c8efb27098bc77ad4e2fb79ea28412)
+- feat: 实现MTGA前端核心功能与状态管理 (cbf6b8434ddffdd5efbd5f8398c79ef362c2436b)
+- feat(commands): 添加配置管理和应用信息命令 (29d8c1af5edf295382c4d0ca171fd36c7af7092a)
+- feat(hosts): 实现hosts文件操作功能 (5c2387d8c287d4dfe514b2983a4d83cbb7c2e467)
+- feat: 实现后端功能并替换前端占位逻辑 (232dafcebfe57aa325edf989772e7b49c04c03f3)
+- feat(icons): 添加多平台应用图标资源 (db74547c69104d4ecbe59a2acae80669671b670e)
+- feat(模块加载): 实现模块来源控制功能 (008c71be4a7592c92e0023e3e7fdbd5e3e00b404)
+- feat(tauri): 实现模块和资源路径的统一配置管理 (4b1db38c08f746ca922103661226ce8d611b8c4f)
+- feat: 在非调试模式下设置默认MTGA_RUNTIME环境变量 (fe3fa197357f7908dd1eff53aa7fd0830e6dc78b)
+- feat(启动): 添加启动状态检查和日志系统 (dbe121c3b5d4ee920086dca80818b44690ea4c84)
+- feat: 添加shell插件支持并优化UI界面 (5546996c31b0220092ebf48d1721aefe7a8b4eba)
+- feat(logs): 实现日志总线功能及前端日志流式拉取 (cc643367c7facfe115d76a9f2042ca0006df8eb9)
+- feat(runtime): 实现平台感知的日志总线模块 (706d3593bd9ffa033e3202a4ee6e9e54f278cfaa)
+- feat(proxy): 添加应用关闭时的代理清理功能 (b80d3e8566ec66a135793706355c4a3616d1b875)
+- feat: 添加工具提示功能并优化UI交互 (7bd33eebb70f460f66c142a87cf1fc88f94df63a)
+- feat(更新): 添加应用启动时自动检查更新功能 (83e00b40a02fdf482be14035e1ddefa54f1a0473)
+- feat(tooltip): 实现全局悬浮提示代理以逃逸容器剪裁 (8de7201c194275f6f849b85a88218b066b621fac)
+- feat(build): 添加Windows应用清单并更新构建配置 (9bbed4688d86f1b08accbb9621fa6532234bd83b)
+- feat(运行时): 添加运行时环境检测功能 (83ae2ba09f259dcc03b4b6b2f4bd8baffdb1be9a)
+- feat: 添加原生启动页并修复后端并发初始化问题 (5d88b2e1ad51b3a2364619733be85c8b93ff2478)
+- feat(logs): 添加日志事件流支持以替代轮询机制 (04b54fb20b0e398106296169f6b58c464dc7fcb4)
+- feat(标签页): 为标签页切换添加过渡动画效果 (e481a24f5fbcb74294de19c6e79bd6ae0237a013)
+- feat(version): 重构应用版本号注入机制 (a6b1168e90042adb259ed5c1b837b41d7199a0a0)
+- feat(proxy): 实现代理启动步骤事件流与自动导航 (e9cb13681791fc0ed135ed21865eb376368c46e0)
+- feat(ui): 为输入框添加带清空按钮的标准样式组件 (f5783bfabc0ba41d395ea798ec6b487d91b21632)
+- feat(ui): 新增可复用输入框组件并重构配置面板 (42cb421b5cbf5590677a1eb0e2a937c33cde1192)
+- feat(ui): 引入 MtgaSelect 组件并替换 ProxyTab 中的原生 select (647ae84a6511cb67507e2218937c7cb6fb30da48)
+- feat(配置组): 添加获取模型列表功能并优化下拉组件 (ad8ade74eae42a775a6e631915788edff8413388)
+- feat(ui): 添加新版本更新提醒徽章 (bc30f5070d344489486a122f5524231eb94a004c)
+- feat(cert): 增强CA证书检查逻辑并记录元数据 (b8f5299c3c4a83b0da6510f32defd46af81ff701)
+- feat(cert): 为清除 CA 证书添加二次确认弹窗 (193fb828e34c6986f6aa803d001141bbd2ee44c1)
+- feat(ui): 重构对话框组件并新增通用弹窗基础组件 (bb0f1107e1fca78c35d772cfd3a34dd1251032dd)
+- feat(theme): 添加主题自定义功能 (e840e3f4cad0891bbd6575f914d13061f522ccf7)
+### :bug: 修复
+- fix(security): 添加 DOMPurify 以净化更新对话框中的 HTML 内容 (3e78b366aaa2d7a570dd3672806dabf252650cfa)
+- fix: 修复Python后端核心功能及依赖配置 (4f69d6339362f92387d24e973397572b75ea8e0c)
+- fix(python集成): 添加Python环境配置及调用处理功能 (6fe07bcc448d28940e9797aefabf1418d972ec85)
+- fix(proxy): 补上停止代理时添加hosts文件清理失败日志的功能 (71141b02efead607ef6d0b7a60b261c994a47c0e)
+- fix(macos_privileged_helper): 改进Python可执行文件路径检测逻辑 (ff0cbcdaa8d5adcf5391a2439b67bfe8fbbe5df7)
+- fix(tooltip): 修复不支持CSS锚点定位时的工具提示位置问题 (c9ae9ec8f3d70e759cd440937a6186bbbc5e87e7)
+- fix(app): 修复类型断言和事件目标检查问题 (a33572944e2c80d567db52b52c931e76225b430a)
+- fix(hosts): 在非Windows系统跳过hosts预检 (6284ce7c6118a20df3cd4237be6c3cb0e3a786a1)
+- fix(tauri配置): 后端改进开发服务器配置以确保主窗口在开发模式下可见 (9cce6c1e1034328cc9f62d3da2869bf9028ba5b1)
+- fix(nuxt.config): 开发期禁用缓存避免 Tauri WebView 读取损坏缓存 (aeb2081f5d2fbc1dbdcd6f457be8a98c5738ed1e)
+- fix: 添加日志流和代理步骤监听器的清理逻辑 (a65a6f8fd20cbfcf740f0048818a261e7b33666e)
+- fix(proxy): 改进代理服务器停止逻辑，修复重启时残留实例问题 (df19b0ba44e631fa9bcb4dcdbc68fb03dfddad93)
+### :art: 界面样式
+- style(MainTabs): 为标签页添加悬停效果和过渡动画 (f24020680e8525c9b129b2a7d86418414384c54a)
+- style(AboutTab): 居中显示页脚文本 (a5565118c45115316441eedc46a8805b968f4895)
+- style: 优化配置编辑面板布局与中间路由样式 (f50d24f2a4dcae613652c2a7dd8637cfc95b2569)
+- style(ui): 更新主题颜色为琥珀色并统一按钮样式 (fa51e815e7dcb37ab4d66f0831ceebd745efc686)
+- style(RuntimeOptionsPanel): 为选项标签添加悬停效果和交互样式 (9addcdf54076b4ff8fc9d99b0a22cf52eaa0ce08)
+- style(AppShell): 调整页面布局和底部导航样式 (54fb08a25587e2186959deeb0dba382e0723aeb3)
+- style(ui): 优化应用布局和导航菜单样式 (49146f1423480488d71f9ebb1f1538c2ff4c51bc)
+- style(ui): 移除冗余卡片容器并优化布局结构 (c2203a9381b5771a19b18d54cc986d84bc9c0de4)
+- style(components): 移除AppShell.vue中多余的背景色类 (6598a6e8a2535435697fe37070f9e6c48be58131)
+- style(ui): 重构应用布局和样式以简化结构 (4e72819ad2d3a2610adb0840721de5b0258ff1be)
+- style(ConfigGroupPanel): 调整表格最大高度以显示更多内容 (2ee381f02133b513ddfc78b0e1c127ece842f14a)
+- style(css): 添加自定义滚动条样式以提升用户体验 (2be8a427272bb5a6524132b7e7d3e554f57c5744)
+- style(ui): 调整多个组件的透明度和背景模糊效果 (c2a1dc6b1b379cf6b9ee074ef142aa3485cd1af5)
+- style(ConfigGroupPanel): 优化配置组面板的视觉反馈和过渡效果 (6a957b5e06909c0c7e3734aa118786f6d9a83769)
+- style(UpdateDialog): 优化更新对话框的UI和交互逻辑 (4c0a401514baa02434f4c3b2da5b7cb5fb6db499)
+- style(ui): 移除独立的关于页并将功能移至主界面 (825754ed67e1dadae24a617cc4db0ca4e1fc4776)
+- style(LogPanel): 调整日志面板的边框和背景样式以提升视觉效果 (cc69346a5cbd0942c655853fe91733ae331f5031)
+- style(UI): 调整界面背景和组件透明度以增强视觉效果 (b1bcee912d650d13d180713cf23c318fe414b16e)
+- style(ui): 重构导航面板和设置功能 (c110edc14ff50f0041a0d1e9a70c78ec116efaee)
+- style(tailwind): 重构样式配置以适配 Tailwind CSS 4 并添加工具类 (3f64e38d734169b7721460fa9a5fb460d59a99f0)
+- style: 更新应用标题与副标题文本 (d7c31503c2eee7964bc70b309850207fa0ee03e0)
+
+## v1.7.1
+### :sparkles: 新功能
+- 暂无新功能
+### :bug: 修复
 - fix(macos_privileged_helper): 修正模块搜索路径的父级目录层级 (b7737e9c918bd68260fbaa55bdd13e20b36990b4)
 - fix(proxy_orchestration): 修改hosts文件失败时继续启动代理服务器 (72a115d0d020a51abdf2ab512b3c487e885d8cdf)
 
 ## v1.7.0
-## :sparkles: 新功能
+### :sparkles: 新功能
 - feat(gui): 启动后自动检查更新 (2c9b233ee6636b7fc35b30714943cd1e1066924d)
 - feat(update_checker): 添加对GitHub表情符号的渲染支持 (3e5e3b1acd612181bf70ae10acd108706131b8fd)
 - feat(runtime): 引入错误码枚举并重构错误处理逻辑 (953fbb69fe8328ae76b4f967a3e0106993ffe6e6)
 - feat: 统一使用describe_result处理操作结果消息 (65b5a889d48fa65afa348b7d147a57b30965bbae)
 - feat(proxy): 添加中间路由支持并更新相关测试和UI (37db2643f22117ae29109a60f120844bed7f6b6b)
-
-## :bug: 修复
+### :bug: 修复
 - fix(actions): 用 /v1/models 列表校验模型并修正文案 (2e34fae2a4b9b8b582b4224b8c35f11bc91a6dde)
 - fix(ui): 修复macOS下Notebook标签切换时的焦点问题 (eaf8d2d8b6cc1f0ed269750b6bb8ea4d10ae7f0d)
 
 ## v1.6.0
-## :sparkles: 新功能
+### :sparkles: 新功能
 - feat(hosts_manager): 添加 hosts 文件写入预检和受限模式支持 (47c2b8f14d3e9e7126b08c45df153e7435f24983)
 - feat(网络检查): 添加网络环境检测功能以识别显式代理配置 (ae3e5042d1b700105bbce7f093c533f75b42fbc8)
 - feat(界面): 为映射模型和MTGA鉴权字段添加工具提示 (9081116e0703be23e6e243f78a9fdcbc4921cd7d)
 - feat(资源管理): 使用platformdirs库改进跨平台用户数据目录处理 (3a280966edbfb1cd2696db65c9e5c14c1bba3c56)
 - feat(update_checker): 使用 GitHub API 渲染 Markdown 并移除本地渲染模块 (97765d2efcc2fbc9054a9cbcc7b9cfb7eae3dc5c)
 - feat(tk字体管理): 提取字体管理逻辑到独立模块并支持更新检查器字体配置 (fb2b1ace1405c1838fab51fca71665e88c7ee998)
-## :bug: 修复
+### :bug: 修复
 - fix(hosts_manager): 改进 Windows 系统下 hosts 文件路径获取逻辑 (7794f157861691e17b2870274970786d95d20a51)
 - fix(hosts): 原子写入失败时回退为追加写入 (71016307e726accbf6155e185021fb03705f4688)
 
 ## v1.5.0
-## :sparkles: 新功能
+### :sparkles: 新功能
 - feat(proxy): 添加关闭SSL严格模式的选项 (8bf706b75f2b3909003d3d18b6b58a717e4a4536)
 - feat(proxy_server): 添加SSE流式响应日志记录功能 (154a694f0e06fd3ca866ae878f688e981e90b10c)
 - feat(proxy_server): 添加请求ID和详细日志记录功能 (286fee26e675c2eb56c4a0be7026b11bef8f53cb)
 - feat(proxy_server): 实现 SSE 事件流处理与 OpenAI 格式规范化 (78d44e0569f563dd46ceb74d8a9316c1eb3054d8)
-## :bug: 修复
+### :bug: 修复
 - fix(proxy_server): 修复服务器关闭时可能的属性错误并添加端口占用检查 (cc3c116dd11c73e1bc82ce1261361f9dbbac9466)
 
 ## v1.4.0
