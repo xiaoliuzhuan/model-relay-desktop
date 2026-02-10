@@ -62,9 +62,9 @@
 #### macOS
 
 1. 从 [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) 下载最新版本的 `MTGA_v{version}_apple_{arch}.dmg`
-  - `{arch}` 为指令集架构：
-    - `x64`：Intel 处理器
-    - `aarch64`：Apple Silicon 处理器（M 系列）
+   - `{arch}` 为指令集架构：
+     - `x64`：Intel 处理器
+     - `aarch64`：Apple Silicon 处理器（M 系列）
 2. 双击 DMG 文件，系统会自动挂载安装包
 3. 将 `MTGA_GUI.app` 拖拽到 `Applications` 文件夹
 
@@ -89,7 +89,7 @@
 6. 完成后，按照[配置 Trae IDE](#配置-trae-ide)进行IDE配置
 
 > [!NOTE]
-> - 支持用户数据持久化存储，代理配置组和证书会自动保存
+> - 代理配置和生成证书会持久化存储于用户数据目录，见 `设置 - 用户数据`
 
 > [!WARNING]
 > - 需要管理员权限
