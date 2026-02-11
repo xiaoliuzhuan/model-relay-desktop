@@ -12,6 +12,7 @@
 ## 构建、测试与开发命令
 - `pnpm i`：安装依赖并触发 `nuxt prepare`。
 - `uv sync --project .`：在 `python-src/` 安装 Python 运行时依赖（依赖由 uv 管理）。
+- 需要运行 Python 时，一律使用 `uv run ...`，不要直接 `python ...`。
 - `pnpm dev:all`：启动前后端开发服务器（默认 `http://localhost:3000`）。
 - `pnpm pytauri:install:<平台：win/mac>`：安装后端到 tauri。
 - `pnpm tauri:bundle:<平台：win/mac> -- --profile bundle-release`：打包桌面端（依赖 `src-tauri/` 配置）。
