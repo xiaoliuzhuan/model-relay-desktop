@@ -133,8 +133,9 @@ commit_parsers = [
 - name: Generate release notes via git-cliff
   uses: orhun/git-cliff-action@v4
   with:
+    version: latest
     config: cliff.toml
-    args: --from "$FROM_COMMIT" --to "$TO_COMMIT" --strip header,footer
+    args: --strip header,footer "$FROM_COMMIT..$TO_COMMIT"
   env:
     OUTPUT: release_notes.md
     GITHUB_REPO: ${{ github.repository }}

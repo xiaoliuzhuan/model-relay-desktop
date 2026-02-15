@@ -582,8 +582,9 @@ jobs:
       - name: 📝 使用 git-cliff 生成发布说明
         uses: orhun/git-cliff-action@v4
         with:
+          version: latest
           config: cliff.toml
-          args: --from "${{ env.FROM_COMMIT }}" --to "${{ env.TARGET_COMMIT }}" --strip header,footer
+          args: --strip header,footer "${{ env.FROM_COMMIT }}..${{ env.TARGET_COMMIT }}"
         env:
           OUTPUT: release_notes.md
           GITHUB_REPO: ${{ github.repository }}
