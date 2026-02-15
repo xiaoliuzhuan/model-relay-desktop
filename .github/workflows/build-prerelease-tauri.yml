@@ -9,7 +9,7 @@ on:
       version:
         description: "版本号 (例如: 2.0.0-beta.1)"
         required: false
-        default: "2.0.0-beta.1"
+        default: ""
       release_type:
         description: "发布类型"
         required: true
