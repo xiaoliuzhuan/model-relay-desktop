@@ -135,7 +135,7 @@ commit_parsers = [
   with:
     version: latest
     config: cliff.toml
-    args: --strip header,footer "$FROM_COMMIT..$TO_COMMIT"
+    args: --strip all "$FROM_COMMIT..$TO_COMMIT"
   env:
     OUTPUT: release_notes.md
     GITHUB_REPO: ${{ github.repository }}
