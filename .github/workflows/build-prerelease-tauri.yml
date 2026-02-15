@@ -503,6 +503,8 @@ jobs:
     name: 🚀 创建 GitHub 发布
     needs: [prepare-version, build-windows, build-macos]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: 📥 检出代码
@@ -550,103 +552,92 @@ jobs:
             -m "$EMOJI $LABEL $VERSION"
           git push origin "$TAG_NAME"
 
-      - name: 📝 生成发布说明
-        id: release_notes
+      - name: 🧮 解析发布范围（上一正式版 -> 当前提交）
         run: |
-          TAG_NAME="$TAG_NAME"
-          START_COMMIT_INPUT="${{ github.event.inputs.start_commit || '' }}"
-          TARGET_COMMIT="${{ github.sha }}"
-          START_COMMIT_SOURCE="user-input"
+          set -euo pipefail
 
-          FEAT_TEMP=$(mktemp)
-          FIX_TEMP=$(mktemp)
-          STYLE_TEMP=$(mktemp)
-          trap 'rm -f "$FEAT_TEMP" "$FIX_TEMP" "$STYLE_TEMP"' EXIT
+          CURRENT_TAG="$TAG_NAME"
+          TARGET_COMMIT=$(git rev-parse "$TAG_NAME^{commit}" 2>/dev/null || git rev-parse "${GITHUB_SHA}")
+          PREV_STABLE_TAG=$(git tag -l 'v*' --sort=-version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | grep -Fvx "$CURRENT_TAG" \
+            | head -n 1)
 
-          append_release_entry() {
-            local subject="$1"
-            local hash="$2"
-            if [ -z "$subject" ]; then
-              return
-            fi
-            if echo "$subject" | grep -Eq '^feat\b'; then
-              echo "- $subject ($hash)" >> "$FEAT_TEMP"
-            elif echo "$subject" | grep -Eq '^fix\b'; then
-              echo "- $subject ($hash)" >> "$FIX_TEMP"
-            elif echo "$subject" | grep -Eq '^style\b'; then
-              echo "- $subject ($hash)" >> "$STYLE_TEMP"
-            fi
-          }
+          if [ -z "$PREV_STABLE_TAG" ]; then
+            echo "❌ 未找到上一正式版标签"
+            exit 1
+          fi
 
-          if [ -z "$START_COMMIT_INPUT" ]; then
-            START_COMMIT_SOURCE="previous-tag"
-            TAG_PATTERN='v*'
-            PREV_TAG=$(git tag -l "$TAG_PATTERN" --sort=-version:refname \
-              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-              | grep -Fvx "$TAG_NAME" | head -n 1)
-            if [ -z "$PREV_TAG" ]; then
-              echo "❌ 未找到上一正式版标签可用作起始提交"
-              exit 1
-            fi
-            START_COMMIT_INPUT=$(git rev-parse "$PREV_TAG^{commit}")
-            echo "ℹ️ 未提供起始提交，使用上一正式版标签 $PREV_TAG ($START_COMMIT_INPUT)"
+          FROM_COMMIT=$(git rev-parse "$PREV_STABLE_TAG^{commit}")
+          if ! git merge-base --is-ancestor "$FROM_COMMIT" "$TARGET_COMMIT"; then
+            echo "❌ 上一正式版提交不在目标提交历史中: $FROM_COMMIT -> $TARGET_COMMIT"
+            exit 1
+          fi
+
+          echo "ℹ️ 发布说明范围: $PREV_STABLE_TAG($FROM_COMMIT)..$TARGET_COMMIT"
+          echo "PREV_STABLE_TAG=$PREV_STABLE_TAG" >> "$GITHUB_ENV"
+          echo "FROM_COMMIT=$FROM_COMMIT" >> "$GITHUB_ENV"
+          echo "TARGET_COMMIT=$TARGET_COMMIT" >> "$GITHUB_ENV"
+
+      - name: 📝 使用 git-cliff 生成发布说明
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --from "${{ env.FROM_COMMIT }}" --to "${{ env.TARGET_COMMIT }}" --strip header,footer
+        env:
+          OUTPUT: release_notes.md
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔎 检查发布说明
+        run: |
+          set -euo pipefail
+          if [ ! -s release_notes.md ]; then
+            echo "❌ release_notes.md 为空，停止发布"
+            exit 1
+          fi
+          echo "📝 release_notes.md 预览:"
+          cat release_notes.md
+
+      - name: 🧾 回写 CHANGELOG.md 并推送 tauri
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 避免 detached HEAD 直接推送导致重跑/并发场景下非快进失败
+          git fetch origin tauri
+          git checkout -B tauri origin/tauri
+
+          if [ -f CHANGELOG.md ]; then
+            tail -n +3 CHANGELOG.md > .changelog_rest.md || true
           else
-            echo "ℹ️ 使用传入的起始提交：$START_COMMIT_INPUT"
+            : > .changelog_rest.md
           fi
-          if ! git cat-file -e "$START_COMMIT_INPUT^{commit}" 2>/dev/null; then
-            echo "❌ 无法在仓库中找到起始提交：$START_COMMIT_INPUT"
-            exit 1
-          fi
-
-          START_COMMIT=$(git rev-parse "$START_COMMIT_INPUT")
-
-          if ! git merge-base --is-ancestor "$START_COMMIT" "$TARGET_COMMIT"; then
-            echo "❌ 起始提交不在当前构建提交的历史中：$START_COMMIT_INPUT"
-            exit 1
-          fi
-
-          START_SUBJECT=$(git show -s --format='%s' "$START_COMMIT")
-          append_release_entry "$START_SUBJECT" "$START_COMMIT"
-          echo "ℹ️ 发布说明范围: $START_COMMIT..$TARGET_COMMIT (起始来源: $START_COMMIT_SOURCE)"
-
-          git log --format='%H%x09%s' --reverse "$START_COMMIT..$TARGET_COMMIT" |
-            while IFS=$'\t' read -r HASH SUBJECT; do
-            append_release_entry "$SUBJECT" "$HASH"
-          done
 
           {
-            echo "## :sparkles: 新功能"
-            if [ -s "$FEAT_TEMP" ]; then
-              cat "$FEAT_TEMP"
-            else
-              echo "- 暂无新功能"
-            fi
+            echo "# CHANGELOG"
             echo
-            echo "## :bug: 修复"
-            if [ -s "$FIX_TEMP" ]; then
-              cat "$FIX_TEMP"
-            else
-              echo "- 暂无修复"
-            fi
+            cat release_notes.md
             echo
-            echo "## :art: 界面样式"
-            if [ -s "$STYLE_TEMP" ]; then
-              cat "$STYLE_TEMP"
-            else
-              echo "- 暂无界面样式"
-            fi
-          } > release_notes.md
+            cat .changelog_rest.md
+          } > CHANGELOG.md
 
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-          cat release_notes.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "ℹ️ CHANGELOG 无变更，跳过提交与推送"
+          else
+            git commit -m "docs(changelog): update for ${TAG_NAME}"
+            git push origin tauri
+          fi
 
       - name: 🚀 创建 GitHub 发布
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.prepare-version.outputs.tag_name }}
           name: ${{ needs.prepare-version.outputs.release_name }}
-          body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+          bodyFile: release_notes.md
           prerelease: ${{ needs.prepare-version.outputs.release_type != 'release' }}
           draft: false
           artifacts: |
