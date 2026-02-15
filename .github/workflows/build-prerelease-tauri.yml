@@ -552,29 +552,43 @@ jobs:
             -m "$EMOJI $LABEL $VERSION"
           git push origin "$TAG_NAME"
 
-      - name: 🧮 解析发布范围（上一正式版 -> 当前提交）
+      - name: 🧮 解析发布范围（start_commit 优先，否则上一正式版 -> 当前提交）
         run: |
           set -euo pipefail
 
+          START_COMMIT_INPUT="${{ github.event.inputs.start_commit || '' }}"
           CURRENT_TAG="$TAG_NAME"
           TARGET_COMMIT=$(git rev-parse "$TAG_NAME^{commit}" 2>/dev/null || git rev-parse "${GITHUB_SHA}")
-          PREV_STABLE_TAG=$(git tag -l 'v*' --sort=-version:refname \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | grep -Fvx "$CURRENT_TAG" \
-            | head -n 1)
 
-          if [ -z "$PREV_STABLE_TAG" ]; then
-            echo "❌ 未找到上一正式版标签"
-            exit 1
+          PREV_STABLE_TAG=""
+          START_COMMIT_SOURCE="workflow_dispatch.start_commit"
+          if [ -n "$START_COMMIT_INPUT" ]; then
+            if ! git cat-file -e "$START_COMMIT_INPUT^{commit}" 2>/dev/null; then
+              echo "❌ start_commit 不存在或不可解析为提交: $START_COMMIT_INPUT"
+              exit 1
+            fi
+            FROM_COMMIT=$(git rev-parse "$START_COMMIT_INPUT^{commit}")
+          else
+            START_COMMIT_SOURCE="previous-stable-tag"
+            PREV_STABLE_TAG=$(git tag -l 'v*' --sort=-version:refname \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | grep -Fvx "$CURRENT_TAG" \
+              | head -n 1)
+
+            if [ -z "$PREV_STABLE_TAG" ]; then
+              echo "❌ 未找到上一正式版标签，且未提供 start_commit"
+              exit 1
+            fi
+
+            FROM_COMMIT=$(git rev-parse "$PREV_STABLE_TAG^{commit}")
           fi
 
-          FROM_COMMIT=$(git rev-parse "$PREV_STABLE_TAG^{commit}")
           if ! git merge-base --is-ancestor "$FROM_COMMIT" "$TARGET_COMMIT"; then
-            echo "❌ 上一正式版提交不在目标提交历史中: $FROM_COMMIT -> $TARGET_COMMIT"
+            echo "❌ 起始提交不在目标提交历史中: $FROM_COMMIT -> $TARGET_COMMIT"
             exit 1
           fi
 
-          echo "ℹ️ 发布说明范围: $PREV_STABLE_TAG($FROM_COMMIT)..$TARGET_COMMIT"
+          echo "ℹ️ 发布说明范围: $FROM_COMMIT..$TARGET_COMMIT (source: $START_COMMIT_SOURCE, prev_stable: ${PREV_STABLE_TAG:-none})"
           echo "PREV_STABLE_TAG=$PREV_STABLE_TAG" >> "$GITHUB_ENV"
           echo "FROM_COMMIT=$FROM_COMMIT" >> "$GITHUB_ENV"
           echo "TARGET_COMMIT=$TARGET_COMMIT" >> "$GITHUB_ENV"

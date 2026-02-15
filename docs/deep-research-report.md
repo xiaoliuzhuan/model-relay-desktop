@@ -101,30 +101,40 @@ commit_parsers = [
 
 ### 6.2 范围计算（必须显式）
 
-必须显式计算上一正式版，不使用“自动推断最近标签”的模糊语义。
+范围解析规则：若 `workflow_dispatch` 传入 `start_commit`，优先使用该提交；否则回退到“上一正式版标签”。
 
 ```yaml
-- name: Resolve release range (previous stable -> current)
+- name: Resolve release range (start_commit first, else previous stable -> current)
   run: |
     set -euo pipefail
 
+    START_COMMIT_INPUT="${{ github.event.inputs.start_commit || '' }}"
     CURRENT_TAG="$TAG_NAME"
-    PREV_STABLE_TAG=$(git tag -l 'v*' --sort=-version:refname \
-      | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-      | grep -Fvx "$CURRENT_TAG" \
-      | head -n 1)
+    TARGET_COMMIT=$(git rev-parse "$TAG_NAME^{commit}" 2>/dev/null || git rev-parse "${GITHUB_SHA}")
 
-    if [ -z "$PREV_STABLE_TAG" ]; then
-      echo "❌ 未找到上一正式版标签"
+    PREV_STABLE_TAG=""
+    if [ -n "$START_COMMIT_INPUT" ]; then
+      FROM_COMMIT=$(git rev-parse "$START_COMMIT_INPUT^{commit}")
+    else
+      PREV_STABLE_TAG=$(git tag -l 'v*' --sort=-version:refname \
+        | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+        | grep -Fvx "$CURRENT_TAG" \
+        | head -n 1)
+      if [ -z "$PREV_STABLE_TAG" ]; then
+        echo "❌ 未找到上一正式版标签，且未提供 start_commit"
+        exit 1
+      fi
+      FROM_COMMIT=$(git rev-parse "$PREV_STABLE_TAG^{commit}")
+    fi
+
+    if ! git merge-base --is-ancestor "$FROM_COMMIT" "$TARGET_COMMIT"; then
+      echo "❌ 起始提交不在目标提交历史中: $FROM_COMMIT -> $TARGET_COMMIT"
       exit 1
     fi
 
-    FROM_COMMIT=$(git rev-parse "$PREV_STABLE_TAG^{commit}")
-    TO_COMMIT="${GITHUB_SHA}"
-
     echo "PREV_STABLE_TAG=$PREV_STABLE_TAG" >> "$GITHUB_ENV"
     echo "FROM_COMMIT=$FROM_COMMIT" >> "$GITHUB_ENV"
-    echo "TO_COMMIT=$TO_COMMIT" >> "$GITHUB_ENV"
+    echo "TARGET_COMMIT=$TARGET_COMMIT" >> "$GITHUB_ENV"
 ```
 
 ### 6.3 生成发布说明（release_notes.md）
@@ -135,7 +145,7 @@ commit_parsers = [
   with:
     version: latest
     config: cliff.toml
-    args: --tag "$TAG_NAME" --strip all "$FROM_COMMIT..$TO_COMMIT"
+    args: --tag "$TAG_NAME" --strip all "$FROM_COMMIT..$TARGET_COMMIT"
   env:
     OUTPUT: release_notes.md
     GITHUB_REPO: ${{ github.repository }}
