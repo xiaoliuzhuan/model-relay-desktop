@@ -264,7 +264,19 @@ jobs:
           which SetFile || true
 
       - name: 🧩 安装 pytauri 依赖
-        run: pnpm pytauri:install:mac
+        run: |
+          set -euo pipefail
+          for i in 1 2 3; do
+            echo "🔁 安装 pytauri 依赖（第 $i 次）..."
+            if pnpm pytauri:install:mac; then
+              exit 0
+            fi
+            if [ "$i" -lt 3 ]; then
+              sleep $((i * 10))
+            fi
+          done
+          echo "❌ 安装 pytauri 依赖失败（重试 3 次后仍失败）"
+          exit 1
         working-directory: .
 
       - name: 🧱 打包 Tauri
@@ -439,7 +451,24 @@ jobs:
           Copy-Item -Path ".env.example" -Destination (Join-Path $envDir ".env") -Force
 
       - name: 🧩 安装 pytauri 依赖
-        run: pnpm pytauri:install:win
+        run: |
+          $ErrorActionPreference = "Stop"
+          for ($i = 1; $i -le 3; $i++) {
+            Write-Host "🔁 安装 pytauri 依赖（第 $i 次）..."
+            try {
+              & pnpm pytauri:install:win
+              if ($LASTEXITCODE -eq 0) {
+                exit 0
+              }
+              Write-Warning "第 $i 次安装失败，退出码：$LASTEXITCODE"
+            } catch {
+              Write-Warning "第 $i 次安装执行失败：$($_.Exception.Message)"
+            }
+            if ($i -lt 3) {
+              Start-Sleep -Seconds ($i * 10)
+            }
+          }
+          throw "❌ 安装 pytauri 依赖失败（重试 3 次后仍失败）"
         working-directory: .
 
       - name: 🧱 打包 Tauri
