@@ -187,6 +187,30 @@ def _build_proxy_config(payload: ProxyStartPayload, *, log_func) -> dict[str, An
     return config
 
 
+def _ensure_global_config_ready_silent() -> OperationResult:
+    config_store = _get_config_store()
+    result = proxy_orchestration.ensure_global_config_ready(
+        load_global_config=config_store.load_global_config,
+    )
+    if result.ok:
+        return OperationResult.success()
+    return OperationResult.failure(
+        "global_config_missing",
+        missing_fields=result.missing_fields,
+    )
+
+
+def _build_proxy_config_silent(payload: ProxyStartPayload) -> dict[str, Any] | None:
+    config_store = _get_config_store()
+    stream_mode = payload.stream_mode if payload.force_stream else None
+    return proxy_orchestration.build_proxy_config(
+        get_current_config=config_store.get_current_config,
+        debug_mode=payload.debug_mode,
+        disable_ssl_strict_mode=payload.disable_ssl_strict_mode,
+        stream_mode=stream_mode,
+    )
+
+
 def _modify_hosts_file(*, log_func, **kwargs: Any) -> OperationResult:
     return modify_hosts_file_result(log_func=log_func, **kwargs)
 
@@ -434,6 +458,35 @@ async def proxy_start(body: ProxyStartPayload) -> dict[str, Any]:
     return build_result_payload(result, logs, "代理服务器启动完成")
 
 
+async def proxy_apply_current_config(body: ProxyStartPayload) -> dict[str, Any]:
+    logs: list[str] = []
+    ready = _ensure_global_config_ready_silent()
+    if not ready.ok:
+        return build_result_payload(ready, logs, "代理配置应用失败")
+
+    config = _build_proxy_config_silent(body)
+    if not config:
+        return build_result_payload(
+            OperationResult.failure("config_group_missing"),
+            logs,
+            "代理配置应用失败",
+        )
+
+    instance = _get_proxy_instance()
+    if not instance or not instance.is_running():
+        return build_result_payload(
+            OperationResult.success(
+                "proxy_not_running",
+                apply_status="deferred",
+            ),
+            logs,
+            "代理配置应用完成",
+        )
+
+    result = instance.apply_runtime_config(config)
+    return build_result_payload(result, logs, "代理配置应用完成")
+
+
 async def proxy_stop() -> dict[str, Any]:
     logs, log_func = collect_logs()
     result = proxy_orchestration.stop_proxy_instance_result(
@@ -494,6 +547,7 @@ async def proxy_start_all(body: ProxyStartPayload) -> dict[str, Any]:
 
 def register_proxy_commands(commands: Commands) -> None:
     commands.set_command("proxy_start", proxy_start)
+    commands.set_command("proxy_apply_current_config", proxy_apply_current_config)
     commands.set_command("proxy_stop", proxy_stop)
     commands.set_command("proxy_check_network", proxy_check_network)
     commands.set_command("proxy_start_all", proxy_start_all)

@@ -18,6 +18,8 @@ const confirmOpen = ref(false)
 const confirmTitle = ref("确认删除")
 const confirmMessage = ref("")
 const pendingDeleteIndex = ref<number | null>(null)
+const pendingSwitchIndex = ref<number | null>(null)
+const switchInProgress = ref(false)
 
 const form = reactive({
   name: "",
@@ -44,10 +46,42 @@ const selectedIndex = computed({
     if (value < 0 || value >= configGroups.value.length) {
       return
     }
+    if (value === currentIndex.value && pendingSwitchIndex.value === null) {
+      return
+    }
     currentIndex.value = value
-    void store.saveConfig()
+    pendingSwitchIndex.value = value
+    void processConfigSwitch()
   },
 })
+
+const processConfigSwitch = async () => {
+  if (switchInProgress.value) {
+    return
+  }
+  switchInProgress.value = true
+  try {
+    while (pendingSwitchIndex.value !== null) {
+      const targetIndex = pendingSwitchIndex.value
+      pendingSwitchIndex.value = null
+      currentIndex.value = targetIndex
+
+      const saved = await store.saveConfig()
+      if (!saved) {
+        store.appendLog("保存配置组失败")
+        continue
+      }
+
+      // 若有新的切换请求，跳过当前热应用，直接处理最新选择。
+      if (pendingSwitchIndex.value !== null) {
+        continue
+      }
+      await store.runProxyApplyCurrentConfig()
+    }
+  } finally {
+    switchInProgress.value = false
+  }
+}
 
 const hasSelection = computed(
   () =>

@@ -38,7 +38,7 @@ def _coerce_detail(value: Any) -> Any:
 
 def build_result_payload(
     result: OperationResult,
-    logs: list[str],
+    _logs: list[str],
     default_message: str,
 ) -> dict[str, Any]:
     return {
@@ -46,5 +46,4 @@ def build_result_payload(
         "message": describe_result(result, default_message),
         "code": str(result.code) if result.code else None,
         "details": _coerce_detail(result.details),
-        "logs": logs,
     }

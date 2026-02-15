@@ -209,12 +209,18 @@ export const useMtgaStore = () => {
     if (!normalized) {
       return
     }
-    if (normalized.includes("全局配置缺失")) {
+    if (
+      normalized.includes("全局配置缺失") ||
+      normalized === "global_config_missing"
+    ) {
       panelNavTarget.value = "global-config"
       panelNavSignal.value += 1
       return
     }
-    if (normalized.includes("没有可用的配置组")) {
+    if (
+      normalized.includes("没有可用的配置组") ||
+      normalized === "config_group_missing"
+    ) {
       panelNavTarget.value = "config-group"
       panelNavSignal.value += 1
     }
@@ -591,6 +597,44 @@ export const useMtgaStore = () => {
     return applyInvokeResult(result, "启动代理服务器")
   }
 
+  const runProxyApplyCurrentConfig = async () => {
+    const result = await api.proxyApplyCurrentConfig(buildProxyPayload())
+    navigateProxyMissingConfigPanel(result?.message)
+    if (!result) {
+      appendLog("应用代理配置失败：无法连接后端")
+      return false
+    }
+
+    const message = coerceText(result.message).trim()
+    const applyStatus =
+      isRecord(result.details) ? coerceText(result.details["apply_status"]) : ""
+
+    if (result.ok) {
+      if (applyStatus === "deferred" || message === "proxy_not_running") {
+        appendLog("代理未运行，配置将在下次启动时生效")
+      } else {
+        appendLog("已应用当前配置组到运行中代理")
+      }
+      return true
+    }
+
+    if (message === "global_config_missing") {
+      appendLog("应用代理配置失败：请先完善全局配置")
+      return false
+    }
+    if (message === "config_group_missing") {
+      appendLog("应用代理配置失败：没有可用的配置组")
+      return false
+    }
+    if (message === "config_invalid") {
+      appendLog("应用代理配置失败：当前配置组无效")
+      return false
+    }
+
+    appendLog("应用代理配置失败")
+    return false
+  }
+
   const runProxyStop = async () => {
     const result = await api.proxyStop()
     return applyInvokeResult(result, "停止代理服务器")
@@ -751,6 +795,7 @@ export const useMtgaStore = () => {
     runHostsModify,
     runHostsOpen,
     runProxyStart,
+    runProxyApplyCurrentConfig,
     runProxyStop,
     runProxyCheckNetwork,
     runProxyStartAll,

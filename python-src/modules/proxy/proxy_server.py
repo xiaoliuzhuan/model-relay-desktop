@@ -52,6 +52,11 @@ class ProxyServer:
         self.app_layer.close()
         return stop_result
 
+    def apply_runtime_config(self, config: dict) -> OperationResult:
+        if not self.runtime.is_running():
+            return OperationResult.failure("代理服务器未运行")
+        return self.app_layer.apply_runtime_config(config)
+
     def is_running(self) -> bool:
         return self.runtime.is_running()
 

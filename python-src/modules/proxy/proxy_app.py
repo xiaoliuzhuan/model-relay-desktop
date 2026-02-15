@@ -3,8 +3,10 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import threading
 import time
 import uuid
+from typing import Any
 
 import requests
 from flask import Flask, Response, jsonify, request
@@ -12,6 +14,8 @@ from flask import Flask, Response, jsonify, request
 from modules.proxy.proxy_auth import ProxyAuth
 from modules.proxy.proxy_config import DEFAULT_MIDDLE_ROUTE, ProxyConfig, build_proxy_config
 from modules.proxy.proxy_transport import ProxyTransport
+from modules.runtime.error_codes import ErrorCode
+from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 
 
@@ -22,6 +26,11 @@ class ProxyApp:
         self.config = config or {}
         self.log_func = log_func
         self.resource_manager = resource_manager
+        self._config_lock = threading.RLock()
+        self._retired_transports: dict[int, ProxyTransport] = {}
+        self._transport_ref_counts: dict[int, int] = {}
+        self._root_logger_default_level = logging.getLogger().level
+        self._app_logger_default_level = logging.WARNING
         self.app: Flask | None = None
         self.valid = True
         self.proxy_config: ProxyConfig | None = None
@@ -65,8 +74,139 @@ class ProxyApp:
         self._create_app()
 
     def close(self) -> None:
-        if self.transport:
-            self.transport.close()
+        transports_to_close: list[ProxyTransport] = []
+        with self._config_lock:
+            if self.transport:
+                transports_to_close.append(self.transport)
+            transports_to_close.extend(self._retired_transports.values())
+            self._retired_transports = {}
+            self._transport_ref_counts = {}
+            self.transport = None
+            self.http_client = None
+            self.auth = None
+        for transport in transports_to_close:
+            with contextlib.suppress(Exception):
+                transport.close()
+
+    def _snapshot_runtime_state(self) -> dict[str, Any]:
+        with self._config_lock:
+            return {
+                "inbound_route": self.inbound_route,
+                "target_api_base_url": self.target_api_base_url,
+                "middle_route": self.middle_route,
+                "custom_model_id": self.custom_model_id,
+                "target_model_id": self.target_model_id,
+                "stream_mode": self.stream_mode,
+                "debug_mode": self.debug_mode,
+                "auth": self.auth,
+                "transport": self.transport,
+                "http_client": self.http_client,
+                "proxy_config": self.proxy_config,
+            }
+
+    def _snapshot_chat_runtime_state(self) -> dict[str, Any]:
+        with self._config_lock:
+            transport = self.transport
+            if transport is not None:
+                key = id(transport)
+                self._transport_ref_counts[key] = (
+                    self._transport_ref_counts.get(key, 0) + 1
+                )
+            return {
+                "inbound_route": self.inbound_route,
+                "target_api_base_url": self.target_api_base_url,
+                "middle_route": self.middle_route,
+                "custom_model_id": self.custom_model_id,
+                "target_model_id": self.target_model_id,
+                "stream_mode": self.stream_mode,
+                "debug_mode": self.debug_mode,
+                "auth": self.auth,
+                "transport": transport,
+                "http_client": self.http_client,
+                "proxy_config": self.proxy_config,
+            }
+
+    def _release_transport_ref(self, transport: ProxyTransport | None) -> None:
+        if transport is None:
+            return
+        close_target: ProxyTransport | None = None
+        with self._config_lock:
+            key = id(transport)
+            current = self._transport_ref_counts.get(key, 0)
+            if current <= 1:
+                self._transport_ref_counts.pop(key, None)
+                retired = self._retired_transports.pop(key, None)
+                if retired is not None:
+                    close_target = retired
+            else:
+                self._transport_ref_counts[key] = current - 1
+        if close_target is not None:
+            with contextlib.suppress(Exception):
+                close_target.close()
+
+    def _retire_transport(self, transport: ProxyTransport | None) -> None:
+        if transport is None:
+            return
+        close_target: ProxyTransport | None = None
+        with self._config_lock:
+            key = id(transport)
+            if self._transport_ref_counts.get(key, 0) > 0:
+                self._retired_transports[key] = transport
+                return
+            close_target = transport
+        if close_target is not None:
+            with contextlib.suppress(Exception):
+                close_target.close()
+
+    def _apply_debug_logging(self, debug_mode: bool) -> None:
+        app = self.app
+        if not app:
+            return
+        root_logger = logging.getLogger()
+        if debug_mode:
+            root_logger.setLevel(logging.INFO)
+            app.logger.setLevel(logging.INFO)
+            return
+        root_logger.setLevel(self._root_logger_default_level)
+        app.logger.setLevel(self._app_logger_default_level)
+
+    def apply_runtime_config(self, raw_config: dict[str, Any] | None) -> OperationResult:
+        new_proxy_config = build_proxy_config(
+            raw_config,
+            resource_manager=self.resource_manager,
+            log_func=lambda _message: None,
+        )
+        if not new_proxy_config:
+            return OperationResult.failure(
+                "config_invalid",
+                code=ErrorCode.CONFIG_INVALID,
+            )
+
+        new_auth = ProxyAuth(new_proxy_config.mtga_auth_key)
+        new_transport = ProxyTransport(
+            resource_manager=self.resource_manager,
+            disable_ssl_strict_mode=new_proxy_config.disable_ssl_strict_mode,
+            log_func=self.log_func,
+        )
+        old_transport: ProxyTransport | None = None
+        with self._config_lock:
+            old_transport = self.transport
+            self.proxy_config = new_proxy_config
+            self.target_api_base_url = new_proxy_config.target_api_base_url
+            self.middle_route = new_proxy_config.middle_route
+            self.custom_model_id = new_proxy_config.custom_model_id
+            self.target_model_id = new_proxy_config.target_model_id
+            self.stream_mode = new_proxy_config.stream_mode
+            self.debug_mode = new_proxy_config.debug_mode
+            self.disable_ssl_strict_mode = new_proxy_config.disable_ssl_strict_mode
+            self.auth = new_auth
+            self.transport = new_transport
+            self.http_client = new_transport.session
+
+        self._apply_debug_logging(self.debug_mode)
+
+        self._retire_transport(old_transport)
+        return OperationResult.success("config_applied", apply_status="applied")
 
     @staticmethod
     def _new_request_id() -> str:
@@ -95,10 +235,8 @@ class ProxyApp:
 
     def _create_app(self):
         self.app = Flask(__name__)
-
-        if self.debug_mode:
-            logging.getLogger().setLevel(logging.INFO)
-            self.app.logger.setLevel(logging.INFO)
+        self._app_logger_default_level = self.app.logger.level
+        self._apply_debug_logging(self.debug_mode)
 
         models_route = self._build_route(self.inbound_route, "models")
         chat_route = self._build_route(self.inbound_route, "chat/completions")
@@ -112,9 +250,11 @@ class ProxyApp:
         )
 
     def _get_models(self):
-        self.log_func(f"收到模型列表请求 {self._build_route(self.inbound_route, 'models')}")
-
-        auth = self.auth
+        snapshot = self._snapshot_runtime_state()
+        inbound_route = str(snapshot["inbound_route"])
+        auth = snapshot["auth"]
+        mapped_model_id = str(snapshot["custom_model_id"])
+        self.log_func(f"收到模型列表请求 {self._build_route(inbound_route, 'models')}")
         if not auth:
             self.log_func("代理鉴权未就绪")
             return jsonify(
@@ -127,8 +267,6 @@ class ProxyApp:
             return jsonify(
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
             ), 401
-
-        mapped_model_id = self._get_mapped_model_id()
 
         model_data = {
             "object": "list",
@@ -167,16 +305,34 @@ class ProxyApp:
         def log(message: str):
             self._log_request(request_id, message)
 
-        log(f"收到聊天补全请求 {self._build_route(self.inbound_route, 'chat/completions')}")
+        snapshot = self._snapshot_chat_runtime_state()
+        inbound_route = str(snapshot["inbound_route"])
+        target_model_id = str(snapshot["target_model_id"])
+        target_api_base_url = str(snapshot["target_api_base_url"])
+        middle_route = str(snapshot["middle_route"])
+        stream_mode = snapshot["stream_mode"]
+        debug_mode = bool(snapshot["debug_mode"])
+        auth = snapshot["auth"]
+        transport = snapshot["transport"]
+        http_client = snapshot["http_client"]
+        proxy_config = snapshot["proxy_config"]
+        transport_released = False
 
-        auth = self.auth
-        transport = self.transport
-        http_client = self.http_client
+        def release_transport() -> None:
+            nonlocal transport_released
+            if transport_released:
+                return
+            transport_released = True
+            self._release_transport_ref(transport)
+
+        log(f"收到聊天补全请求 {self._build_route(inbound_route, 'chat/completions')}")
+
         if not (auth and transport and http_client):
             log("代理服务未就绪")
+            release_transport()
             return jsonify({"error": "Proxy not ready"}), 500
 
-        if self.debug_mode:
+        if debug_mode:
             headers_str = "\\n".join(f"{k}: {v}" for k, v in request.headers.items())
             log_message = (
                 f"--- 请求头 (调试模式) ---\\n{headers_str}\\n"
@@ -199,6 +355,7 @@ class ProxyApp:
         if request_data is None:
             log("解析 JSON 失败或请求不是 JSON 格式")
             log(f"Content-Type: {request.headers.get('Content-Type')}")
+            release_transport()
             return jsonify(
                 {
                     "error": "Invalid JSON or Content-Type",
@@ -214,14 +371,14 @@ class ProxyApp:
 
         if "model" in request_data:
             original_model = request_data["model"]
-            log(f"替换模型名: {original_model} -> {self.target_model_id}")
-            request_data["model"] = self.target_model_id
+            log(f"替换模型名: {original_model} -> {target_model_id}")
+            request_data["model"] = target_model_id
         else:
-            log(f"请求中没有 model 字段，添加 model: {self.target_model_id}")
-            request_data["model"] = self.target_model_id
+            log(f"请求中没有 model 字段，添加 model: {target_model_id}")
+            request_data["model"] = target_model_id
 
-        if self.stream_mode is not None:
-            stream_value = self.stream_mode == "true"
+        if stream_mode is not None:
+            stream_value = stream_mode == "true"
             if "stream" in request_data:
                 original_stream_value = request_data["stream"]
                 log(f"强制修改流模式: {original_stream_value} -> {stream_value}")
@@ -233,13 +390,14 @@ class ProxyApp:
         auth_header = request.headers.get("Authorization")
         if not auth.verify(auth_header):
             log("聊天补全请求MTGA鉴权失败")
+            release_transport()
             return jsonify(
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
             ), 401
 
         target_api_key = ""
-        if self.proxy_config:
-            target_api_key = self.proxy_config.api_key
+        if isinstance(proxy_config, ProxyConfig):
+            target_api_key = proxy_config.api_key
         forward_headers = auth.build_forward_headers(
             auth_header,
             target_api_key,
@@ -248,8 +406,8 @@ class ProxyApp:
 
         try:
             target_url = (
-                f"{self.target_api_base_url.rstrip('/')}"
-                f"{self._build_route(self.middle_route, 'chat/completions')}"
+                f"{target_api_base_url.rstrip('/')}"
+                f"{self._build_route(middle_route, 'chat/completions')}"
             )
             log(f"转发请求到: {target_url}")
 
@@ -264,7 +422,7 @@ class ProxyApp:
                 timeout=300,
             )
             response_from_target.raise_for_status()
-            if self.debug_mode:
+            if debug_mode:
                 log(f"上游响应状态码: {response_from_target.status_code}")
                 log(f"上游 Content-Type: {response_from_target.headers.get('content-type')}")
 
@@ -274,7 +432,7 @@ class ProxyApp:
                 log_file = None
                 log_file_stack = None
                 log_path = None
-                if self.debug_mode:
+                if debug_mode:
                     try:
                         log_path = transport.prepare_sse_log_path()
                         log_file_stack = contextlib.ExitStack()
@@ -304,7 +462,7 @@ class ProxyApp:
                                 continue
                             data_str = "\n".join(data_lines)
 
-                            if self.debug_mode:
+                            if debug_mode:
                                 log(
                                     f"UP<< evt#{event_index} src_chunk#{upstream_chunk_index} "
                                     f"bytes={len(raw_event)} | {data_str.strip()}"
@@ -329,7 +487,7 @@ class ProxyApp:
                             normalized_bytes, finish_reason = transport.normalize_openai_event(
                                 data_str,
                                 event_index,
-                                model_name=self.target_model_id,
+                                model_name=target_model_id,
                                 log=log,
                             )
                             if finish_reason:
@@ -349,7 +507,7 @@ class ProxyApp:
                             tail_bytes = b"data: [DONE]\n\n"
                             with contextlib.suppress(Exception):
                                 yield tail_bytes
-                            if self.debug_mode:
+                            if debug_mode:
                                 extra = (
                                     f"，finish_reason={finish_reason_seen}"
                                     if finish_reason_seen
@@ -357,6 +515,7 @@ class ProxyApp:
                                 )
                                 log(f"未收到上游 [DONE]，已补发终止事件{extra}")
                     finally:
+                        release_transport()
                         if log_file_stack:
                             with contextlib.suppress(Exception):
                                 log_file_stack.close()
@@ -364,13 +523,13 @@ class ProxyApp:
                             log(f"SSE 记录完成: {log_path}")
                         with contextlib.suppress(Exception):
                             response_from_target.close()
-                        if self.debug_mode:
+                        if debug_mode:
                             log(f"UP 流结束，累计 {event_index} 个事件")
 
                 downstream_content_type = response_from_target.headers.get(
                     "content-type", "text/event-stream"
                 )
-                if self.debug_mode:
+                if debug_mode:
                     log(f"下游响应 Content-Type: {downstream_content_type}")
 
                 return Response(
@@ -380,7 +539,7 @@ class ProxyApp:
 
             response_json = response_from_target.json()
 
-            if client_requested_stream and self.stream_mode == "false":
+            if client_requested_stream and stream_mode == "false":
                 log("将非流式响应转换为流式格式返回给客户端")
 
                 def simulate_stream():
@@ -430,9 +589,10 @@ class ProxyApp:
 
                     yield "data: [DONE]\\n\\n"
 
+                release_transport()
                 return Response(simulate_stream(), content_type="text/event-stream")
 
-            if self.debug_mode:
+            if debug_mode:
                 response_str = json.dumps(response_json, indent=2, ensure_ascii=False)
                 log(
                     f"--- 完整响应体 (调试模式) ---\\n{response_str}\\n"
@@ -440,21 +600,25 @@ class ProxyApp:
                 )
             else:
                 log("返回非流式 JSON 响应")
+            release_transport()
             return jsonify(response_json), response_from_target.status_code
 
         except requests.exceptions.HTTPError as e:
             error_msg = f"目标 API HTTP 错误: {e.response.status_code} - {e.response.text}"
             log(error_msg)
+            release_transport()
             return jsonify(
                 {"error": f"Target API error: {e.response.status_code}", "details": e.response.text}
             ), e.response.status_code
         except requests.exceptions.RequestException as e:
             error_msg = f"连接目标 API 时出错: {e}"
             log(error_msg)
+            release_transport()
             return jsonify({"error": f"Error contacting target API: {str(e)}"}), 503
         except Exception as e:
             error_msg = f"发生意外错误: {e}"
             log(error_msg)
+            release_transport()
             return jsonify({"error": "An internal server error occurred"}), 500
 
 

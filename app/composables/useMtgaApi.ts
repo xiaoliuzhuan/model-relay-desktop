@@ -51,6 +51,12 @@ export const useMtgaApi = () => {
     force_stream: boolean
     stream_mode?: string | null
   }) => safeInvoke<InvokeResult>("proxy_start", payload)
+  const proxyApplyCurrentConfig = (payload: {
+    debug_mode: boolean
+    disable_ssl_strict_mode: boolean
+    force_stream: boolean
+    stream_mode?: string | null
+  }) => safeInvoke<InvokeResult>("proxy_apply_current_config", payload)
   const proxyStop = () => safeInvoke<InvokeResult>("proxy_stop")
   const proxyCheckNetwork = () =>
     safeInvoke<InvokeResult>("proxy_check_network")
@@ -123,6 +129,7 @@ export const useMtgaApi = () => {
     installCaCert,
     clearCaCert,
     proxyStart,
+    proxyApplyCurrentConfig,
     proxyStop,
     proxyCheckNetwork,
     proxyStartAll,
