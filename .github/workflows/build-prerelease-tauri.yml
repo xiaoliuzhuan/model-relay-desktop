@@ -588,17 +588,28 @@ jobs:
             exit 1
           fi
 
-          echo "ℹ️ 发布说明范围: $FROM_COMMIT..$TARGET_COMMIT (source: $START_COMMIT_SOURCE, prev_stable: ${PREV_STABLE_TAG:-none})"
+          CHANGELOG_RANGE="${FROM_COMMIT}..${TARGET_COMMIT}"
+          if [ -n "$START_COMMIT_INPUT" ]; then
+            # 双点范围不包含起始提交；手动 start_commit 时通过父提交把起始提交纳入范围
+            if git rev-parse "${FROM_COMMIT}^" >/dev/null 2>&1; then
+              CHANGELOG_RANGE="$(git rev-parse "${FROM_COMMIT}^")..${TARGET_COMMIT}"
+            else
+              echo "⚠️ start_commit 没有父提交，范围将不包含起始提交本身"
+            fi
+          fi
+
+          echo "ℹ️ 发布说明范围: $CHANGELOG_RANGE (source: $START_COMMIT_SOURCE, from: $FROM_COMMIT, prev_stable: ${PREV_STABLE_TAG:-none})"
           echo "PREV_STABLE_TAG=$PREV_STABLE_TAG" >> "$GITHUB_ENV"
           echo "FROM_COMMIT=$FROM_COMMIT" >> "$GITHUB_ENV"
           echo "TARGET_COMMIT=$TARGET_COMMIT" >> "$GITHUB_ENV"
+          echo "CHANGELOG_RANGE=$CHANGELOG_RANGE" >> "$GITHUB_ENV"
 
       - name: 📝 使用 git-cliff 生成发布说明
         uses: orhun/git-cliff-action@v4
         with:
           version: latest
           config: cliff.toml
-          args: --tag "${{ env.TAG_NAME }}" --strip all "${{ env.FROM_COMMIT }}..${{ env.TARGET_COMMIT }}"
+          args: --tag "${{ env.TAG_NAME }}" --strip all "${{ env.CHANGELOG_RANGE }}"
         env:
           OUTPUT: release_notes.md
           GITHUB_REPO: ${{ github.repository }}

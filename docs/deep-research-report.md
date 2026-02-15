@@ -102,6 +102,7 @@ commit_parsers = [
 ### 6.2 范围计算（必须显式）
 
 范围解析规则：若 `workflow_dispatch` 传入 `start_commit`，优先使用该提交；否则回退到“上一正式版标签”。
+当传入 `start_commit` 时，最终生成给 git-cliff 的范围会自动回退到该提交的父提交，以便把 `start_commit` 本身纳入发布说明。
 
 ```yaml
 - name: Resolve release range (start_commit first, else previous stable -> current)
@@ -132,9 +133,15 @@ commit_parsers = [
       exit 1
     fi
 
+    CHANGELOG_RANGE="$FROM_COMMIT..$TARGET_COMMIT"
+    if [ -n "$START_COMMIT_INPUT" ] && git rev-parse "$FROM_COMMIT^" >/dev/null 2>&1; then
+      CHANGELOG_RANGE="$(git rev-parse "$FROM_COMMIT^")..$TARGET_COMMIT"
+    fi
+
     echo "PREV_STABLE_TAG=$PREV_STABLE_TAG" >> "$GITHUB_ENV"
     echo "FROM_COMMIT=$FROM_COMMIT" >> "$GITHUB_ENV"
     echo "TARGET_COMMIT=$TARGET_COMMIT" >> "$GITHUB_ENV"
+    echo "CHANGELOG_RANGE=$CHANGELOG_RANGE" >> "$GITHUB_ENV"
 ```
 
 ### 6.3 生成发布说明（release_notes.md）
@@ -145,7 +152,7 @@ commit_parsers = [
   with:
     version: latest
     config: cliff.toml
-    args: --tag "$TAG_NAME" --strip all "$FROM_COMMIT..$TARGET_COMMIT"
+    args: --tag "$TAG_NAME" --strip all "$CHANGELOG_RANGE"
   env:
     OUTPUT: release_notes.md
     GITHUB_REPO: ${{ github.repository }}
