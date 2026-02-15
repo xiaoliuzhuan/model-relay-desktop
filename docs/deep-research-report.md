@@ -135,7 +135,7 @@ commit_parsers = [
   with:
     version: latest
     config: cliff.toml
-    args: --strip all "$FROM_COMMIT..$TO_COMMIT"
+    args: --tag "$TAG_NAME" --strip all "$FROM_COMMIT..$TO_COMMIT"
   env:
     OUTPUT: release_notes.md
     GITHUB_REPO: ${{ github.repository }}
@@ -145,41 +145,50 @@ commit_parsers = [
 ### 6.4 回写 changelog（强一致）
 
 ```yaml
-- name: Commit and push CHANGELOG.md
+- name: Commit and push CHANGELOG.md (dev -> tauri)
   run: |
     set -euo pipefail
 
     git config user.name "github-actions[bot]"
     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-    # 避免 detached HEAD 直接推送导致重跑/并发场景下非快进失败
-    git fetch origin tauri
-    git checkout -B tauri origin/tauri
+    update_changelog_for_branch() {
+      branch="$1"
+      git checkout -B "$branch" "origin/$branch"
 
-    # 保留标题并将最新 release notes 插到最前
-    if [ -f CHANGELOG.md ]; then
-      tail -n +3 CHANGELOG.md > .changelog_rest.md || true
-    else
-      : > .changelog_rest.md
-    fi
+      if [ -f CHANGELOG.md ]; then
+        tail -n +3 CHANGELOG.md > .changelog_rest.md || true
+      else
+        : > .changelog_rest.md
+      fi
 
-    {
-      echo "# CHANGELOG"
-      echo
-      cat release_notes.md
-      echo
-      cat .changelog_rest.md
-    } > CHANGELOG.md
+      {
+        echo "# CHANGELOG"
+        echo
+        cat release_notes.md
+        echo
+        cat .changelog_rest.md
+      } > CHANGELOG.md
 
-    git add CHANGELOG.md
-    git commit -m "docs(changelog): update for ${{ github.ref_name }}"
-    git push origin tauri
+      git add CHANGELOG.md
+      if git diff --cached --quiet; then
+        echo "No CHANGELOG changes on $branch"
+        return 0
+      fi
+
+      git commit -m "docs(changelog): update for ${TAG_NAME}"
+      git push origin "$branch"
+    }
+
+    git fetch origin dev tauri
+    update_changelog_for_branch dev
+    update_changelog_for_branch tauri
 ```
 
 说明：
 
 - 不使用 `|| echo "No changes"` 吞错。若无变更时可按仓库偏好决定是否改为显式跳过。
-- 先同步并切到 `origin/tauri` 再提交，避免 tag 重跑或并发提交时出现非快进推送失败。
+- 在 `dev` 与 `tauri` 上分别回写 changelog，并按 `dev -> tauri` 顺序推送，保证 dev 保持最新。
 - 当前定版策略是“失败即中止发布”，因此回写步骤必须严格失败即退出。
 
 ### 6.5 创建 Release
