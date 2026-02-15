@@ -1,6 +1,14 @@
 # CHANGELOG
 
-## v2.1.0 (Latest)
+## v2.2.0 (Latest)
+### :sparkles: 新功能
+- feat(proxy): 支持运行时热更新代理配置 (3587ada37488acdabc0f56393069b82377fdf5e1)
+### :bug: 修复
+- 暂无修复
+### :art: 界面样式
+- 暂无界面样式
+
+## v2.1.0
 ### :sparkles: 新功能
 - feat(proxy): 添加配置缺失时的自动面板导航 (cf6d81dfafba699e4344b7a09f79db10d9b01c7a)
 ### :bug: 修复
