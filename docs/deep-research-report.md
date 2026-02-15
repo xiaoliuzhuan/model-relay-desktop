@@ -140,6 +140,14 @@ commit_parsers = [
     OUTPUT: release_notes.md
     GITHUB_REPO: ${{ github.repository }}
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+- name: Normalize heading to current tag
+  run: |
+    set -euo pipefail
+    if grep -Eq '^## [^ ]+ - ' release_notes.md; then
+      sed -E "1s|^## [^ ]+ - |## ${TAG_NAME} - |" release_notes.md > release_notes.tmp
+      mv release_notes.tmp release_notes.md
+    fi
 ```
 
 ### 6.4 回写 changelog（强一致）

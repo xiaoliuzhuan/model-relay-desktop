@@ -597,6 +597,25 @@ jobs:
             echo "❌ release_notes.md 为空，停止发布"
             exit 1
           fi
+
+      - name: 🏷️ 统一发布说明标题为当前标签
+        run: |
+          set -euo pipefail
+          if grep -Eq '^## [^ ]+ - ' release_notes.md; then
+            sed -E "1s|^## [^ ]+ - |## ${TAG_NAME} - |" release_notes.md > release_notes.tmp
+            mv release_notes.tmp release_notes.md
+          else
+            {
+              echo "## ${TAG_NAME} - $(date -u +%Y-%m-%d)"
+              echo
+              cat release_notes.md
+            } > release_notes.tmp
+            mv release_notes.tmp release_notes.md
+          fi
+
+      - name: 🔎 预览发布说明
+        run: |
+          set -euo pipefail
           echo "📝 release_notes.md 预览:"
           cat release_notes.md
 
