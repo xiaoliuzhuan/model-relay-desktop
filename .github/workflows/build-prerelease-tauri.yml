@@ -645,7 +645,25 @@ jobs:
             git checkout -B "$branch" "origin/$branch"
 
             if [ -f CHANGELOG.md ]; then
-              tail -n +3 CHANGELOG.md > .changelog_rest.md || true
+              # 幂等：重跑同一 TAG 时先移除已有同版本章节，再 prepend 最新内容
+              awk -v tag="$TAG_NAME" '
+                BEGIN { skip = 0 }
+                NR <= 2 { next }
+                {
+                  if ($1 == "##") {
+                    if (skip == 1 && $2 != tag) {
+                      skip = 0
+                    }
+                    if ($2 == tag) {
+                      skip = 1
+                      next
+                    }
+                  }
+                  if (skip == 0) {
+                    print
+                  }
+                }
+              ' CHANGELOG.md > .changelog_rest.md
             else
               : > .changelog_rest.md
             fi

@@ -175,7 +175,18 @@ commit_parsers = [
       git checkout -B "$branch" "origin/$branch"
 
       if [ -f CHANGELOG.md ]; then
-        tail -n +3 CHANGELOG.md > .changelog_rest.md || true
+        # 幂等：重跑同一 TAG 时先移除已有同版本章节，再 prepend 最新内容
+        awk -v tag="$TAG_NAME" '
+          BEGIN { skip = 0 }
+          NR <= 2 { next }
+          {
+            if ($1 == "##") {
+              if (skip == 1 && $2 != tag) { skip = 0 }
+              if ($2 == tag) { skip = 1; next }
+            }
+            if (skip == 0) print
+          }
+        ' CHANGELOG.md > .changelog_rest.md
       else
         : > .changelog_rest.md
       fi
@@ -207,6 +218,7 @@ commit_parsers = [
 
 - 不使用 `|| echo "No changes"` 吞错。若无变更时可按仓库偏好决定是否改为显式跳过。
 - 在 `dev` 与 `tauri` 上分别回写 changelog，并按 `dev -> tauri` 顺序推送，保证 dev 保持最新。
+- 回写前会剔除已存在的同 tag 章节，确保同一版本重跑不会重复插入。
 - 当前定版策略是“失败即中止发布”，因此回写步骤必须严格失败即退出。
 
 ### 6.5 创建 Release
