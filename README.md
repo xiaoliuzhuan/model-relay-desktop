@@ -1,17 +1,16 @@
 # MTGA
+
 <picture>
     <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
-[![English](https://img.shields.io/badge/docs-English-purple)](docs/README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](docs/README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](docs/README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](docs/README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](docs/README.fr.md) [![Documentação em Português (Brasil)](<https://img.shields.io/badge/docs-Português-purple>)](docs/README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](docs/README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](docs/README.ru.md)
+[![English](https://img.shields.io/badge/docs-English-purple)](docs/README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](docs/README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](docs/README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](docs/README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](docs/README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](docs/README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](docs/README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](docs/README.ru.md)
 
 ## 简介
 
- MTGA 是一个基于本地代理的 IDE 固定模型服务商解决方案，适用于 Windows 和 macOS。
+MTGA 是一个基于本地代理的 IDE 固定模型服务商解决方案，适用于 Windows 和 macOS。
 
- **注意：本项目目前只支持 openai 格式的 api ，请确认。其他格式可以转为 openai 格式后再使用。**
-
-
+**注意：本项目目前只支持 openai 格式的 api ，请确认。其他格式可以转为 openai 格式后再使用。**
 
  <details>
   <summary>你什么也看不见~~</summary>
@@ -69,6 +68,7 @@
 3. 将 `MTGA_GUI.app` 拖拽到 `Applications` 文件夹
 
 ### 使用
+
 1. 启动 MTGA 应用程序
 2. 添加代理配置组
    - **API URL 只需要填域名（端口号可选，不懂的就不要填），不需要填后面的路由，例如：`https://your-api.example.com`**
@@ -89,9 +89,11 @@
 6. 完成后，按照[配置 Trae IDE](#配置-trae-ide)进行IDE配置
 
 > [!NOTE]
+>
 > - 代理配置和生成证书会持久化存储于用户数据目录，见 `设置 - 用户数据`
 
 > [!WARNING]
+>
 > - 需要管理员权限
 > - macOS 端如提示“包已损坏”，请参考 [macOS 解决 “包已损坏” 问题](#macos-解决-包已损坏-问题)
 > - 如 trae 端添加模型失败，请参考 [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
@@ -132,9 +134,11 @@
 <img width="40%" alt="received list request" src="./images/received-list-request.png?raw=true" />
 
 如无日志，请检查：
+
 - **hosts**：确保包含 `127.0.0.1 api.openai.com` 这一行，且未被注释掉（# 开头）。
 - **端口监听**：确保没有其他程序正在使用端口 443（如浏览器、VPN 等）。
   - 可以使用以下命令检查：
+
     ```
     # windows
     netstat -ano | find ":443" | find "LISTENING"
@@ -142,7 +146,9 @@
     # macos
     netstat -lnp tcp | grep :443
     ```
+
   - 如果有进程在监听 443 端口，建议关闭该进程。
+
 - **网络代理**：确保没有其他代理软件正在运行，它们可能会干扰 MTGA 的代理功能。
   - 如需科学上网，请使用 TUN 模式而非系统代理。有条件的请在 **本机之外** 部署其他代理服务。
   - 如果 DNS 配置错误，也可能导致无法解析。
@@ -183,6 +189,7 @@
 ![star to keep latest](https://github.com/BiFangKNT/mtga/blob/gui/images/star-to-keep-latest.gif?raw=true)
 
 ---
+
 ## 架构与依赖约束
 
 为避免模块耦合失控，项目遵循以下分层与依赖规则：

@@ -1,55 +1,55 @@
 <script setup lang="ts">
-const store = useMtgaStore()
-const appInfo = store.appInfo
+const store = useMtgaStore();
+const appInfo = store.appInfo;
 
-const isConfirmOpen = ref(false)
-const inputCommonName = ref("")
-const showInputError = ref(false)
+const isConfirmOpen = ref(false);
+const inputCommonName = ref("");
+const showInputError = ref(false);
 
 const clearCaTooltip = computed(() => {
-  const commonName = appInfo.value.ca_common_name || "MTGA_CA"
+  const commonName = appInfo.value.ca_common_name || "MTGA_CA";
   return [
     "macOS: 删除系统钥匙串中匹配的CA证书；",
     "Windows: 删除本地计算机/Root 中匹配的CA证书",
     `Common Name: ${commonName}`,
     "需要管理员权限，建议仅在需要重置证书时使用",
-  ].join("\n")
-})
+  ].join("\n");
+});
 
 const handleGenerate = () => {
-  store.runGenerateCertificates()
-}
+  store.runGenerateCertificates();
+};
 
 const handleInstall = () => {
-  store.runInstallCaCert()
-}
+  store.runInstallCaCert();
+};
 
 /**
  * 触发清除系统 CA 证书流程，先打开确认弹窗
  */
 const handleClear = () => {
-  inputCommonName.value = appInfo.value.ca_common_name || "MTGA_CA"
-  showInputError.value = false
-  isConfirmOpen.value = true
-}
+  inputCommonName.value = appInfo.value.ca_common_name || "MTGA_CA";
+  showInputError.value = false;
+  isConfirmOpen.value = true;
+};
 
 /**
  * 用户确认后的实际清除操作
  */
 const confirmClear = () => {
   if (!inputCommonName.value.trim()) {
-    showInputError.value = true
-    return
+    showInputError.value = true;
+    return;
   }
-  isConfirmOpen.value = false
-  store.runClearCaCert(inputCommonName.value)
-}
+  isConfirmOpen.value = false;
+  store.runClearCaCert(inputCommonName.value);
+};
 
 watch(inputCommonName, (val) => {
   if (val.trim()) {
-    showInputError.value = false
+    showInputError.value = false;
   }
-})
+});
 </script>
 
 <template>
@@ -59,15 +59,13 @@ watch(inputCommonName, (val) => {
       <div class="text-xs text-slate-500">生成、安装与清理本地证书</div>
     </div>
     <div class="space-y-2">
-      <button class="mtga-btn-primary" @click="handleGenerate">
-        生成CA和服务器证书
-      </button>
+      <button class="mtga-btn-primary" @click="handleGenerate">生成CA和服务器证书</button>
       <div class="grid grid-cols-2 gap-2">
         <button class="mtga-btn-primary" @click="handleInstall">安装CA证书</button>
         <button
           class="mtga-btn-error tooltip mtga-tooltip"
           :data-tip="clearCaTooltip"
-          style="--mtga-tooltip-max: 280px;"
+          style="--mtga-tooltip-max: 280px"
           @click="handleClear"
         >
           清除系统CA证书

@@ -40,11 +40,10 @@ function assertGitRepo() {
 function setupGitflow() {
   assertGitRepo();
 
-  const keysResult = run(
-    "git",
-    ["config", "--local", "--get-regexp", "^gitflow\\."],
-    { capture: true, check: false },
-  );
+  const keysResult = run("git", ["config", "--local", "--get-regexp", "^gitflow\\."], {
+    capture: true,
+    check: false,
+  });
 
   if ((keysResult.status ?? 1) === 0) {
     const keys = Array.from(
@@ -154,7 +153,9 @@ function finishRelease(argv) {
   }
   const dirty = trimOutput(statusResult.stdout);
   if (dirty) {
-    console.error("当前工作区不干净（git status --porcelain 有输出），请先 commit/stash/clean 后再运行：");
+    console.error(
+      "当前工作区不干净（git status --porcelain 有输出），请先 commit/stash/clean 后再运行：",
+    );
     for (const line of dirty.split("\n")) {
       if (line.trim()) console.error(`  ${line}`);
     }
@@ -170,10 +171,7 @@ function finishRelease(argv) {
     fail("无法获取当前分支名", 4);
   }
   if (!branch.startsWith(RELEASE_PREFIX)) {
-    fail(
-      `当前分支不是 release/*（现在是 '${branch}'）。请切到 release/<版本> 分支再运行。`,
-      10,
-    );
+    fail(`当前分支不是 release/*（现在是 '${branch}'）。请切到 release/<版本> 分支再运行。`, 10);
   }
 
   const currentVersion = branch.slice(RELEASE_PREFIX.length);
@@ -192,14 +190,15 @@ function finishRelease(argv) {
   const expectedTag = /^[vV]/.test(version) ? version : `v${version}`;
   const expectedRef = `refs/tags/${expectedTag}`;
 
-  const localTagResult = run(
-    "git",
-    ["show-ref", "--tags", "--verify", "--quiet", expectedRef],
-    { check: false },
-  );
+  const localTagResult = run("git", ["show-ref", "--tags", "--verify", "--quiet", expectedRef], {
+    check: false,
+  });
   const localTagStatus = localTagResult.status ?? 1;
   if (localTagStatus === 0) {
-    fail(`本地已存在 tag：${expectedTag}（${expectedRef}）。请更换版本号或先删除该 tag 后再试。`, 30);
+    fail(
+      `本地已存在 tag：${expectedTag}（${expectedRef}）。请更换版本号或先删除该 tag 后再试。`,
+      30,
+    );
   }
   if (localTagStatus !== 1) {
     fail(`本地 tag 检查失败：git show-ref --tags --verify --quiet ${expectedRef}`, 30);
@@ -211,7 +210,10 @@ function finishRelease(argv) {
     { capture: true, check: false },
   );
   if ((remoteTagResult.status ?? 1) !== 0) {
-    fail(`无法查询远程 tag：git ls-remote --tags ${options.remote} ...（请检查远程名/网络/权限）`, 31);
+    fail(
+      `无法查询远程 tag：git ls-remote --tags ${options.remote} ...（请检查远程名/网络/权限）`,
+      31,
+    );
   }
   if (trimOutput(remoteTagResult.stdout)) {
     fail(
@@ -239,7 +241,10 @@ function finishRelease(argv) {
   );
   if ((pushBranchesResult.status ?? 1) !== 0) {
     const code = pushBranchesResult.status ?? 1;
-    fail(`推送分支失败：git push ${options.remote} ${options.mainBranch} ${options.devBranch}`, code);
+    fail(
+      `推送分支失败：git push ${options.remote} ${options.mainBranch} ${options.devBranch}`,
+      code,
+    );
   }
 
   const tagResult = run("git", ["describe", "--tags", "--exact-match"], {

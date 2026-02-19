@@ -1,33 +1,33 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    logs?: string[]
-    emptyText?: string
+    logs?: string[];
+    emptyText?: string;
   }>(),
   {
     logs: () => [],
     emptyText: "日志输出占位",
-  }
-)
+  },
+);
 
-const logBox = ref<HTMLDivElement | null>(null)
+const logBox = ref<HTMLDivElement | null>(null);
 
-const logCount = computed(() => props.logs?.length ?? 0)
+const logCount = computed(() => props.logs?.length ?? 0);
 
 const formattedLogs = computed(() =>
-  props.logs && props.logs.length ? props.logs.join("\n") : props.emptyText
-)
+  props.logs && props.logs.length ? props.logs.join("\n") : props.emptyText,
+);
 
 watch(
   () => props.logs,
   async () => {
-    await nextTick()
+    await nextTick();
     if (logBox.value) {
-      logBox.value.scrollTop = logBox.value.scrollHeight
+      logBox.value.scrollTop = logBox.value.scrollHeight;
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 </script>
 
 <template>

@@ -1,3 +1,3 @@
 {
-    "extends": "python-src/pyproject.toml"
+  "extends": "python-src/pyproject.toml"
 }

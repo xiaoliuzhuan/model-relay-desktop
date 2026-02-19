@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import type { ConfigGroup } from "~/composables/mtgaTypes"
+import type { ConfigGroup } from "~/composables/mtgaTypes";
 
-const store = useMtgaStore()
-const configGroups = store.configGroups
-const currentIndex = store.currentConfigIndex
+const store = useMtgaStore();
+const configGroups = store.configGroups;
+const currentIndex = store.currentConfigIndex;
 
-const DEFAULT_MIDDLE_ROUTE = "/v1"
+const DEFAULT_MIDDLE_ROUTE = "/v1";
 
-const editorOpen = ref(false)
-const editorMode = ref<"add" | "edit">("add")
-const formError = ref("")
-const middleRouteEnabled = ref(false)
-const availableModels = ref<string[]>([])
-const modelLoading = ref(false)
+const editorOpen = ref(false);
+const editorMode = ref<"add" | "edit">("add");
+const formError = ref("");
+const middleRouteEnabled = ref(false);
+const availableModels = ref<string[]>([]);
+const modelLoading = ref(false);
 
-const confirmOpen = ref(false)
-const confirmTitle = ref("确认删除")
-const confirmMessage = ref("")
-const pendingDeleteIndex = ref<number | null>(null)
-const pendingSwitchIndex = ref<number | null>(null)
-const switchInProgress = ref(false)
+const confirmOpen = ref(false);
+const confirmTitle = ref("确认删除");
+const confirmMessage = ref("");
+const pendingDeleteIndex = ref<number | null>(null);
+const pendingSwitchIndex = ref<number | null>(null);
+const switchInProgress = ref(false);
 
 const form = reactive({
   name: "",
@@ -27,88 +27,85 @@ const form = reactive({
   model_id: "",
   api_key: "",
   middle_route: "",
-})
+});
 
 const testTooltip = [
   "测试选中配置组的实际对话功能",
   "会发送最小请求并消耗少量tokens",
   "请确保配置正确后使用",
-].join("\n")
+].join("\n");
 
-const refreshTooltip = [
-  "重新加载配置文件中的配置组",
-  "用于同步外部修改或恢复意外更改",
-].join("\n")
+const refreshTooltip = ["重新加载配置文件中的配置组", "用于同步外部修改或恢复意外更改"].join("\n");
 
 const selectedIndex = computed({
   get: () => (configGroups.value.length ? currentIndex.value : -1),
   set: (value) => {
     if (value < 0 || value >= configGroups.value.length) {
-      return
+      return;
     }
     if (value === currentIndex.value && pendingSwitchIndex.value === null) {
-      return
+      return;
     }
-    currentIndex.value = value
-    pendingSwitchIndex.value = value
-    void processConfigSwitch()
+    currentIndex.value = value;
+    pendingSwitchIndex.value = value;
+    void processConfigSwitch();
   },
-})
+});
 
 const processConfigSwitch = async () => {
   if (switchInProgress.value) {
-    return
+    return;
   }
-  switchInProgress.value = true
+  switchInProgress.value = true;
   try {
     while (pendingSwitchIndex.value !== null) {
-      const targetIndex = pendingSwitchIndex.value
-      pendingSwitchIndex.value = null
-      currentIndex.value = targetIndex
+      const targetIndex = pendingSwitchIndex.value;
+      pendingSwitchIndex.value = null;
+      currentIndex.value = targetIndex;
 
-      const saved = await store.saveConfig()
+      const saved = await store.saveConfig();
       if (!saved) {
-        store.appendLog("保存配置组失败")
-        continue
+        store.appendLog("保存配置组失败");
+        continue;
       }
 
       // 若有新的切换请求，跳过当前热应用，直接处理最新选择。
       if (pendingSwitchIndex.value !== null) {
-        continue
+        continue;
       }
-      await store.runProxyApplyCurrentConfig()
+      await store.runProxyApplyCurrentConfig();
     }
   } finally {
-    switchInProgress.value = false
+    switchInProgress.value = false;
   }
-}
+};
 
 const hasSelection = computed(
   () =>
     configGroups.value.length > 0 &&
     selectedIndex.value >= 0 &&
-    selectedIndex.value < configGroups.value.length
-)
+    selectedIndex.value < configGroups.value.length,
+);
 
 const normalizeMiddleRoute = (value: string) => {
-  let raw = value.trim()
+  let raw = value.trim();
   if (!raw) {
-    raw = DEFAULT_MIDDLE_ROUTE
+    raw = DEFAULT_MIDDLE_ROUTE;
   }
   if (!raw.startsWith("/")) {
-    raw = `/${raw}`
+    raw = `/${raw}`;
   }
   if (raw.length > 1) {
-    raw = raw.replace(/\/+$/, "")
+    raw = raw.replace(/\/+$/, "");
     if (!raw) {
-      raw = "/"
+      raw = "/";
     }
   }
-  return raw
-}
+  return raw;
+};
 
 const getDisplayName = (group: ConfigGroup, index: number) =>
-  group.name?.trim() || `配置组 ${index + 1}`
+  group.name?.trim() || `配置组 ${index + 1}`;
 
 /**
  * 获取 API Key 的显示文本
@@ -119,83 +116,83 @@ const getDisplayName = (group: ConfigGroup, index: number) =>
  */
 const getApiKeyDisplay = (group: ConfigGroup) => {
   if ("target_model_id" in group) {
-    return group.target_model_id || "(无)"
+    return group.target_model_id || "(无)";
   }
-  const apiKey = group.api_key || ""
+  const apiKey = group.api_key || "";
   if (!apiKey) {
-    return "(无)"
+    return "(无)";
   }
 
-  const len = apiKey.length
-  const threshold = 12
-  const maxVisible = 4
+  const len = apiKey.length;
+  const threshold = 12;
+  const maxVisible = 4;
 
   // 计算可见字符数：超出阈值的部分，且不超过上限
-  const visibleCount = Math.min(Math.max(0, len - threshold), maxVisible)
+  const visibleCount = Math.min(Math.max(0, len - threshold), maxVisible);
 
   if (visibleCount > 0) {
-    return `${"*".repeat(len - visibleCount)}${apiKey.slice(-visibleCount)}`
+    return `${"*".repeat(len - visibleCount)}${apiKey.slice(-visibleCount)}`;
   }
-  return "*".repeat(len)
-}
+  return "*".repeat(len);
+};
 
 const refreshList = async () => {
-  const ok = await store.loadConfig()
+  const ok = await store.loadConfig();
   if (ok) {
-    store.appendLog("已刷新配置组列表")
+    store.appendLog("已刷新配置组列表");
   }
-}
+};
 
 const requestTest = async () => {
   if (!hasSelection.value) {
-    store.appendLog("请先选择要测活的配置组")
-    return
+    store.appendLog("请先选择要测活的配置组");
+    return;
   }
-  await store.runConfigGroupTest(selectedIndex.value)
-}
+  await store.runConfigGroupTest(selectedIndex.value);
+};
 
 const resetForm = () => {
-  form.name = ""
-  form.api_url = ""
-  form.model_id = ""
-  form.api_key = ""
-  form.middle_route = ""
-  middleRouteEnabled.value = false
-  formError.value = ""
-  availableModels.value = []
-  modelLoading.value = false
-}
+  form.name = "";
+  form.api_url = "";
+  form.model_id = "";
+  form.api_key = "";
+  form.middle_route = "";
+  middleRouteEnabled.value = false;
+  formError.value = "";
+  availableModels.value = [];
+  modelLoading.value = false;
+};
 
 const openAdd = () => {
-  editorMode.value = "add"
-  resetForm()
-  editorOpen.value = true
-}
+  editorMode.value = "add";
+  resetForm();
+  editorOpen.value = true;
+};
 
 const openEdit = () => {
   if (!hasSelection.value) {
-    store.appendLog("请先选择要修改的配置组")
-    return
+    store.appendLog("请先选择要修改的配置组");
+    return;
   }
-  editorMode.value = "edit"
-  const group = configGroups.value[selectedIndex.value]
+  editorMode.value = "edit";
+  const group = configGroups.value[selectedIndex.value];
   if (!group) {
-    return
+    return;
   }
-  form.name = group.name || ""
-  form.api_url = group.api_url || ""
-  form.model_id = group.model_id || ""
-  form.api_key = group.api_key || ""
-  form.middle_route = group.middle_route || ""
-  middleRouteEnabled.value = Boolean(group.middle_route)
-  formError.value = ""
-  availableModels.value = []
-  editorOpen.value = true
-}
+  form.name = group.name || "";
+  form.api_url = group.api_url || "";
+  form.model_id = group.model_id || "";
+  form.api_key = group.api_key || "";
+  form.middle_route = group.middle_route || "";
+  middleRouteEnabled.value = Boolean(group.middle_route);
+  formError.value = "";
+  availableModels.value = [];
+  editorOpen.value = true;
+};
 
 const closeEditor = () => {
-  editorOpen.value = false
-}
+  editorOpen.value = false;
+};
 
 const handleSave = async () => {
   const payload: ConfigGroup = {
@@ -203,152 +200,142 @@ const handleSave = async () => {
     api_url: form.api_url.trim(),
     model_id: form.model_id.trim(),
     api_key: form.api_key.trim(),
-  }
+  };
 
   if (!payload.api_url || !payload.model_id || !payload.api_key) {
-    formError.value = "API URL、实际模型ID 和 API Key 都是必填项"
-    store.appendLog("错误: API URL、实际模型ID和API Key都是必填项")
-    return
+    formError.value = "API URL、实际模型ID 和 API Key 都是必填项";
+    store.appendLog("错误: API URL、实际模型ID和API Key都是必填项");
+    return;
   }
 
   if (middleRouteEnabled.value && form.middle_route.trim()) {
-    payload.middle_route = normalizeMiddleRoute(form.middle_route)
+    payload.middle_route = normalizeMiddleRoute(form.middle_route);
   }
 
   if (editorMode.value === "add") {
-    configGroups.value.push(payload)
-    currentIndex.value = configGroups.value.length - 1
+    configGroups.value.push(payload);
+    currentIndex.value = configGroups.value.length - 1;
   } else if (hasSelection.value) {
-    configGroups.value.splice(selectedIndex.value, 1, payload)
+    configGroups.value.splice(selectedIndex.value, 1, payload);
   }
 
-  const ok = await store.saveConfig()
+  const ok = await store.saveConfig();
   if (ok) {
-    const displayName = getDisplayName(payload, selectedIndex.value)
+    const displayName = getDisplayName(payload, selectedIndex.value);
     store.appendLog(
-      editorMode.value === "add"
-        ? `已添加配置组: ${displayName}`
-        : `已修改配置组: ${displayName}`
-    )
-    closeEditor()
+      editorMode.value === "add" ? `已添加配置组: ${displayName}` : `已修改配置组: ${displayName}`,
+    );
+    closeEditor();
   } else {
-    store.appendLog("保存配置组失败")
+    store.appendLog("保存配置组失败");
   }
-}
+};
 
 const handleFetchModels = async () => {
   if (modelLoading.value) {
-    return
+    return;
   }
-  const apiUrl = form.api_url.trim()
+  const apiUrl = form.api_url.trim();
   if (!apiUrl) {
-    store.appendLog("获取模型列表失败: API URL为空")
-    return
+    store.appendLog("获取模型列表失败: API URL为空");
+    return;
   }
-  modelLoading.value = true
+  modelLoading.value = true;
   const models = await store.fetchConfigGroupModels({
     api_url: apiUrl,
     api_key: form.api_key.trim(),
     model_id: form.model_id.trim(),
-    middle_route: middleRouteEnabled.value
-      ? normalizeMiddleRoute(form.middle_route)
-      : "",
-  })
+    middle_route: middleRouteEnabled.value ? normalizeMiddleRoute(form.middle_route) : "",
+  });
   if (models !== null) {
-    availableModels.value = models
+    availableModels.value = models;
   }
-  modelLoading.value = false
-}
+  modelLoading.value = false;
+};
 
 const requestDelete = () => {
   if (!hasSelection.value) {
-    store.appendLog("请先选择要删除的配置组")
-    return
+    store.appendLog("请先选择要删除的配置组");
+    return;
   }
   if (configGroups.value.length <= 1) {
-    store.appendLog("至少需要保留一个配置组")
-    return
+    store.appendLog("至少需要保留一个配置组");
+    return;
   }
-  const group = configGroups.value[selectedIndex.value]
+  const group = configGroups.value[selectedIndex.value];
   if (!group) {
-    return
+    return;
   }
-  pendingDeleteIndex.value = selectedIndex.value
-  confirmTitle.value = "确认删除"
-  confirmMessage.value = `确定要删除配置组 “${getDisplayName(
-    group,
-    selectedIndex.value
-  )}” 吗？`
-  confirmOpen.value = true
-}
+  pendingDeleteIndex.value = selectedIndex.value;
+  confirmTitle.value = "确认删除";
+  confirmMessage.value = `确定要删除配置组 “${getDisplayName(group, selectedIndex.value)}” 吗？`;
+  confirmOpen.value = true;
+};
 
 const cancelDelete = () => {
-  confirmOpen.value = false
-  pendingDeleteIndex.value = null
-}
+  confirmOpen.value = false;
+  pendingDeleteIndex.value = null;
+};
 
 const confirmDelete = async () => {
   if (pendingDeleteIndex.value == null) {
-    return
+    return;
   }
-  const index = pendingDeleteIndex.value
-  const group = configGroups.value[index]
+  const index = pendingDeleteIndex.value;
+  const group = configGroups.value[index];
   if (!group) {
-    store.appendLog("配置组不存在，已取消删除")
-    confirmOpen.value = false
-    pendingDeleteIndex.value = null
-    return
+    store.appendLog("配置组不存在，已取消删除");
+    confirmOpen.value = false;
+    pendingDeleteIndex.value = null;
+    return;
   }
-  configGroups.value.splice(index, 1)
+  configGroups.value.splice(index, 1);
   if (currentIndex.value >= configGroups.value.length) {
-    currentIndex.value = Math.max(configGroups.value.length - 1, 0)
+    currentIndex.value = Math.max(configGroups.value.length - 1, 0);
   } else if (currentIndex.value > index) {
-    currentIndex.value -= 1
+    currentIndex.value -= 1;
   }
-  const ok = await store.saveConfig()
+  const ok = await store.saveConfig();
   if (ok) {
-    store.appendLog(`已删除配置组: ${getDisplayName(group, index)}`)
+    store.appendLog(`已删除配置组: ${getDisplayName(group, index)}`);
   } else {
-    store.appendLog("保存配置组失败")
+    store.appendLog("保存配置组失败");
   }
-  confirmOpen.value = false
-  pendingDeleteIndex.value = null
-}
+  confirmOpen.value = false;
+  pendingDeleteIndex.value = null;
+};
 
 const moveUp = async () => {
   if (!hasSelection.value || selectedIndex.value <= 0) {
-    return
+    return;
   }
-  const index = selectedIndex.value
-  const current = configGroups.value[index]
-  const prev = configGroups.value[index - 1]
+  const index = selectedIndex.value;
+  const current = configGroups.value[index];
+  const prev = configGroups.value[index - 1];
   if (!current || !prev) {
-    return
+    return;
   }
-  configGroups.value[index - 1] = current
-  configGroups.value[index] = prev
-  currentIndex.value = index - 1
-  await store.saveConfig()
-}
+  configGroups.value[index - 1] = current;
+  configGroups.value[index] = prev;
+  currentIndex.value = index - 1;
+  await store.saveConfig();
+};
 
 const moveDown = async () => {
-  if (
-    !hasSelection.value ||
-    selectedIndex.value >= configGroups.value.length - 1
-  ) {
-    return
+  if (!hasSelection.value || selectedIndex.value >= configGroups.value.length - 1) {
+    return;
   }
-  const index = selectedIndex.value
-  const current = configGroups.value[index]
-  const next = configGroups.value[index + 1]
+  const index = selectedIndex.value;
+  const current = configGroups.value[index];
+  const next = configGroups.value[index + 1];
   if (!current || !next) {
-    return
+    return;
   }
-  configGroups.value[index + 1] = current
-  configGroups.value[index] = next
-  currentIndex.value = index + 1
-  await store.saveConfig()
-}
+  configGroups.value[index + 1] = current;
+  configGroups.value[index] = next;
+  currentIndex.value = index + 1;
+  await store.saveConfig();
+};
 </script>
 
 <template>
@@ -361,7 +348,7 @@ const moveDown = async () => {
       <button
         class="btn btn-sm btn-outline rounded-xl border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-600 tooltip mtga-tooltip"
         :data-tip="testTooltip"
-        style="--mtga-tooltip-max: 250px;"
+        style="--mtga-tooltip-max: 250px"
         @click="requestTest"
       >
         测活
@@ -369,7 +356,7 @@ const moveDown = async () => {
       <button
         class="btn btn-sm btn-outline rounded-xl border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-600 tooltip mtga-tooltip"
         :data-tip="refreshTooltip"
-        style="--mtga-tooltip-max: 250px;"
+        style="--mtga-tooltip-max: 250px"
         @click="refreshList"
       >
         刷新
@@ -378,9 +365,9 @@ const moveDown = async () => {
   </div>
 
   <div class="mt-4 grid gap-4 lg:grid-cols-[1fr,180px]">
-    <div 
-      class="min-w-0 rounded-xl border border-slate-200/70 bg-white/50 backdrop-blur-md overflow-hidden flex flex-col" 
-      style="--row-h: 36px; --head-h: 38px;"
+    <div
+      class="min-w-0 rounded-xl border border-slate-200/70 bg-white/50 backdrop-blur-md overflow-hidden flex flex-col"
+      style="--row-h: 36px; --head-h: 38px"
     >
       <div class="overflow-auto custom-scrollbar flex-1 max-h-[260px]">
         <table class="table table-sm w-full text-sm border-separate border-spacing-0">
@@ -412,19 +399,19 @@ const moveDown = async () => {
               >
                 {{ index + 1 }}
               </td>
-              <td 
+              <td
                 class="truncate max-w-[200px] text-slate-700 transition-all"
                 :class="selectedIndex === index ? 'border-amber-400' : 'border-transparent'"
               >
                 {{ group.api_url || "(未填写)" }}
               </td>
-              <td 
+              <td
                 class="truncate max-w-[150px] text-slate-700 transition-all"
                 :class="selectedIndex === index ? 'border-amber-400' : 'border-transparent'"
               >
                 {{ group.model_id || "(未填写)" }}
               </td>
-              <td 
+              <td
                 class="truncate max-w-[200px] text-slate-700 transition-all"
                 :class="selectedIndex === index ? 'border-amber-400' : 'border-transparent'"
               >
@@ -434,9 +421,7 @@ const moveDown = async () => {
           </tbody>
           <tbody v-else>
             <tr>
-              <td colspan="4" class="py-6 text-center text-sm text-slate-400">
-                暂无配置组
-              </td>
+              <td colspan="4" class="py-6 text-center text-sm text-slate-400">暂无配置组</td>
             </tr>
           </tbody>
         </table>
@@ -446,9 +431,7 @@ const moveDown = async () => {
     <div class="space-y-2">
       <button class="mtga-btn-primary" @click="openAdd">新增</button>
       <button class="mtga-btn-outline" @click="openEdit">修改</button>
-      <button class="mtga-btn-error" @click="requestDelete">
-        删除
-      </button>
+      <button class="mtga-btn-error" @click="requestDelete">删除</button>
       <div class="h-px bg-slate-200/70 mx-1"></div>
       <button class="mtga-btn-outline" @click="moveUp">上移</button>
       <button class="mtga-btn-outline" @click="moveDown">下移</button>

@@ -11,21 +11,22 @@ import {
   loadThemeFromStorage,
   sanitizeThemeConfig,
   saveThemeToStorage,
-} from "~/composables/themeConfig"
+} from "~/composables/themeConfig";
 
-const store = useMtgaStore()
-const appInfo = store.appInfo
+const store = useMtgaStore();
+const appInfo = store.appInfo;
 
-const clearConfirmOpen = ref(false)
-const clearConfirmTitle = "确认清除数据"
-const clearConfirmMessage = "确定要清除用户数据吗？该操作将删除配置文件、SSL 证书和 hosts 备份（历史 backups 保留）。"
-const themeDialogOpen = ref(false)
+const clearConfirmOpen = ref(false);
+const clearConfirmTitle = "确认清除数据";
+const clearConfirmMessage =
+  "确定要清除用户数据吗？该操作将删除配置文件、SSL 证书和 hosts 备份（历史 backups 保留）。";
+const themeDialogOpen = ref(false);
 
-const themeConfig = reactive<ThemeConfig>({ ...DEFAULT_THEME_CONFIG })
+const themeConfig = reactive<ThemeConfig>({ ...DEFAULT_THEME_CONFIG });
 if (import.meta.client) {
-  const savedTheme = loadThemeFromStorage()
+  const savedTheme = loadThemeFromStorage();
   if (savedTheme) {
-    copyThemeConfig(themeConfig, savedTheme)
+    copyThemeConfig(themeConfig, savedTheme);
   }
 }
 
@@ -33,19 +34,19 @@ if (import.meta.client) {
  * 打开目录的工具提示内容
  */
 const openDirTooltip = computed(() => {
-  const current = appInfo.value.user_data_dir?.trim()
-  const fallback = appInfo.value.default_user_data_dir?.trim()
+  const current = appInfo.value.user_data_dir?.trim();
+  const fallback = appInfo.value.default_user_data_dir?.trim();
   if (current && fallback && current !== fallback) {
-    return `使用系统文件管理器打开用户数据目录\n当前：${current}\n默认：${fallback}`
+    return `使用系统文件管理器打开用户数据目录\n当前：${current}\n默认：${fallback}`;
   }
   if (current) {
-    return `使用系统文件管理器打开用户数据目录\n目录：${current}`
+    return `使用系统文件管理器打开用户数据目录\n目录：${current}`;
   }
   if (fallback) {
-    return `使用系统文件管理器打开用户数据目录\n默认目录：${fallback}`
+    return `使用系统文件管理器打开用户数据目录\n默认目录：${fallback}`;
   }
-  return "使用系统文件管理器打开用户数据目录"
-})
+  return "使用系统文件管理器打开用户数据目录";
+});
 
 /**
  * 备份数据的工具提示内容
@@ -54,7 +55,7 @@ const backupTooltip = [
   "创建带时间戳的完整数据备份",
   "备份内容：配置文件、SSL证书、hosts备份",
   "备份位置：用户数据目录/backups/backup_时间戳/",
-].join("\n")
+].join("\n");
 
 /**
  * 还原数据的工具提示内容
@@ -63,7 +64,7 @@ const restoreTooltip = [
   "从最新备份恢复用户数据（覆盖现有数据）",
   "自动选择最新时间戳的备份进行还原",
   "注意：此操作会覆盖当前的配置和证书",
-].join("\n")
+].join("\n");
 
 /**
  * 清除数据的工具提示内容
@@ -72,60 +73,60 @@ const clearTooltip = [
   "删除所有用户数据（保留历史备份）",
   "清除内容：配置文件、SSL证书、hosts备份",
   "保留内容：backups文件夹及其历史备份",
-].join("\n")
+].join("\n");
 
 /**
  * 处理打开数据目录
  */
 const handleOpen = () => {
-  store.runUserDataOpenDir()
-}
+  store.runUserDataOpenDir();
+};
 
 /**
  * 处理备份数据
  */
 const handleBackup = () => {
-  store.runUserDataBackup()
-}
+  store.runUserDataBackup();
+};
 
 /**
  * 处理还原数据
  */
 const handleRestore = () => {
-  store.runUserDataRestoreLatest()
-}
+  store.runUserDataRestoreLatest();
+};
 
 /**
  * 处理清除数据
  */
 const handleClear = () => {
-  clearConfirmOpen.value = true
-}
+  clearConfirmOpen.value = true;
+};
 
 const cancelClear = () => {
-  clearConfirmOpen.value = false
-}
+  clearConfirmOpen.value = false;
+};
 
 const confirmClear = () => {
-  clearConfirmOpen.value = false
-  store.runUserDataClear()
-}
+  clearConfirmOpen.value = false;
+  store.runUserDataClear();
+};
 
 const openThemeDialog = () => {
-  themeDialogOpen.value = true
-}
+  themeDialogOpen.value = true;
+};
 
 const handleThemeSave = (value: ThemeConfig) => {
-  const normalized = sanitizeThemeConfig(value)
-  copyThemeConfig(themeConfig, normalized)
-  applyThemeConfig(themeConfig)
-  const saveResult = saveThemeToStorage(themeConfig)
+  const normalized = sanitizeThemeConfig(value);
+  copyThemeConfig(themeConfig, normalized);
+  applyThemeConfig(themeConfig);
+  const saveResult = saveThemeToStorage(themeConfig);
   if (saveResult.ok) {
-    store.appendLog("主题配置已保存")
-    return
+    store.appendLog("主题配置已保存");
+    return;
   }
-  store.appendLog(`主题配置已应用，但本地保存失败：${saveResult.error}`)
-}
+  store.appendLog(`主题配置已应用，但本地保存失败：${saveResult.error}`);
+};
 </script>
 
 <template>
@@ -154,7 +155,7 @@ const handleThemeSave = (value: ThemeConfig) => {
         <button
           class="mtga-btn-primary tooltip mtga-tooltip"
           :data-tip="backupTooltip"
-          style="--mtga-tooltip-max: 360px;"
+          style="--mtga-tooltip-max: 360px"
           @click="handleBackup"
         >
           备份数据
@@ -162,7 +163,7 @@ const handleThemeSave = (value: ThemeConfig) => {
         <button
           class="mtga-btn-outline tooltip mtga-tooltip"
           :data-tip="restoreTooltip"
-          style="--mtga-tooltip-max: 360px;"
+          style="--mtga-tooltip-max: 360px"
           @click="handleRestore"
         >
           还原数据
@@ -170,7 +171,7 @@ const handleThemeSave = (value: ThemeConfig) => {
         <button
           class="mtga-btn-error tooltip mtga-tooltip"
           :data-tip="clearTooltip"
-          style="--mtga-tooltip-max: 360px;"
+          style="--mtga-tooltip-max: 360px"
           @click="handleClear"
         >
           清除数据

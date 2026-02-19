@@ -251,21 +251,26 @@ commit_parsers = [
 ## 7. 验收清单（按顺序执行）
 
 1. 本地 dry-run 生成
+
 - 执行 `git-cliff`，确认每条记录带 commit inline link。
 
 2. 分类验证
+
 - 造一组 `feat`、`fix`、`style`、`docs(changelog)` 提交并打测试 tag。
 - 验证产出仅包含前三类。
 
 3. 范围验证
+
 - 连续打两个预发布 tag 后再打正式版。
 - 验证正式版范围仍从“上一正式版”开始，而不是从最近预发布开始。
 
 4. 强一致验证
+
 - 人为制造 `git push origin HEAD:tauri` 失败。
 - 验证 workflow 在 changelog 回写步骤失败并停止，不创建 Release。
 
 5. 可点击验证
+
 - 在 Release 页面与 `CHANGELOG.md` 中分别点击 commit 链接，均可跳转到对应 commit 页面。
 
 ## 8. 回退方案

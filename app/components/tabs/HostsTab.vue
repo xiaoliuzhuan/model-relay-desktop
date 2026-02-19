@@ -1,21 +1,21 @@
 <script setup lang="ts">
-const store = useMtgaStore()
+const store = useMtgaStore();
 
 const handleModify = () => {
-  store.runHostsModify("add")
-}
+  store.runHostsModify("add");
+};
 
 const handleBackup = () => {
-  store.runHostsModify("backup")
-}
+  store.runHostsModify("backup");
+};
 
 const handleRestore = () => {
-  store.runHostsModify("restore")
-}
+  store.runHostsModify("restore");
+};
 
 const handleOpen = () => {
-  store.runHostsOpen()
-}
+  store.runHostsOpen();
+};
 </script>
 
 <template>

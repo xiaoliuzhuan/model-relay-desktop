@@ -1,28 +1,28 @@
 export const getRuntimeTag = (): string => {
   if (typeof window === "undefined") {
-    return ""
+    return "";
   }
-  const runtime = window.__MTGA_RUNTIME__
+  const runtime = window.__MTGA_RUNTIME__;
   if (typeof runtime === "string" && runtime.trim()) {
-    return runtime.trim().toLowerCase()
+    return runtime.trim().toLowerCase();
   }
-  const tauriCore = window.__TAURI__?.core
-  return tauriCore?.invoke ? "tauri" : ""
-}
+  const tauriCore = window.__TAURI__?.core;
+  return tauriCore?.invoke ? "tauri" : "";
+};
 
-export const isTauriRuntime = (): boolean => getRuntimeTag() === "tauri"
+export const isTauriRuntime = (): boolean => getRuntimeTag() === "tauri";
 
 export const isBundledRuntime = (): boolean => {
   if (typeof window === "undefined") {
-    return false
+    return false;
   }
-  const runtime = window.__MTGA_RUNTIME__
+  const runtime = window.__MTGA_RUNTIME__;
   if (runtime === "tauri" || runtime === "nuitka") {
-    return true
+    return true;
   }
-  const protocol = window.location?.protocol?.replace(":", "")
+  const protocol = window.location?.protocol?.replace(":", "");
   if (protocol === "tauri") {
-    return true
+    return true;
   }
-  return window.location?.hostname === "tauri.localhost"
-}
+  return window.location?.hostname === "tauri.localhost";
+};

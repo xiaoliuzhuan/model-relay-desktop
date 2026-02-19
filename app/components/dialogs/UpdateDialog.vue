@@ -1,145 +1,142 @@
 <script setup lang="ts">
-import DOMPurify from "dompurify"
-import { isTauriRuntime } from "../../composables/runtime"
+import DOMPurify from "dompurify";
+import { isTauriRuntime } from "../../composables/runtime";
 
 /**
  * 更新提示对话框
  */
 const props = withDefaults(
   defineProps<{
-    open?: boolean
-    versionLabel?: string
-    notesHtml?: string
-    releaseUrl?: string
+    open?: boolean;
+    versionLabel?: string;
+    notesHtml?: string;
+    releaseUrl?: string;
   }>(),
   {
     open: false,
     versionLabel: "",
     notesHtml: "",
     releaseUrl: "",
-  }
-)
+  },
+);
 
 const emit = defineEmits<{
-  (event: "update:open", value: boolean): void
-  (event: "close"): void
-  (event: "open-release"): void
-}>()
+  (event: "update:open", value: boolean): void;
+  (event: "close"): void;
+  (event: "open-release"): void;
+}>();
 
 const openModel = computed({
   get: () => props.open,
   set: (value: boolean) => emit("update:open", value),
-})
+});
 
 const sanitizedNotesHtml = computed(() => {
-  const source = props.notesHtml?.trim() ?? ""
+  const source = props.notesHtml?.trim() ?? "";
   if (!source) {
-    return ""
+    return "";
   }
-  const sanitized = DOMPurify.sanitize(source, { WHOLE_DOCUMENT: true })
+  const sanitized = DOMPurify.sanitize(source, { WHOLE_DOCUMENT: true });
   if (!sanitized) {
-    return ""
+    return "";
   }
   if (typeof window === "undefined") {
-    return sanitized
+    return sanitized;
   }
   try {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(sanitized, "text/html")
-    const tauriRuntime = isTauriRuntime()
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(sanitized, "text/html");
+    const tauriRuntime = isTauriRuntime();
     doc.querySelectorAll("a[href]").forEach((anchor) => {
       if (tauriRuntime) {
-        anchor.removeAttribute("target")
-        anchor.removeAttribute("rel")
-        return
+        anchor.removeAttribute("target");
+        anchor.removeAttribute("rel");
+        return;
       }
-      anchor.setAttribute("target", "_blank")
-      anchor.setAttribute("rel", "noopener noreferrer")
-    })
-    const bodyHtml = doc.body?.innerHTML?.trim() ?? ""
-    return bodyHtml || sanitized
+      anchor.setAttribute("target", "_blank");
+      anchor.setAttribute("rel", "noopener noreferrer");
+    });
+    const bodyHtml = doc.body?.innerHTML?.trim() ?? "";
+    return bodyHtml || sanitized;
   } catch {
-    return sanitized
+    return sanitized;
   }
-})
+});
 
 const resolveExternalUrl = (href: string) => {
-  const trimmed = href.trim()
+  const trimmed = href.trim();
   if (!trimmed) {
-    return ""
+    return "";
   }
   if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed
+    return trimmed;
   }
   if (!props.releaseUrl) {
-    return trimmed
+    return trimmed;
   }
   try {
-    return new URL(trimmed, props.releaseUrl).toString()
+    return new URL(trimmed, props.releaseUrl).toString();
   } catch {
-    return trimmed
+    return trimmed;
   }
-}
+};
 
 const openExternalUrl = async (href: string) => {
-  const url = resolveExternalUrl(href)
+  const url = resolveExternalUrl(href);
   if (!url || typeof window === "undefined") {
-    return
+    return;
   }
   if (isTauriRuntime()) {
     try {
-      const { open } = await import("@tauri-apps/plugin-shell")
-      await open(url)
-      return
+      const { open } = await import("@tauri-apps/plugin-shell");
+      await open(url);
+      return;
     } catch (error) {
-      console.warn("[mtga] open notes link failed", error)
-      return
+      console.warn("[mtga] open notes link failed", error);
+      return;
     }
   }
-  const opened = window.open(url, "_blank", "noopener,noreferrer")
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
   if (!opened) {
-    window.location.href = url
+    window.location.href = url;
   }
-}
+};
 
 const handleNotesClick = async (event: MouseEvent) => {
-  const eventTarget = event.target
+  const eventTarget = event.target;
   if (!(eventTarget instanceof HTMLElement)) {
-    return
+    return;
   }
-  const anchor = eventTarget.closest("a")
+  const anchor = eventTarget.closest("a");
   if (!(anchor instanceof HTMLAnchorElement)) {
-    return
+    return;
   }
-  const href = anchor.getAttribute("href") ?? ""
+  const href = anchor.getAttribute("href") ?? "";
   if (!href) {
-    return
+    return;
   }
-  event.preventDefault()
-  await openExternalUrl(href)
-}
+  event.preventDefault();
+  await openExternalUrl(href);
+};
 
 const handleDialogClose = () => {
-  emit("close")
-}
+  emit("close");
+};
 
 const handleOpenRelease = () => {
-  emit("open-release")
-}
+  emit("open-release");
+};
 </script>
 
 <template>
-  <MtgaDialog
-    v-model:open="openModel"
-    max-width="max-w-md"
-    @close="handleDialogClose"
-  >
+  <MtgaDialog v-model:open="openModel" max-width="max-w-md" @close="handleDialogClose">
     <template #header>
       <div class="flex items-center justify-between bg-white/50">
-        <h3 class="mtga-card-title text-lg!">
-          发现新版本
-        </h3>
-        <div v-if="props.versionLabel" class="mtga-chip bg-amber-50 border-amber-200! text-amber-700 font-medium">
+        <h3 class="mtga-card-title text-lg!">发现新版本</h3>
+        <div
+          v-if="props.versionLabel"
+          class="mtga-chip bg-amber-50 border-amber-200! text-amber-700 font-medium"
+        >
           {{ props.versionLabel }}
         </div>
       </div>
@@ -154,9 +151,7 @@ const handleOpenRelease = () => {
         <!-- eslint-disable vue/no-v-html -->
         <div
           v-if="sanitizedNotesHtml"
-          class="text-sm text-slate-600 leading-relaxed wrap-break-word space-y-2
-                  [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1
-                  [&_a]:text-amber-600 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-amber-700"
+          class="text-sm text-slate-600 leading-relaxed wrap-break-word space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1 [&_a]:text-amber-600 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-amber-700"
           v-html="sanitizedNotesHtml"
         />
         <!-- eslint-enable vue/no-v-html -->

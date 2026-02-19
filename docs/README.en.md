@@ -4,7 +4,7 @@
     <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
-[![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](<https://img.shields.io/badge/docs-Português-purple>)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
+[![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## Introduction
 
@@ -54,6 +54,7 @@ MTGA is a local proxy-based IDE fixed model provider solution for Windows and ma
 ## Changelog
 
 ### v1.2.0 (Latest)
+
 - 🔄 **Refactored Model Mapping Architecture** - Changed from "One-to-One Mapping" to "Unified Mapping Model" architecture
   - Trae side uses a unified mapping model ID, MTGA switches the actual backend model through configuration groups
   - Proxy server supports model ID mapping and MTGA authentication verification
@@ -69,7 +70,7 @@ MTGA is a local proxy-based IDE fixed model provider solution for Windows and ma
 - 🎯 **Enhanced User Experience** - Added liveness test button and detailed prompts
   - Liveness test button supports tooltip hints explaining token consumption risks
   - Asynchronous testing to avoid UI blocking with improved error handling mechanism
-  - API Key security display (masked) 
+  - API Key security display (masked)
 
 <details>
 <summary>Changelog</summary>
@@ -118,6 +119,7 @@ MTGA is a local proxy-based IDE fixed model provider solution for Windows and ma
 6. After completion, proceed with IDE configuration according to [Step 5: Configure Trae IDE](#第-5-步配置-trae-ide)
 
 > [!NOTE]
+>
 > - First run may require allowing firewall access permissions
 > - The single-file version supports persistent storage of user data; configurations and certificates are automatically saved
 > - If adding a model on the Trae side fails, please refer to [Troubleshooting 'Add Model Failed' Prompt on Trae Side](#troubleshooting-add-model-failed-prompt-on-trae-side)
@@ -148,6 +150,7 @@ MTGA is a local proxy-based IDE fixed model provider solution for Windows and ma
 7. Complete the setup by following the [Trae IDE Configuration](#第-5-步配置-trae-ide) below
 
 > [!NOTE]
+>
 > - Certificate installation and hosts modification require administrator privileges
 > - If prompted with "The package is damaged", please refer to [macOS Fix "The package is damaged" Issue](#macos-fix-the-package-is-damaged-issue)
 > - If adding a model on the Trae side fails, please refer to [Troubleshooting 'Add Model Failed' Prompt on Trae Side](#troubleshooting-add-model-failed-prompt-on-trae-side)
@@ -184,9 +187,11 @@ If you see a prompt like this when launching `MTGA_GUI.app`:
 ## Troubleshooting 'Add Model Failed' Prompt on Trae Side
 
 Please check:
+
 - Whether the hosts file contains the line `127.0.0.1 api.openai.com`, and that it is not commented out (starting with #).
 - Ensure no other programs are using port 443 (such as browsers, VPNs, etc.).
   - You can check using the following commands:
+
     ```
     # windows
     netstat -ano | find ":443" | find "LISTENING"
@@ -194,6 +199,7 @@ Please check:
     # macos
     netstat -lnp tcp | grep :443
     ```
+
   - If there is a process listening on port 443, it is recommended to close that process.
 
 ---
@@ -223,8 +229,8 @@ cd "mtga/ca"
 
 When executing `./genca.sh`, it will ask "Do you want to generate ca cert and key? [yes/no]". Enter `y` and press Enter. Afterwards, it will prompt for some information:
 
-*   `Country Name (2 letter code) []`: Enter `CN` (or another country code)
-*   Other fields (like State, Locality, Organization, Common Name for CA) can be filled as needed or left blank; it's suggested to fill them with `X`. The Common Name can be something like `MTGA_CA`. The email field can be left empty.
+- `Country Name (2 letter code) []`: Enter `CN` (or another country code)
+- Other fields (like State, Locality, Organization, Common Name for CA) can be filled as needed or left blank; it's suggested to fill them with `X`. The Common Name can be something like `MTGA_CA`. The email field can be left empty.
 
 ```bash
 # 2. Generate the SSL certificate for api.openai.com (api.openai.com.crt and api.openai.com.key)
@@ -234,10 +240,10 @@ When executing `./genca.sh`, it will ask "Do you want to generate ca cert and ke
 
 After execution completes, you will find the following important files in the `mtga\ca` directory:
 
-*   `ca.crt` (Your custom CA certificate)
-*   `ca.key` (Your custom CA private key - **DO NOT LEAK**)
-*   `api.openai.com.crt` (SSL certificate for the local proxy server)
-*   `api.openai.com.key` (SSL private key for the local proxy server - **DO NOT LEAK**)
+- `ca.crt` (Your custom CA certificate)
+- `ca.key` (Your custom CA private key - **DO NOT LEAK**)
+- `api.openai.com.crt` (SSL certificate for the local proxy server)
+- `api.openai.com.key` (SSL private key for the local proxy server - **DO NOT LEAK**)
 
 ##### Step 2: Make Windows Trust Your CA Certificate
 
@@ -272,9 +278,9 @@ You need to modify the Hosts file with administrator privileges to point `api.op
     pip install Flask requests
     ```
 2.  **Configure the Script**:
-    *   Open the `trae_proxy.py` file.
-    *   **Modify `TARGET_API_BASE_URL`**: Replace it with the base URL of the actual OpenAI-format API site you want to connect to (e.g., `"https://your-api.example.com"`).
-    *   **Confirm Certificate Paths**: The script defaults to reading `api.openai.com.crt` and `api.openai.com.key` from `mtga\ca`. If your certificates are not in this path, modify the values of `CERT_FILE` and `KEY_FILE`, or copy these two files to the `CERT_DIR` specified by the script.
+    - Open the `trae_proxy.py` file.
+    - **Modify `TARGET_API_BASE_URL`**: Replace it with the base URL of the actual OpenAI-format API site you want to connect to (e.g., `"https://your-api.example.com"`).
+    - **Confirm Certificate Paths**: The script defaults to reading `api.openai.com.crt` and `api.openai.com.key` from `mtga\ca`. If your certificates are not in this path, modify the values of `CERT_FILE` and `KEY_FILE`, or copy these two files to the `CERT_DIR` specified by the script.
 
 **Run the Proxy Server:**
 
@@ -294,8 +300,8 @@ If everything goes well, you should see the server startup logs.
 4.  **Model**: Select "Custom Model".
 5.  **Model ID**: Enter the value you defined for `CUSTOM_MODEL_ID` in the Python script (e.g., `my-custom-local-model`).
 6.  **API Key**:
-    *   If your target API requires an API key and Trae will pass it via `Authorization: Bearer <key>`, then the key entered here will be forwarded by the Python proxy.
-    *   When configuring OpenAI in Trae, the API key is related to the `remove_reasoning_content` configuration. Our Python proxy does not handle this logic; it simply forwards the Authorization header. You can try entering the key required by your target API, or an arbitrary key in the `sk-xxxx` format.
+    - If your target API requires an API key and Trae will pass it via `Authorization: Bearer <key>`, then the key entered here will be forwarded by the Python proxy.
+    - When configuring OpenAI in Trae, the API key is related to the `remove_reasoning_content` configuration. Our Python proxy does not handle this logic; it simply forwards the Authorization header. You can try entering the key required by your target API, or an arbitrary key in the `sk-xxxx` format.
 
 7.  Click "Add Model".
 8.  Return to the AI chat box and select the custom model you just added from the lower right corner.
@@ -304,10 +310,10 @@ Now, when you interact with this custom model through Trae, the requests should 
 
 **Troubleshooting Tips:**
 
-*   **Port Conflict**: If port 443 is already occupied (e.g., by IIS, Skype, or other services), the Python script will fail to start. You need to stop the service occupying that port, or modify the Python script and Nginx (if used) to listen on a different port (though this is more complex because Trae hardcodes access to `https://api.openai.com` on port 443).
-*   **Firewall**: Ensure the Windows firewall allows inbound connections for Python listening on port 443 (even though it's a local connection `127.0.0.1`, firewall configuration is usually not required, but it's worth checking).
-*   **Certificate Issues**: If Trae reports SSL/TLS related errors, carefully check if the CA certificate has been correctly installed into the "Trusted Root Certification Authorities" store, and if the Python proxy correctly loaded `api.openai.com.crt` and `.key`.
-*   **Proxy Logs**: The Python script will print some logs that can help you diagnose issues.
+- **Port Conflict**: If port 443 is already occupied (e.g., by IIS, Skype, or other services), the Python script will fail to start. You need to stop the service occupying that port, or modify the Python script and Nginx (if used) to listen on a different port (though this is more complex because Trae hardcodes access to `https://api.openai.com` on port 443).
+- **Firewall**: Ensure the Windows firewall allows inbound connections for Python listening on port 443 (even though it's a local connection `127.0.0.1`, firewall configuration is usually not required, but it's worth checking).
+- **Certificate Issues**: If Trae reports SSL/TLS related errors, carefully check if the CA certificate has been correctly installed into the "Trusted Root Certification Authorities" store, and if the Python proxy correctly loaded `api.openai.com.crt` and `.key`.
+- **Proxy Logs**: The Python script will print some logs that can help you diagnose issues.
 
 This solution is more integrated than the direct vproxy + nginx approach, placing both TLS termination and proxy logic within a single Python script, making it more suitable for rapid prototyping on Windows.
 

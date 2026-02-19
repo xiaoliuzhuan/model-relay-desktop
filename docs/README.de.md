@@ -4,7 +4,7 @@
     <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
-[![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](<https://img.shields.io/badge/docs-Português-purple>)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
+[![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## Einführung
 
@@ -53,6 +53,7 @@ MTGA ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellan
 ## Changelog
 
 ### v1.2.0 (Neueste)
+
 - 🔄 **Umstrukturierung der Modellzuordnungsarchitektur** – von "Eins-zu-Eins-Zuordnung" zu einer "einheitlichen Modellzuordnungsarchitektur"
   - Der trae-Endpunkt verwendet eine einheitliche Zuordnungsmodell-ID, MTGA wechselt über die Konfigurationsgruppe das tatsächliche Backend-Modell
   - Der Proxy-Server unterstützt Modell-ID-Zuordnung und MTGA Authentifizierungsprüfung
@@ -117,6 +118,7 @@ MTGA ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellan
 6. Nach Abschluss führen Sie die IDE-Konfiguration gemäß [Schritt 5: Trae IDE konfigurieren](#第-5-步配置-trae-ide) durch
 
 > [!NOTE]
+>
 > - Bei der ersten Ausführung müssen möglicherweise Firewall-Zugriffsberechtigungen erteilt werden
 > - Die Einzeldatei-Version unterstützt persistente Speicherung von Benutzerdaten, Konfigurationen und Zertifikate werden automatisch gespeichert
 
@@ -146,6 +148,7 @@ MTGA ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellan
 7. Führen Sie die Einrichtung gemäß der untenstehenden [Trae IDE Konfiguration](#第-5-步配置-trae-ide) ab
 
 > [!NOTE]
+>
 > - Die Installation des Zertifikats und die Änderung der Hosts erfordern Administratorrechte
 > - Wenn die Meldung „Paket ist beschädigt“ erscheint, siehe [macOS Lösung für das Problem „Paket ist beschädigt“](#macos-lösung-für-das-problem-paket-ist-beschädigt)
 
@@ -205,8 +208,8 @@ cd "mtga/ca"
 
 Bei Ausführung von `./genca.sh` wird gefragt: "Do you want to generate ca cert and key? [yes/no]". Eingabe `y` und Enter drücken. Anschließend werden einige Informationen abgefragt:
 
-*   `Country Name (2 letter code) []`: `CN` eingeben (oder anderer Ländercode)
-*   Andere Felder (wie State, Locality, Organization, Common Name for CA) können nach Bedarf ausgefüllt oder leer gelassen werden, `X` wird empfohlen. Common Name kann z.B. `MTGA_CA` sein. E-Mail kann leer bleiben.
+- `Country Name (2 letter code) []`: `CN` eingeben (oder anderer Ländercode)
+- Andere Felder (wie State, Locality, Organization, Common Name for CA) können nach Bedarf ausgefüllt oder leer gelassen werden, `X` wird empfohlen. Common Name kann z.B. `MTGA_CA` sein. E-Mail kann leer bleiben.
 
 ```bash
 # 2. SSL-Zertifikat für api.openai.com generieren (api.openai.com.crt und api.openai.com.key)
@@ -216,10 +219,10 @@ Bei Ausführung von `./genca.sh` wird gefragt: "Do you want to generate ca cert 
 
 Nach Abschluss finden Sie im Verzeichnis `mtga\ca` folgende wichtige Dateien:
 
-*   `ca.crt` (Ihr benutzerdefiniertes CA-Zertifikat)
-*   `ca.key` (Ihr benutzerdefinierter CA-Private Key - **nicht weitergeben**)
-*   `api.openai.com.crt` (SSL-Zertifikat für lokalen Proxy-Server)
-*   `api.openai.com.key` (SSL-Private Key für lokalen Proxy-Server - **nicht weitergeben**)
+- `ca.crt` (Ihr benutzerdefiniertes CA-Zertifikat)
+- `ca.key` (Ihr benutzerdefinierter CA-Private Key - **nicht weitergeben**)
+- `api.openai.com.crt` (SSL-Zertifikat für lokalen Proxy-Server)
+- `api.openai.com.key` (SSL-Private Key für lokalen Proxy-Server - **nicht weitergeben**)
 
 ##### Schritt 2: CA-Zertifikat unter Windows vertrauen
 
@@ -254,9 +257,9 @@ Hosts-Datei mit Admin-Rechten bearbeiten, um `api.openai.com` auf localhost umzu
     pip install Flask requests
     ```
 2.  **Skript konfigurieren**:
-    *   Öffnen Sie die Datei `trae_proxy.py`.
-    *   **Ändern Sie `TARGET_API_BASE_URL`**: Ersetzen Sie diese durch die Basis-URL der OpenAI-formatieren API der Website, mit der Sie sich tatsächlich verbinden möchten (z.B.: `"https://your-api.example.com"`).
-    *   **Zertifikatspfad bestätigen**: Das Skript liest standardmäßig `api.openai.com.crt` und `api.openai.com.key` aus `mtga\ca`. Wenn sich Ihre Zertifikate nicht in diesem Pfad befinden, ändern Sie bitte die Werte für `CERT_FILE` und `KEY_FILE`, oder kopieren Sie diese beiden Dateien in das vom Skript angegebene `CERT_DIR`.
+    - Öffnen Sie die Datei `trae_proxy.py`.
+    - **Ändern Sie `TARGET_API_BASE_URL`**: Ersetzen Sie diese durch die Basis-URL der OpenAI-formatieren API der Website, mit der Sie sich tatsächlich verbinden möchten (z.B.: `"https://your-api.example.com"`).
+    - **Zertifikatspfad bestätigen**: Das Skript liest standardmäßig `api.openai.com.crt` und `api.openai.com.key` aus `mtga\ca`. Wenn sich Ihre Zertifikate nicht in diesem Pfad befinden, ändern Sie bitte die Werte für `CERT_FILE` und `KEY_FILE`, oder kopieren Sie diese beiden Dateien in das vom Skript angegebene `CERT_DIR`.
 
 **Proxy-Server ausführen:**
 
@@ -276,8 +279,8 @@ Wenn alles reibungslos verläuft, sollten Sie die Startprotokolle des Servers se
 4.  **Modell**: Wählen Sie "Benutzerdefiniertes Modell".
 5.  **Modell-ID**: Geben Sie den Wert ein, den Sie im Python-Skript unter `CUSTOM_MODEL_ID` definiert haben (z.B.: `my-custom-local-model`).
 6.  **API-Schlüssel**:
-    *   Wenn Ihre Ziel-API einen API-Schlüssel benötigt und Trae diesen über `Authorization: Bearer <key>` übergibt, wird der hier eingegebene Schlüssel vom Python-Proxy weitergeleitet.
-    *   Bei der Konfiguration von OpenAI in Trae hängt der API-Schlüssel mit der `remove_reasoning_content`-Konfiguration zusammen. Unser Python-Proxy verarbeitet diese Logik nicht, er leitet den Authorization-Header einfach weiter. Sie können versuchen, den für Ihre Ziel-API erforderlichen Schlüssel oder einen beliebigen Schlüssel im Format `sk-xxxx` einzugeben.
+    - Wenn Ihre Ziel-API einen API-Schlüssel benötigt und Trae diesen über `Authorization: Bearer <key>` übergibt, wird der hier eingegebene Schlüssel vom Python-Proxy weitergeleitet.
+    - Bei der Konfiguration von OpenAI in Trae hängt der API-Schlüssel mit der `remove_reasoning_content`-Konfiguration zusammen. Unser Python-Proxy verarbeitet diese Logik nicht, er leitet den Authorization-Header einfach weiter. Sie können versuchen, den für Ihre Ziel-API erforderlichen Schlüssel oder einen beliebigen Schlüssel im Format `sk-xxxx` einzugeben.
 
 7.  Klicken Sie auf "Modell hinzufügen".
 8.  Kehren Sie zum KI-Chatfeld zurück und wählen Sie unten rechts Ihr soeben hinzugefügtes benutzerdefiniertes Modell aus.
@@ -286,10 +289,10 @@ Wenn Sie nun über Trae mit diesem benutzerdefinierten Modell interagieren, soll
 
 **Hinweise zur Fehlerbehebung:**
 
-*   **Portkonflikte**: Wenn Port 443 bereits belegt ist (z.B. durch IIS, Skype oder andere Dienste), schlägt das Starten des Python-Skripts fehl. Sie müssen den Dienst beenden, der den Port belegt, oder das Python-Skript und Nginx (falls verwendet) so ändern, dass sie einen anderen Port überwachen (dies ist jedoch komplexer, da Trae den Zugriff auf `https://api.openai.com` über Port 443 hartkodiert).
-*   **Firewall**: Stellen Sie sicher, dass die Windows-Firewall eingehende Verbindungen an Port 443 für Python zulässt (obwohl es sich um eine lokale Verbindung `127.0.0.1` handelt, ist normalerweise keine spezielle Firewall-Konfiguration erforderlich, aber eine Überprüfung ist dennoch ratsam).
-*   **Zertifikatsprobleme**: Wenn Trae SSL/TLS-bezogene Fehler meldet, überprüfen Sie sorgfältig, ob das CA-Zertifikat korrekt unter "Vertrauenswürdige Stammzertifizierungsstellen" installiert ist und ob der Python-Proxy `api.openai.com.crt` und `.key` korrekt lädt.
-*   **Proxy-Protokolle**: Das Python-Skript gibt einige Protokolle aus, die bei der Problemdiagnose helfen können.
+- **Portkonflikte**: Wenn Port 443 bereits belegt ist (z.B. durch IIS, Skype oder andere Dienste), schlägt das Starten des Python-Skripts fehl. Sie müssen den Dienst beenden, der den Port belegt, oder das Python-Skript und Nginx (falls verwendet) so ändern, dass sie einen anderen Port überwachen (dies ist jedoch komplexer, da Trae den Zugriff auf `https://api.openai.com` über Port 443 hartkodiert).
+- **Firewall**: Stellen Sie sicher, dass die Windows-Firewall eingehende Verbindungen an Port 443 für Python zulässt (obwohl es sich um eine lokale Verbindung `127.0.0.1` handelt, ist normalerweise keine spezielle Firewall-Konfiguration erforderlich, aber eine Überprüfung ist dennoch ratsam).
+- **Zertifikatsprobleme**: Wenn Trae SSL/TLS-bezogene Fehler meldet, überprüfen Sie sorgfältig, ob das CA-Zertifikat korrekt unter "Vertrauenswürdige Stammzertifizierungsstellen" installiert ist und ob der Python-Proxy `api.openai.com.crt` und `.key` korrekt lädt.
+- **Proxy-Protokolle**: Das Python-Skript gibt einige Protokolle aus, die bei der Problemdiagnose helfen können.
 
 Diese Lösung ist etwas integrierter als der direkte Ansatz mit vproxy + nginx, da sowohl die TLS-Terminierung als auch die Proxy-Logik in einem Python-Skript zusammengefasst sind, was sie besser für schnelle Prototypenvalidierungen unter Windows geeignet macht.
 

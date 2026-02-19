@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MainTabKey } from "~/composables/mtgaTypes"
+import type { MainTabKey } from "~/composables/mtgaTypes";
 
 const tabs: { key: MainTabKey; label: string }[] = [
   { key: "cert", label: "证书管理" },
@@ -9,7 +9,7 @@ const tabs: { key: MainTabKey; label: string }[] = [
 
 const activeTab = ref<MainTabKey>("cert");
 const direction = ref<"right" | "left">("right");
-const { mainTabTarget, mainTabSignal } = useMtgaStore()
+const { mainTabTarget, mainTabSignal } = useMtgaStore();
 
 /**
  * 处理标签页切换
@@ -27,14 +27,14 @@ const selectTab = (key: MainTabKey) => {
 
 const applyMainTabTarget = (target: MainTabKey | null) => {
   if (!target) {
-    return
+    return;
   }
-  selectTab(target)
-}
+  selectTab(target);
+};
 
 watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
   immediate: true,
-})
+});
 </script>
 
 <template>
@@ -52,7 +52,11 @@ watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
       role="tab"
       type="button"
       class="cursor-pointer px-3 py-2 text-sm font-medium text-slate-500 transition-colors duration-150"
-      :class="activeTab === tab.key ? 'border-b-2 border-amber-500 text-slate-900' : 'border-b-2 border-transparent hover:text-slate-800'"
+      :class="
+        activeTab === tab.key
+          ? 'border-b-2 border-amber-500 text-slate-900'
+          : 'border-b-2 border-transparent hover:text-slate-800'
+      "
       :aria-selected="activeTab === tab.key"
       @click="selectTab(tab.key)"
     >
@@ -62,7 +66,9 @@ watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
 
   <Transition
     enter-active-class="transition duration-200 ease-out"
-    :enter-from-class="direction === 'right' ? 'opacity-0 translate-x-8' : 'opacity-0 -translate-x-8'"
+    :enter-from-class="
+      direction === 'right' ? 'opacity-0 translate-x-8' : 'opacity-0 -translate-x-8'
+    "
     enter-to-class="opacity-100 translate-x-0"
     leave-active-class="transition duration-150 ease-in"
     leave-from-class="opacity-100 translate-x-0"

@@ -3,6 +3,7 @@
 本文件合并原有分析/计划/配置说明，用于指导从 Tkinter UI 迁移到 `mtga-tauri/app/`。
 
 ## 迁移目标与组件拆分
+
 - 页面级布局：`AppShell`（标题 + 分栏）
 - 主要组件：
   - `ConfigGroupPanel`、`GlobalConfigPanel`、`RuntimeOptionsPanel`
@@ -11,6 +12,7 @@
   - `UpdateDialog`、`ConfirmDialog`
 
 ## 页面骨架建议（目录结构）
+
 ```
 app/
   app.vue
@@ -35,18 +37,21 @@ app/
 ```
 
 ## 迁移顺序建议
-1) 布局 + 日志面板
-2) 配置组 / 全局配置 / 运行时选项
-3) Tabs 功能区
-4) 更新弹窗与确认弹窗
+
+1. 布局 + 日志面板
+2. 配置组 / 全局配置 / 运行时选项
+3. Tabs 功能区
+4. 更新弹窗与确认弹窗
 
 ## 当前进度摘要（便于恢复上下文）
+
 - 已确定 UI 技术选型：Tailwind + daisyUI（基于 daisyUI 5 / Tailwind v4 的 CSS-first 配置方式）。
 - 已搭建组件骨架：`AppShell`、`LogPanel`、`FooterActions`、`panels/*`、`tabs/*`、`dialogs/*`。
 - 已在 `mtga-tauri/app/app.vue` 挂载骨架布局：左侧面板 + Tabs，右侧日志面板，底部按钮。
 - 交互方式确认：前端通过 `pyInvoke` 调用 Python 后端命令（pytauri-wheel）。
 
 ## TODO（下一步执行清单）
+
 - [x] 安装并启用 Tailwind + daisyUI（创建 `mtga-tauri/app/assets/css/tailwind.css`，在 `mtga-tauri/nuxt.config.ts` 引入）。
 - [x] `MainTabs` 支持切换并挂载各 Tab 内容（证书/hosts/代理/数据/关于）。
 - [x] `ConfigGroupPanel` 改为可交互：列表数据、选中状态、增删改弹窗。
@@ -56,6 +61,7 @@ app/
 - [x] 用 `pyInvoke` 串起最小功能链路（例如 `greet` -> 日志输出）。
 
 ## 现有 UI 功能梳理
+
 - **整体布局**：标题 + 左右分栏，左侧操作区，右侧日志滚动面板。
 - **配置区**：配置组列表（含新增/修改/删除/上移/下移/测活/刷新）、全局配置（映射模型 ID / MTGA 鉴权 Key）。
 - **运行时选项**：调试模式、关闭 SSL 严格模式、强制流模式。
@@ -68,15 +74,20 @@ app/
 - **更新弹窗**：展示 HTML release notes + 跳转发布页
 
 ## 交互方式（pytauri-wheel）
+
 前端通过 `tauri-plugin-pytauri-api` 调用 Python 后端：
+
 ```ts
 import { pyInvoke } from "tauri-plugin-pytauri-api";
 const msg = await pyInvoke("greet", { name: "bifang" });
 ```
+
 需要对接的能力包括：配置读写、证书/hosts/代理操作、用户数据管理、更新检查、运行环境标志。
 
 ## 前后端契约（pyInvoke 命令）
+
 ### 已实现
+
 ```
 greet({ name: string }) -> string
 
@@ -106,6 +117,7 @@ is_packaged() -> boolean
 ```
 
 ### 待实现（优先按 UI 按钮接入）
+
 ```
 generate_certificates()
 install_ca_cert()
@@ -128,6 +140,7 @@ check_updates()
 ```
 
 ## 状态字段定义（前端 store）
+
 ```
 config_groups: ConfigGroup[]
 current_config_index: number
@@ -151,6 +164,7 @@ show_data_tab: boolean
 ```
 
 ## ConfigGroup 结构
+
 ```
 type ConfigGroup = {
   name?: string
@@ -164,6 +178,7 @@ type ConfigGroup = {
 ```
 
 ## 旧 Tkinter 功能 → 新 UI 按钮映射
+
 ```
 ConfigGroupPanel:
   测活 -> test_chat_completion
@@ -206,12 +221,15 @@ AboutTab:
 ```
 
 ## Tailwind + daisyUI 最小集成（按 daisyUI 5 / Tailwind v4）
+
 依赖（示例 pnpm）：
+
 ```bash
 pnpm add -D tailwindcss daisyui
 ```
 
 `mtga-tauri/app/assets/css/tailwind.css`：
+
 ```css
 @import "tailwindcss";
 @plugin "daisyui";
@@ -223,13 +241,15 @@ pnpm add -D tailwindcss daisyui
 ```
 
 `mtga-tauri/nuxt.config.ts` 引入样式：
+
 ```ts
 export default defineNuxtConfig({
-  css: ['./app/assets/css/tailwind.css'],
-})
+  css: ["./app/assets/css/tailwind.css"],
+});
 ```
 
 常用组件类：
+
 - Tabs：`tabs` / `tab`
 - Dialog：`modal` / `modal-box`
 - Tooltip：`tooltip`
@@ -238,56 +258,72 @@ export default defineNuxtConfig({
 - 按钮：`btn` + `btn-primary/secondary`
 
 ## 迁移期开发环境下的开发方法
+
 ### 后端工程化
+
 在 `mtga-tauri/python-src` 下：
+
 ```bash
 uv venv
 uv pip install -e .
 ```
 
 ### 启动前端
+
 在 `mtga-tauri/app` 下：
+
 ```bash
 pnpm dev
 ```
 
 ### 启动后端
+
 在 `mtga-tauri/python-src` 下：
+
 ```pwsh
 $env:DEV_SERVER="http://localhost:3000"; $env:MTGA_SRC_TAURI_DIR="..\\src-tauri"; uv run python -m mtga_app
 ```
 
 ## 打包：嵌入 Python（Tauri bundle）
+
 ### 1) 准备嵌入解释器
+
 - 目录 `mtga-tauri/src-tauri/pyembed/...` 需要先准备。
 - 使用 `python-build-standalone` 解压到 `mtga-tauri/src-tauri/pyembed/`：
   - Windows：`mtga-tauri/src-tauri/pyembed/python/python.exe`
   - macOS：`mtga-tauri/src-tauri/pyembed/python/bin/python3`
 
 ### 2) 安装后端到嵌入解释器
+
 在 `mtga-tauri/src-tauri`：
 
 Windows：
+
 ```pwsh
 $env:PYTAURI_STANDALONE="1"
 uv pip install --exact --python ".\pyembed\python\python.exe" --reinstall-package mtga-app "..\python-src"
 ```
 
 macOS：
+
 ```zsh
 export PYTAURI_STANDALONE="1"
 uv pip install --exact --python "./pyembed/python/bin/python3" --reinstall-package mtga-app "../python-src"
 ```
 
 ### 3) 放置 .env（必需）
+
 后端强依赖 `.env`（`MTGA_MODULES_SOURCE` / `MTGA_PATH_STRICT` 必填），需保证嵌入解释器可读取：
+
 - Windows：`mtga-tauri/src-tauri/pyembed/python/Lib/.env`
 - macOS：`mtga-tauri/src-tauri/pyembed/python/lib/python3.13/.env`（按实际版本调整）
 
 或在启动器中设置 `MTGA_ENV_FILE` 指向 `.env` 绝对路径。
 
 ### 4) 配置 tauri-cli（仅打包用）
+
 新建 `mtga-tauri/src-tauri/tauri.bundle.json`：
+
 ```json
 {
   "bundle": {
@@ -299,15 +335,19 @@ uv pip install --exact --python "./pyembed/python/bin/python3" --reinstall-packa
   }
 }
 ```
+
 > 不要把 `bundle.resources` 写进 `tauri.conf.json`，而是用 `--config` 传入。
 
 同时建议在 `mtga-tauri/src-tauri/.taurignore` 中加入：
+
 ```
 /pyembed/
 ```
+
 避免 `tauri dev` 每次复制庞大的解释器目录。
 
 `mtga-tauri/src-tauri/Cargo.toml` 增加：
+
 ```toml
 [profile.bundle-dev]
 inherits = "dev"
@@ -317,12 +357,16 @@ inherits = "release"
 ```
 
 ### 5) Build & Bundle（环境变量 + 最终打包命令）
+
 **回到 `mtga-tauri` 根目录下。**
 设置编译期 Python：
+
 ```pwsh
 $env:PYO3_PYTHON = (Resolve-Path -LiteralPath ".\src-tauri\pyembed\python\python.exe").Path
 ```
+
 macOS 还需：
+
 ```zsh
 export PYO3_PYTHON=$(realpath ./src-tauri/pyembed/python/bin/python3)
 export RUSTFLAGS=" \
@@ -333,13 +377,16 @@ install_name_tool -id '@rpath/libpython3.13.dylib' \
 ```
 
 最终打包：
+
 ```bash
 pnpm -- tauri build --config="src-tauri/tauri.bundle.json" -- --profile bundle-release
 ```
 
 ### Windows 安装器/应用图标配置
-1) **NSIS 安装包（setup.exe）图标**
-在 `mtga-tauri/src-tauri/tauri.conf.json`：
+
+1. **NSIS 安装包（setup.exe）图标**
+   在 `mtga-tauri/src-tauri/tauri.conf.json`：
+
 ```json
 "bundle": {
   "windows": {
@@ -350,8 +397,9 @@ pnpm -- tauri build --config="src-tauri/tauri.bundle.json" -- --profile bundle-r
 }
 ```
 
-2) **应用图标（程序窗口/任务栏/快捷方式）**
-在同一文件的 `bundle.icon` 中配置 `.ico`（Windows）：
+2. **应用图标（程序窗口/任务栏/快捷方式）**
+   在同一文件的 `bundle.icon` 中配置 `.ico`（Windows）：
+
 ```json
 "bundle": {
   "icon": [
@@ -360,8 +408,9 @@ pnpm -- tauri build --config="src-tauri/tauri.bundle.json" -- --profile bundle-r
 }
 ```
 
-3) **MSI 安装界面图片（WiX banner/dialog BMP）**
-在 `mtga-tauri/src-tauri/tauri.conf.json`：
+3. **MSI 安装界面图片（WiX banner/dialog BMP）**
+   在 `mtga-tauri/src-tauri/tauri.conf.json`：
+
 ```json
 "bundle": {
   "windows": {
@@ -374,7 +423,9 @@ pnpm -- tauri build --config="src-tauri/tauri.bundle.json" -- --profile bundle-r
 ```
 
 ### MSI 图片生成（PowerShell 快速生成）
+
 使用现有 logo 生成 WiX 需要的两张 BMP：
+
 ```pwsh
 Add-Type -AssemblyName System.Drawing
 $logoPath = (Resolve-Path -LiteralPath ".\src-tauri\icons\128x128@2x.png").Path
@@ -398,6 +449,7 @@ $dialog.Save((Join-Path $iconsDir "wix-dialog.bmp"), [System.Drawing.Imaging.Ima
 ```
 
 ## Tauri 后端模块/资源对齐（关键约定）
+
 - 采用“复制方案”：`mtga-tauri/python-src/modules` 作为 Tauri 侧核心逻辑来源，仓库根 `modules` 仅供旧 GUI 使用。
 - `mtga-tauri/.env` 为唯一配置入口（支持 `MTGA_ENV_FILE` 覆盖路径），必须设置：
   - `MTGA_MODULES_SOURCE`（auto/local/root）

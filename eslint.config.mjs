@@ -1,9 +1,9 @@
-import withNuxt from "./.nuxt/eslint.config.mjs"
-import betterTailwind from "eslint-plugin-better-tailwindcss"
-import eslintConfigPrettier from "eslint-config-prettier/flat"
-import eslintPluginPrettier from "eslint-plugin-prettier"
-import * as yamlParser from "yaml-eslint-parser"
-import * as eslintPluginYml from "eslint-plugin-yml"
+import withNuxt from "./.nuxt/eslint.config.mjs";
+import betterTailwind from "eslint-plugin-better-tailwindcss";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
+import eslintPluginPrettier from "eslint-plugin-prettier";
+import * as yamlParser from "yaml-eslint-parser";
+import * as eslintPluginYml from "eslint-plugin-yml";
 
 export default withNuxt(
   {
@@ -77,7 +77,7 @@ export default withNuxt(
         Object.entries(betterTailwind.configs.recommended.rules).map(([key, value]) => [
           key,
           value === "error" ? "warn" : value,
-        ])
+        ]),
       ),
       "better-tailwindcss/no-unregistered-classes": "off", // daisyUI 类名经常被识别为未注册，暂时关闭
       "better-tailwindcss/enforce-consistent-class-order": "off", // 排序规则太严格，暂时关闭
@@ -94,5 +94,5 @@ export default withNuxt(
     },
   },
   // 关闭与 Prettier 冲突的 ESLint 规则
-  eslintConfigPrettier
-)
+  eslintConfigPrettier,
+);

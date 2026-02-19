@@ -11,38 +11,38 @@ import {
   resolvePickerColor,
   resolveThemeBasePalette,
   sanitizeThemeConfig,
-} from "~/composables/themeConfig"
+} from "~/composables/themeConfig";
 
 const props = withDefaults(
   defineProps<{
-    open?: boolean
-    config: ThemeConfig
+    open?: boolean;
+    config: ThemeConfig;
   }>(),
   {
     open: false,
-  }
-)
+  },
+);
 
 const emit = defineEmits<{
-  (event: "update:open", value: boolean): void
-  (event: "save", value: ThemeConfig): void
-}>()
+  (event: "update:open", value: boolean): void;
+  (event: "save", value: ThemeConfig): void;
+}>();
 
 const openModel = computed({
   get: () => props.open,
   set: (value: boolean) => emit("update:open", value),
-})
+});
 
-const themeError = ref("")
-const backgroundInputRef = ref<HTMLInputElement | null>(null)
-const themeDraft = reactive<ThemeConfig>({ ...DEFAULT_THEME_CONFIG })
-const MAX_BACKGROUND_SIZE = 2 * 1024 * 1024
-const basePalette = ref<Record<ThemeColorKey, string>>(resolveThemeBasePalette())
+const themeError = ref("");
+const backgroundInputRef = ref<HTMLInputElement | null>(null);
+const themeDraft = reactive<ThemeConfig>({ ...DEFAULT_THEME_CONFIG });
+const MAX_BACKGROUND_SIZE = 2 * 1024 * 1024;
+const basePalette = ref<Record<ThemeColorKey, string>>(resolveThemeBasePalette());
 
-type QueryLocalFontData = { family: string }
+type QueryLocalFontData = { family: string };
 type QueryLocalFontsWindow = Window & {
-  queryLocalFonts?: () => Promise<QueryLocalFontData[]>
-}
+  queryLocalFonts?: () => Promise<QueryLocalFontData[]>;
+};
 
 const createEmptyColorInput = (): Record<ThemeColorKey, string> => ({
   primaryColor: "",
@@ -53,290 +53,283 @@ const createEmptyColorInput = (): Record<ThemeColorKey, string> => ({
   warningColor: "",
   errorColor: "",
   successColor: "",
-})
+});
 
-const colorInput = reactive<Record<ThemeColorKey, string>>(createEmptyColorInput())
-const fontListLoading = ref(false)
-const fontListLoaded = ref(false)
-const fontFamilies = ref<string[]>([])
-let fontLoadPromise: Promise<void> | null = null
+const colorInput = reactive<Record<ThemeColorKey, string>>(createEmptyColorInput());
+const fontListLoading = ref(false);
+const fontListLoaded = ref(false);
+const fontFamilies = ref<string[]>([]);
+let fontLoadPromise: Promise<void> | null = null;
 
 const getFieldLabel = (key: ThemeColorKey) =>
-  THEME_COLOR_FIELDS.find((field) => field.key === key)?.label ?? key
+  THEME_COLOR_FIELDS.find((field) => field.key === key)?.label ?? key;
 
-const normalizeFontFamily = (value: string) =>
-  value.trim().replace(/^["']+|["']+$/g, "")
+const normalizeFontFamily = (value: string) => value.trim().replace(/^["']+|["']+$/g, "");
 
 const dedupeAndSortFontFamilies = (value: string[]) => {
-  const unique = new Set<string>()
+  const unique = new Set<string>();
   for (const item of value) {
-    const normalized = normalizeFontFamily(item)
+    const normalized = normalizeFontFamily(item);
     if (normalized) {
-      unique.add(normalized)
+      unique.add(normalized);
     }
   }
-  return Array.from(unique).sort((a, b) => a.localeCompare(b, "zh-Hans-CN"))
-}
+  return Array.from(unique).sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
+};
 
 const fontInputDescription = computed(() => {
   if (fontListLoading.value) {
-    return "正在读取系统字体列表..."
+    return "正在读取系统字体列表...";
   }
   if (fontFamilies.value.length === 0) {
-    return "未读取到系统字体，留空将跟随系统默认"
+    return "未读取到系统字体，留空将跟随系统默认";
   }
-  return `共 ${fontFamilies.value.length} 个系统字体，可输入关键字过滤`
-})
+  return `共 ${fontFamilies.value.length} 个系统字体，可输入关键字过滤`;
+});
 
 const findMatchedSystemFont = (value: string) => {
-  const normalized = normalizeFontFamily(value).toLowerCase()
+  const normalized = normalizeFontFamily(value).toLowerCase();
   if (!normalized) {
-    return ""
+    return "";
   }
-  return (
-    fontFamilies.value.find((family) => family.toLowerCase() === normalized) ?? ""
-  )
-}
+  return fontFamilies.value.find((family) => family.toLowerCase() === normalized) ?? "";
+};
 
 const loadSystemFontFamilies = async () => {
   if (typeof window === "undefined") {
-    return
+    return;
   }
   if (fontListLoaded.value) {
-    return
+    return;
   }
   if (fontLoadPromise) {
-    await fontLoadPromise
-    return
+    await fontLoadPromise;
+    return;
   }
 
   fontLoadPromise = (async () => {
-    const queryLocalFonts = (window as QueryLocalFontsWindow).queryLocalFonts
+    const queryLocalFonts = (window as QueryLocalFontsWindow).queryLocalFonts;
     if (typeof queryLocalFonts === "function") {
       try {
-        const localFonts = await queryLocalFonts()
+        const localFonts = await queryLocalFonts();
         const families = dedupeAndSortFontFamilies(
-          localFonts.map((font) => (typeof font.family === "string" ? font.family : ""))
-        )
+          localFonts.map((font) => (typeof font.family === "string" ? font.family : "")),
+        );
         if (families.length > 0) {
-          fontFamilies.value = families
-          const matched = findMatchedSystemFont(themeDraft.fontFamily)
+          fontFamilies.value = families;
+          const matched = findMatchedSystemFont(themeDraft.fontFamily);
           if (matched) {
-            themeDraft.fontFamily = matched
+            themeDraft.fontFamily = matched;
           }
-          fontListLoaded.value = true
-          return
+          fontListLoaded.value = true;
+          return;
         }
       } catch {
         // ignore and leave font list empty
       }
     }
-    fontFamilies.value = []
-    fontListLoaded.value = false
-  })()
+    fontFamilies.value = [];
+    fontListLoaded.value = false;
+  })();
 
-  fontListLoading.value = true
+  fontListLoading.value = true;
   try {
-    await fontLoadPromise
+    await fontLoadPromise;
   } finally {
-    fontListLoading.value = false
-    fontLoadPromise = null
+    fontListLoading.value = false;
+    fontLoadPromise = null;
   }
-}
+};
 
 const syncColorStateFromConfig = (config: ThemeConfig) => {
   for (const field of THEME_COLOR_FIELDS) {
-    const key = field.key
-    const configured = normalizeHexColor(config[key])
+    const key = field.key;
+    const configured = normalizeHexColor(config[key]);
     if (/^#([0-9A-F]{6}|[0-9A-F]{8})$/.test(configured)) {
-      themeDraft[key] = configured
-      colorInput[key] = configured
+      themeDraft[key] = configured;
+      colorInput[key] = configured;
     } else {
-      themeDraft[key] = ""
-      colorInput[key] = ""
+      themeDraft[key] = "";
+      colorInput[key] = "";
     }
   }
-}
+};
 
 const buildThemeConfigForSave = (): { payload: ThemeConfig | null; error: string } => {
-  const payload = sanitizeThemeConfig(themeDraft)
+  const payload = sanitizeThemeConfig(themeDraft);
   for (const field of THEME_COLOR_FIELDS) {
-    const key = field.key
-    const raw = colorInput[key].trim()
+    const key = field.key;
+    const raw = colorInput[key].trim();
     if (!raw) {
-      payload[key] = ""
-      continue
+      payload[key] = "";
+      continue;
     }
-    const parsed = parseCustomColorInput(raw)
+    const parsed = parseCustomColorInput(raw);
     if (!parsed) {
       return {
         payload: null,
         error: `${field.label} 必须是 6 位或 8 位十六进制颜色值`,
-      }
+      };
     }
-    payload[key] = parsed
+    payload[key] = parsed;
   }
-  return { payload, error: "" }
-}
+  return { payload, error: "" };
+};
 
 const getPickerColor = (key: ThemeColorKey, value: string) => {
-  return resolvePickerColor(key, value, basePalette.value)
-}
+  return resolvePickerColor(key, value, basePalette.value);
+};
 
 const getPreviewColor = (key: ThemeColorKey, value: string) => {
-  return resolveColorValue(key, value, basePalette.value)
-}
+  return resolveColorValue(key, value, basePalette.value);
+};
 
 const refreshBasePalette = () => {
-  basePalette.value = resolveThemeBasePalette()
-}
+  basePalette.value = resolveThemeBasePalette();
+};
 
 const onThemeColorInputBlur = (key: ThemeColorKey) => {
-  const raw = colorInput[key].trim()
+  const raw = colorInput[key].trim();
   if (!raw) {
-    themeDraft[key] = ""
-    colorInput[key] = ""
-    themeError.value = ""
-    return
+    themeDraft[key] = "";
+    colorInput[key] = "";
+    themeError.value = "";
+    return;
   }
-  const parsed = parseCustomColorInput(raw)
+  const parsed = parseCustomColorInput(raw);
   if (parsed) {
-    themeDraft[key] = parsed
-    colorInput[key] = parsed
-    themeError.value = ""
-    return
+    themeDraft[key] = parsed;
+    colorInput[key] = parsed;
+    themeError.value = "";
+    return;
   }
-  themeError.value = `${getFieldLabel(key)} 必须是 6 位或 8 位十六进制颜色值`
-}
+  themeError.value = `${getFieldLabel(key)} 必须是 6 位或 8 位十六进制颜色值`;
+};
 
 const onThemeColorPickerInput = (key: ThemeColorKey, event: Event) => {
-  const target = event.target
+  const target = event.target;
   if (!(target instanceof HTMLInputElement)) {
-    return
+    return;
   }
-  const normalized = normalizeHexColor(target.value)
-  themeDraft[key] = normalized
-  colorInput[key] = normalized
-  themeError.value = ""
-}
+  const normalized = normalizeHexColor(target.value);
+  themeDraft[key] = normalized;
+  colorInput[key] = normalized;
+  themeError.value = "";
+};
 
 const resetDraft = () => {
-  const normalized = sanitizeThemeConfig(props.config)
-  copyThemeConfig(themeDraft, normalized)
-  syncColorStateFromConfig(normalized)
-  themeError.value = ""
-}
+  const normalized = sanitizeThemeConfig(props.config);
+  copyThemeConfig(themeDraft, normalized);
+  syncColorStateFromConfig(normalized);
+  themeError.value = "";
+};
 
 watch(
   () => props.open,
   (open) => {
     if (open) {
-      refreshBasePalette()
-      resetDraft()
-      void loadSystemFontFamilies()
+      refreshBasePalette();
+      resetDraft();
+      void loadSystemFontFamilies();
     }
-  }
-)
+  },
+);
 
 watch(
   () => props.config,
   () => {
     if (props.open) {
-      refreshBasePalette()
-      resetDraft()
+      refreshBasePalette();
+      resetDraft();
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 
 const handleClose = () => {
-  themeError.value = ""
-}
+  themeError.value = "";
+};
 
 const handleCancel = () => {
-  openModel.value = false
-  themeError.value = ""
-}
+  openModel.value = false;
+  themeError.value = "";
+};
 
 const handleSave = async () => {
-  await loadSystemFontFamilies()
-  const normalizedFont = normalizeFontFamily(themeDraft.fontFamily)
+  await loadSystemFontFamilies();
+  const normalizedFont = normalizeFontFamily(themeDraft.fontFamily);
   if (normalizedFont) {
     if (fontFamilies.value.length === 0) {
-      themeError.value = "当前环境无法获取系统字体列表，请先清空字体设置"
-      return
+      themeError.value = "当前环境无法获取系统字体列表，请先清空字体设置";
+      return;
     }
-    const matched = findMatchedSystemFont(normalizedFont)
+    const matched = findMatchedSystemFont(normalizedFont);
     if (!matched) {
-      themeError.value = "字体必须从系统字体列表中选择"
-      return
+      themeError.value = "字体必须从系统字体列表中选择";
+      return;
     }
-    themeDraft.fontFamily = matched
+    themeDraft.fontFamily = matched;
   }
-  const { payload, error } = buildThemeConfigForSave()
+  const { payload, error } = buildThemeConfigForSave();
   if (!payload) {
-    themeError.value = error
-    return
+    themeError.value = error;
+    return;
   }
-  emit("save", payload)
-  openModel.value = false
-  themeError.value = ""
-}
+  emit("save", payload);
+  openModel.value = false;
+  themeError.value = "";
+};
 
 const handleReset = () => {
-  refreshBasePalette()
-  const normalized = sanitizeThemeConfig({ ...DEFAULT_THEME_CONFIG })
-  copyThemeConfig(themeDraft, normalized)
-  syncColorStateFromConfig(normalized)
-  themeError.value = ""
-}
+  refreshBasePalette();
+  const normalized = sanitizeThemeConfig({ ...DEFAULT_THEME_CONFIG });
+  copyThemeConfig(themeDraft, normalized);
+  syncColorStateFromConfig(normalized);
+  themeError.value = "";
+};
 
 const openBackgroundPicker = () => {
-  backgroundInputRef.value?.click()
-}
+  backgroundInputRef.value?.click();
+};
 
 const clearBackground = () => {
-  themeDraft.backgroundImage = ""
-}
+  themeDraft.backgroundImage = "";
+};
 
 const handleBackgroundFileChange = (event: Event) => {
-  const target = event.target
+  const target = event.target;
   if (!(target instanceof HTMLInputElement)) {
-    return
+    return;
   }
-  const [file] = target.files ?? []
-  target.value = ""
+  const [file] = target.files ?? [];
+  target.value = "";
   if (!file) {
-    return
+    return;
   }
   if (!file.type.startsWith("image/")) {
-    themeError.value = "仅支持图片文件"
-    return
+    themeError.value = "仅支持图片文件";
+    return;
   }
   if (file.size > MAX_BACKGROUND_SIZE) {
-    themeError.value = "背景图片不能超过 2MB"
-    return
+    themeError.value = "背景图片不能超过 2MB";
+    return;
   }
-  const reader = new FileReader()
+  const reader = new FileReader();
   reader.onload = () => {
     if (typeof reader.result === "string") {
-      themeDraft.backgroundImage = reader.result
-      themeError.value = ""
+      themeDraft.backgroundImage = reader.result;
+      themeError.value = "";
     }
-  }
+  };
   reader.onerror = () => {
-    themeError.value = "读取背景图片失败，请重试"
-  }
-  reader.readAsDataURL(file)
-}
+    themeError.value = "读取背景图片失败，请重试";
+  };
+  reader.readAsDataURL(file);
+};
 </script>
 
 <template>
-  <MtgaDialog
-    v-model:open="openModel"
-    max-width="max-w-3xl"
-    @close="handleClose"
-  >
+  <MtgaDialog v-model:open="openModel" max-width="max-w-3xl" @close="handleClose">
     <template #header>
       <div class="flex items-start justify-between gap-3">
         <div class="space-y-1">
@@ -360,20 +353,24 @@ const handleBackgroundFileChange = (event: Event) => {
           class="group flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/50 p-2 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm"
         >
           <!-- 标签 -->
-          <span class="text-sm font-semibold text-slate-500 min-w-[80px] pl-1 group-hover:text-amber-600 transition-colors">
+          <span
+            class="text-sm font-semibold text-slate-500 min-w-[80px] pl-1 group-hover:text-amber-600 transition-colors"
+          >
             {{ field.label }}
           </span>
-          
+
           <div class="flex flex-1 items-center justify-end gap-2">
             <!-- 颜色预览和选择器 -->
-            <div class="relative h-7 w-9 shrink-0 overflow-hidden rounded-md border border-slate-200 shadow-sm transition-transform active:scale-95">
+            <div
+              class="relative h-7 w-9 shrink-0 overflow-hidden rounded-md border border-slate-200 shadow-sm transition-transform active:scale-95"
+            >
               <input
                 type="color"
                 class="absolute -inset-1 h-[150%] w-[150%] cursor-pointer opacity-0"
                 :value="getPickerColor(field.key, colorInput[field.key])"
                 @input="onThemeColorPickerInput(field.key, $event)"
               />
-              <div 
+              <div
                 class="h-full w-full pointer-events-none transition-colors duration-300"
                 :style="{ backgroundColor: getPreviewColor(field.key, colorInput[field.key]) }"
               ></div>
@@ -393,7 +390,9 @@ const handleBackgroundFileChange = (event: Event) => {
         </div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm">
+      <div
+        class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm"
+      >
         <label class="mb-2 block text-sm font-semibold text-slate-500">字体</label>
         <MtgaInput
           v-model="themeDraft.fontFamily"
@@ -409,7 +408,9 @@ const handleBackgroundFileChange = (event: Event) => {
         />
       </div>
 
-      <div class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 space-y-3 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm">
+      <div
+        class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 space-y-3 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm"
+      >
         <div class="flex items-center justify-between gap-3">
           <div>
             <div class="text-sm font-semibold text-slate-500">背景</div>
@@ -454,18 +455,17 @@ const handleBackgroundFileChange = (event: Event) => {
         </div>
       </div>
 
-      <div v-if="themeError" class="rounded-xl border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">
+      <div
+        v-if="themeError"
+        class="rounded-xl border border-error/30 bg-error/10 px-3 py-2 text-xs text-error"
+      >
         {{ themeError }}
       </div>
     </div>
 
     <template #footer>
-      <button class="mtga-btn-dialog-ghost flex-1" @click="handleCancel">
-        取消
-      </button>
-      <button class="mtga-btn-dialog-primary flex-1" @click="handleSave">
-        保存
-      </button>
+      <button class="mtga-btn-dialog-ghost flex-1" @click="handleCancel">取消</button>
+      <button class="mtga-btn-dialog-primary flex-1" @click="handleSave">保存</button>
     </template>
   </MtgaDialog>
 </template>

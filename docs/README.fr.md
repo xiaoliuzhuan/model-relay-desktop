@@ -4,7 +4,7 @@
     <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
-[![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](<https://img.shields.io/badge/docs-Português-purple>)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
+[![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## Introduction
 
@@ -53,6 +53,7 @@ MTGA est une solution basée sur un proxy local pour fournisseurs de modèles fi
 ## Journal des modifications
 
 ### v1.2.0 (Dernier)
+
 - 🔄 **Refonte de l'architecture de mapping des modèles** - Passage du "mapping un-à-un" à une architecture de "modèle de mapping unifié"
   - Le client trae utilise un ID de modèle de mapping unifié, MTGA bascule le modèle backend réel via le groupe de configuration
   - Le serveur proxy supporte le mapping des IDs de modèle et la validation d'authentification MTGA
@@ -89,9 +90,9 @@ MTGA est une solution basée sur un proxy local pour fournisseurs de modèles fi
 
 ### v1.0.0
 
-- ✅ **Adaptation pour Mac OS** - Prise en charge de l'installation d'applications macOS  
-- 🔄 **Changement de fournisseur par défaut** - Passage de DeepSeek à OpenAI  
-- 📦 **Refactorisation des fichiers** - Renommage des fichiers liés à ds au format `*_ds.*` pour archivage  
+- ✅ **Adaptation pour Mac OS** - Prise en charge de l'installation d'applications macOS
+- 🔄 **Changement de fournisseur par défaut** - Passage de DeepSeek à OpenAI
+- 📦 **Refactorisation des fichiers** - Renommage des fichiers liés à ds au format `*_ds.*` pour archivage
 - 🌐 **Modification du format de l'URL de l'API** - Passage de `https://your-api.example.com/v1` à `https://your-api.example.com`
 
 </details>
@@ -102,31 +103,32 @@ MTGA est une solution basée sur un proxy local pour fournisseurs de modèles fi
 
 ### Utilisateurs Windows (méthode de lancement en un clic via l'interface graphique)
 
-1. Téléchargez la dernière version de `MTGA_GUI-v{numéro de version}-x64.exe` depuis [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)  
-2. Double-cliquez sur le fichier exe téléchargé (des privilèges d'administrateur sont requis)  
-3. Dans l'interface graphique ouverte, renseignez l'URL de l'API et l'ID du modèle  
-   - **L'URL de l'API ne nécessite que le domaine (le numéro de port est optionnel, ne le renseignez pas si vous ne comprenez pas), sans la route suivante, par exemple : `https://your-api.example.com`**  
+1. Téléchargez la dernière version de `MTGA_GUI-v{numéro de version}-x64.exe` depuis [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)
+2. Double-cliquez sur le fichier exe téléchargé (des privilèges d'administrateur sont requis)
+3. Dans l'interface graphique ouverte, renseignez l'URL de l'API et l'ID du modèle
+   - **L'URL de l'API ne nécessite que le domaine (le numéro de port est optionnel, ne le renseignez pas si vous ne comprenez pas), sans la route suivante, par exemple : `https://your-api.example.com`**
    - **Si vous souhaitez activer les capacités multimodales, vous pouvez mapper le nom du modèle vers un nom de modèle multimodal intégré :**
    - <img width="247" height="76" alt="model mapping" src="../images/model-mapping.png?raw=true" />
    - <img width="380" height="141" alt="model mapping effects" src="../images/model-mapping-effects.png?raw=true" />
-4. Cliquez sur le bouton "Lancer tous les services en un clic"  
-5. Attendez que le programme termine automatiquement les opérations suivantes :  
-   - Génération et installation du certificat  
-   - Modification du fichier hosts  
-   - Démarrage du serveur proxy  
+4. Cliquez sur le bouton "Lancer tous les services en un clic"
+5. Attendez que le programme termine automatiquement les opérations suivantes :
+   - Génération et installation du certificat
+   - Modification du fichier hosts
+   - Démarrage du serveur proxy
 6. Une fois terminé, configurez votre IDE selon [Étape 5 : Configuration de Trae IDE](#第-5-步配置-trae-ide)
 
-> [!NOTE]  
-> - Un accès au pare-feu peut être requis lors du premier lancement  
+> [!NOTE]
+>
+> - Un accès au pare-feu peut être requis lors du premier lancement
 > - La version mono-fichier prend en charge la persistance des données utilisateur, la configuration et les certificats sont sauvegardés automatiquement
 
 ### Utilisateurs macOS (installation via l'application)
 
 #### Méthode d'installation
 
-1. Téléchargez la dernière version de `MTGA_GUI-v{numéro de version}-aarch64.dmg` depuis [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)  
-2. Double-cliquez sur le fichier DMG, le système montera automatiquement le package d'installation  
-3. Glissez-déposez `MTGA_GUI.app` dans le dossier `Applications`  
+1. Téléchargez la dernière version de `MTGA_GUI-v{numéro de version}-aarch64.dmg` depuis [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)
+2. Double-cliquez sur le fichier DMG, le système montera automatiquement le package d'installation
+3. Glissez-déposez `MTGA_GUI.app` dans le dossier `Applications`
 4. Lancez l'application depuis le Launchpad ou le dossier Applications
 
 #### Mode d'emploi
@@ -146,6 +148,7 @@ MTGA est une solution basée sur un proxy local pour fournisseurs de modèles fi
 7. Suivez la configuration [Trae IDE ci-dessous](#第-5-步配置-trae-ide) pour finaliser la configuration
 
 > [!NOTE]
+>
 > - L'installation du certificat et la modification du fichier hosts nécessitent les droits d'administrateur.
 > - En cas d'apparition du message « Le paquet est corrompu », veuillez consulter [macOS Résolution du problème « Le paquet est corrompu »](#macos-résolution-du-problème--le-paquet-est-corrompu-).
 
@@ -205,8 +208,8 @@ cd "mtga/ca"
 
 Lors de l'exécution de `./genca.sh`, il vous demandera "Do you want to generate ca cert and key? [yes/no]", saisissez `y` et appuyez sur Entrée. Ensuite, il vous sera demandé de renseigner quelques informations :
 
-*   `Country Name (2 letter code) []` : Saisissez `CN` (ou un autre code pays)
-*   Les autres champs (comme State, Locality, Organization, Common Name for CA) peuvent être remplis au besoin ou laissés vides, il est recommandé de mettre `X`. Le Common Name peut être `MTGA_CA` ou similaire. L'e-mail peut être laissé vide.
+- `Country Name (2 letter code) []` : Saisissez `CN` (ou un autre code pays)
+- Les autres champs (comme State, Locality, Organization, Common Name for CA) peuvent être remplis au besoin ou laissés vides, il est recommandé de mettre `X`. Le Common Name peut être `MTGA_CA` ou similaire. L'e-mail peut être laissé vide.
 
 ```bash
 # 2. Générer le certificat SSL pour api.openai.com (api.openai.com.crt et api.openai.com.key)
@@ -216,10 +219,10 @@ Lors de l'exécution de `./genca.sh`, il vous demandera "Do you want to generate
 
 Une fois l'exécution terminée, vous trouverez les fichiers importants suivants dans le répertoire `mtga\ca` :
 
-*   `ca.crt` (votre certificat d'autorité de certification personnalisé)
-*   `ca.key` (votre clé privée d'autorité de certification personnalisée - **ne pas divulguer**)
-*   `api.openai.com.crt` (certificat SSL pour le serveur proxy local)
-*   `api.openai.com.key` (clé privée SSL pour le serveur proxy local - **ne pas divulguer**)
+- `ca.crt` (votre certificat d'autorité de certification personnalisé)
+- `ca.key` (votre clé privée d'autorité de certification personnalisée - **ne pas divulguer**)
+- `api.openai.com.crt` (certificat SSL pour le serveur proxy local)
+- `api.openai.com.key` (clé privée SSL pour le serveur proxy local - **ne pas divulguer**)
 
 ##### Étape 2 : Faire confiance à votre certificat d'autorité de certification sous Windows
 
@@ -254,9 +257,9 @@ Vous devez modifier le fichier Hosts avec des privilèges d'administrateur pour 
     pip install Flask requests
     ```
 2.  **Configurer le script**:
-    *   Ouvrez le fichier `trae_proxy.py`.
-    *   **Modifiez `TARGET_API_BASE_URL`** : Remplacez-la par l'URL de base de l'API au format OpenAI du site auquel vous souhaitez réellement vous connecter (par exemple : `"https://your-api.example.com"`).
-    *   **Vérifiez les chemins des certificats** : Le script lit par défaut `api.openai.com.crt` et `api.openai.com.key` depuis `mtga\ca`. Si vos certificats ne se trouvent pas à cet emplacement, modifiez les valeurs de `CERT_FILE` et `KEY_FILE`, ou copiez ces deux fichiers dans le `CERT_DIR` spécifié par le script.
+    - Ouvrez le fichier `trae_proxy.py`.
+    - **Modifiez `TARGET_API_BASE_URL`** : Remplacez-la par l'URL de base de l'API au format OpenAI du site auquel vous souhaitez réellement vous connecter (par exemple : `"https://your-api.example.com"`).
+    - **Vérifiez les chemins des certificats** : Le script lit par défaut `api.openai.com.crt` et `api.openai.com.key` depuis `mtga\ca`. Si vos certificats ne se trouvent pas à cet emplacement, modifiez les valeurs de `CERT_FILE` et `KEY_FILE`, ou copiez ces deux fichiers dans le `CERT_DIR` spécifié par le script.
 
 **Exécuter le serveur proxy :**
 
@@ -276,8 +279,8 @@ Si tout se passe bien, vous devriez voir les journaux de démarrage du serveur.
 4.  **Modèle** : Sélectionnez "Modèle personnalisé".
 5.  **ID du modèle** : Saisissez la valeur que vous avez définie pour `CUSTOM_MODEL_ID` dans le script Python (par exemple : `my-custom-local-model`).
 6.  **Clé API** :
-    *   Si votre API cible nécessite une clé API et que Trae la transmet via `Authorization: Bearer <key>`, alors la clé saisie ici sera transmise par le proxy Python.
-    *   Lors de la configuration d'OpenAI dans Trae, la clé API est liée à la configuration `remove_reasoning_content`. Notre proxy Python ne gère pas cette logique, il se contente de transmettre l'en-tête Authorization. Vous pouvez essayer de saisir la clé requise par votre API cible, ou une clé arbitraire au format `sk-xxxx`.
+    - Si votre API cible nécessite une clé API et que Trae la transmet via `Authorization: Bearer <key>`, alors la clé saisie ici sera transmise par le proxy Python.
+    - Lors de la configuration d'OpenAI dans Trae, la clé API est liée à la configuration `remove_reasoning_content`. Notre proxy Python ne gère pas cette logique, il se contente de transmettre l'en-tête Authorization. Vous pouvez essayer de saisir la clé requise par votre API cible, ou une clé arbitraire au format `sk-xxxx`.
 
 7.  Cliquez sur "Ajouter un modèle".
 8.  Revenez à la boîte de chat IA et sélectionnez le modèle personnalisé que vous venez d'ajouter dans le menu en bas à droite.
@@ -286,10 +289,10 @@ Maintenant, lorsque vous interagissez avec ce modèle personnalisé via Trae, le
 
 **Conseils de dépannage :**
 
-*   **Conflit de port** : Si le port 443 est déjà occupé (par exemple par IIS, Skype ou un autre service), le script Python échouera à démarrer. Vous devez arrêter le service qui utilise ce port, ou modifier le script Python et Nginx (si utilisé) pour écouter sur un autre port (mais cela est plus complexe, car Trae accède en dur au port 443 de `https://api.openai.com`).
-*   **Pare-feu** : Assurez-vous que le pare-feu Windows autorise les connexions entrantes sur le port 443 pour Python (même s'il s'agit d'une connexion locale `127.0.0.1`, une configuration spéciale du pare-feu n'est généralement pas nécessaire, mais cela vaut la peine de vérifier).
-*   **Problèmes de certificat** : Si Trae signale une erreur liée à SSL/TLS, vérifiez attentivement que le certificat d'autorité de certification (CA) est correctement installé dans les "Autorités de certification racines de confiance", et que le proxy Python charge correctement les fichiers `api.openai.com.crt` et `.key`.
-*   **Journaux du proxy** : Le script Python imprime quelques journaux qui peuvent vous aider à diagnostiquer les problèmes.
+- **Conflit de port** : Si le port 443 est déjà occupé (par exemple par IIS, Skype ou un autre service), le script Python échouera à démarrer. Vous devez arrêter le service qui utilise ce port, ou modifier le script Python et Nginx (si utilisé) pour écouter sur un autre port (mais cela est plus complexe, car Trae accède en dur au port 443 de `https://api.openai.com`).
+- **Pare-feu** : Assurez-vous que le pare-feu Windows autorise les connexions entrantes sur le port 443 pour Python (même s'il s'agit d'une connexion locale `127.0.0.1`, une configuration spéciale du pare-feu n'est généralement pas nécessaire, mais cela vaut la peine de vérifier).
+- **Problèmes de certificat** : Si Trae signale une erreur liée à SSL/TLS, vérifiez attentivement que le certificat d'autorité de certification (CA) est correctement installé dans les "Autorités de certification racines de confiance", et que le proxy Python charge correctement les fichiers `api.openai.com.crt` et `.key`.
+- **Journaux du proxy** : Le script Python imprime quelques journaux qui peuvent vous aider à diagnostiquer les problèmes.
 
 Cette solution est plus intégrée que l'utilisation directe de vproxy + nginx, car elle place la terminaison TLS et la logique de proxy dans un seul script Python, ce qui la rend plus adaptée à la validation rapide de prototypes sur Windows.
 

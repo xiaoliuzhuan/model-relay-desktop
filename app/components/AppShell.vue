@@ -6,9 +6,7 @@
       <header class="w-full px-8 py-6 shrink-0 border-b border-slate-200/60">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">
-              Console
-            </p>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Console</p>
             <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
               <slot name="title">MTGA</slot>
             </h1>

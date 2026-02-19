@@ -1,18 +1,18 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    open?: boolean
-    mode?: "add" | "edit"
-    name?: string
-    apiUrl?: string
-    modelId?: string
-    apiKey?: string
-    middleRoute?: string
-    middleRouteEnabled?: boolean
-    formError?: string
-    defaultMiddleRoute?: string
-    availableModels?: string[]
-    modelLoading?: boolean
+    open?: boolean;
+    mode?: "add" | "edit";
+    name?: string;
+    apiUrl?: string;
+    modelId?: string;
+    apiKey?: string;
+    middleRoute?: string;
+    middleRouteEnabled?: boolean;
+    formError?: string;
+    defaultMiddleRoute?: string;
+    availableModels?: string[];
+    modelLoading?: boolean;
   }>(),
   {
     open: false,
@@ -27,81 +27,77 @@ const props = withDefaults(
     defaultMiddleRoute: "/v1",
     availableModels: () => [],
     modelLoading: false,
-  }
-)
+  },
+);
 
 const emit = defineEmits<{
-  (event: "update:open", value: boolean): void
-  (event: "update:name", value: string): void
-  (event: "update:apiUrl", value: string): void
-  (event: "update:modelId", value: string): void
-  (event: "update:apiKey", value: string): void
-  (event: "update:middleRoute", value: string): void
-  (event: "update:middleRouteEnabled", value: boolean): void
-  (event: "save"): void
-  (event: "cancel"): void
-  (event: "fetch-models"): void
-}>()
+  (event: "update:open", value: boolean): void;
+  (event: "update:name", value: string): void;
+  (event: "update:apiUrl", value: string): void;
+  (event: "update:modelId", value: string): void;
+  (event: "update:apiKey", value: string): void;
+  (event: "update:middleRoute", value: string): void;
+  (event: "update:middleRouteEnabled", value: boolean): void;
+  (event: "save"): void;
+  (event: "cancel"): void;
+  (event: "fetch-models"): void;
+}>();
 
 const openModel = computed({
   get: () => props.open,
   set: (value: boolean) => emit("update:open", value),
-})
+});
 
 const nameModel = computed({
   get: () => props.name,
   set: (value: string) => emit("update:name", value),
-})
+});
 
 const apiUrlModel = computed({
   get: () => props.apiUrl,
   set: (value: string) => emit("update:apiUrl", value),
-})
+});
 
 const modelIdModel = computed({
   get: () => props.modelId,
   set: (value: string) => emit("update:modelId", value),
-})
+});
 
 const apiKeyModel = computed({
   get: () => props.apiKey,
   set: (value: string) => emit("update:apiKey", value),
-})
+});
 
 const middleRouteModel = computed({
   get: () => props.middleRoute,
   set: (value: string) => emit("update:middleRoute", value),
-})
+});
 
 const middleRouteEnabledModel = computed({
   get: () => props.middleRouteEnabled,
   set: (value: boolean) => emit("update:middleRouteEnabled", value),
-})
+});
 
 const handleDialogClose = () => {
-  emit("cancel")
-}
+  emit("cancel");
+};
 
 const handleCancel = () => {
-  openModel.value = false
-  emit("cancel")
-}
+  openModel.value = false;
+  emit("cancel");
+};
 
 const handleSave = () => {
-  emit("save")
-}
+  emit("save");
+};
 
 const handleFetchModels = () => {
-  emit("fetch-models")
-}
+  emit("fetch-models");
+};
 </script>
 
 <template>
-  <MtgaDialog
-    v-model:open="openModel"
-    max-width="max-w-l"
-    @close="handleDialogClose"
-  >
+  <MtgaDialog v-model:open="openModel" max-width="max-w-l" @close="handleDialogClose">
     <template #header>
       <div class="flex items-center justify-between gap-3">
         <div>
@@ -172,7 +168,19 @@ const handleFetchModels = () => {
       />
 
       <div v-if="props.formError" class="alert alert-error py-2 px-3 rounded-xl">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="stroke-current shrink-0 h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
         <span class="text-xs">{{ props.formError }}</span>
       </div>
     </div>
