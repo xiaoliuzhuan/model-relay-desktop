@@ -6,6 +6,7 @@ from typing import Any
 
 from modules.runtime.operation_result import OperationResult
 from modules.runtime.result_messages import describe_result
+from modules.runtime.thread_manager import ThreadManager
 
 
 @dataclass(frozen=True)
@@ -27,7 +28,7 @@ class ProxyTaskRunner:
         self,
         *,
         log_func: Callable[[str], None],
-        thread_manager,
+        thread_manager: ThreadManager,
         deps: ProxyTaskDependencies,
     ) -> None:
         self._log = log_func
@@ -36,11 +37,11 @@ class ProxyTaskRunner:
         self.proxy_start_task_id = None
         self.proxy_stop_task_id = None
 
-    def start_proxy(self):
+    def start_proxy(self) -> str | None:
         if not self._deps.ensure_global_config_ready():
             return None
 
-        def task():
+        def task() -> None:
             config = self._deps.build_proxy_config()
             if not config:
                 return
@@ -54,8 +55,8 @@ class ProxyTaskRunner:
         )
         return self.proxy_start_task_id
 
-    def stop_proxy(self):
-        def task():
+    def stop_proxy(self) -> str | None:
+        def task() -> None:
             self._deps.stop_proxy_and_restore(show_idle_message=True)
 
         wait_targets = [self.proxy_start_task_id] if self.proxy_start_task_id else None
@@ -66,11 +67,11 @@ class ProxyTaskRunner:
         )
         return self.proxy_stop_task_id
 
-    def start_all(self):
+    def start_all(self) -> str | None:
         if not self._deps.ensure_global_config_ready():
             return None
 
-        def task():
+        def task() -> None:
             self._thread_manager.wait(self.proxy_start_task_id)
             self._thread_manager.wait(self.proxy_stop_task_id)
 

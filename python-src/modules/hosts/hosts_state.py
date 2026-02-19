@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from modules.hosts.file_operability import FileOperabilityReport
 
 ALLOW_UNSAFE_HOSTS_FLAG = "--allow-unsafe-hosts"
+type LogFunc = Callable[[str], None]
 
 
 @dataclass
@@ -46,7 +48,7 @@ def should_block_hosts_action(action: str) -> bool:
     return action in {"remove", "restore"}
 
 
-def guard_hosts_modify(action: str, log_func=print) -> bool:
+def guard_hosts_modify(action: str, log_func: LogFunc = print) -> bool:
     """如需阻断则输出提示并返回 False；允许则返回 True。"""
     state = _HOSTS_MODIFY_BLOCK_STATE
     if not state.blocked:

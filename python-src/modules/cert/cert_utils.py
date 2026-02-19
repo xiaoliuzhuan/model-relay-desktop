@@ -5,11 +5,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 
+type LogFunc = Callable[[str], None]
 
-def log_lines(lines: str | None, log_func=print) -> None:
+def log_lines(lines: str | None, log_func: LogFunc = print) -> None:
     """逐行输出日志，自动跳过空行。"""
     if not lines:
         return

@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
+from typing import cast
+
 HOSTS_ENTRY_MARKER = "# Added by MTGA"
-DEFAULT_HOSTS_IPS = ("127.0.0.1", "::1")
+DEFAULT_HOSTS_IPS: tuple[str, str] = ("127.0.0.1", "::1")
 
 
-def normalize_ip_list(ip):
+def normalize_ip_list(ip: str | Iterable[object] | object | None) -> list[str]:
     """将 IP 参数转换为去重后的字符串列表。"""
+    iterable: Iterable[object]
     if ip is None:
         iterable = DEFAULT_HOSTS_IPS
     elif isinstance(ip, str):
         iterable = [ip]
-    elif isinstance(ip, list | tuple | set):
-        iterable = list(ip)
+    elif isinstance(ip, Iterable):
+        iterable = cast(Iterable[object], ip)
     else:
         iterable = [ip]
 
@@ -25,7 +29,7 @@ def normalize_ip_list(ip):
     return normalized
 
 
-def build_hosts_block(domain, ip_list):
+def build_hosts_block(domain: object, ip_list: list[str]) -> str:
     """根据域名与 IP 列表构建统一的 hosts 文本块。"""
     domain = str(domain).strip()
     valid_ips = [ip for ip in ip_list if ip]
@@ -35,7 +39,7 @@ def build_hosts_block(domain, ip_list):
     return f"{HOSTS_ENTRY_MARKER}\n{entries}\n"
 
 
-def append_hosts_block(content, hosts_block):
+def append_hosts_block(content: str, hosts_block: str) -> str:
     """在原有内容后追加 hosts 文本块，并保留一个空行分隔。"""
     content = content.rstrip("\n")
     if not content:
@@ -43,7 +47,7 @@ def append_hosts_block(content, hosts_block):
     return f"{content}\n\n{hosts_block}"
 
 
-def remove_legacy_hosts_entries(content, domain):
+def remove_legacy_hosts_entries(content: str, domain: str) -> tuple[str, int]:
     """
     移除旧版本逐条写入的 hosts 记录，返回新内容与删除数量。
     旧格式为一条注释配合单个域名记录。
@@ -76,7 +80,9 @@ def remove_legacy_hosts_entries(content, domain):
     return new_content, removed_entries
 
 
-def remove_hosts_block_from_content(content, domain, ip_list):
+def remove_hosts_block_from_content(
+    content: str, domain: str, ip_list: str | Iterable[object] | object | None
+) -> tuple[str, int]:
     """移除当前版本写入的文本块，并返回新内容和删除的条目数量。"""
     normalized_ips = normalize_ip_list(ip_list)
     removed_entries = 0

@@ -3,11 +3,14 @@ hosts 文件管理模块
 处理 hosts 文件的备份、修改、还原等操作
 """
 
+from __future__ import annotations
+
 import ctypes
 import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable, Iterable
 
 from modules.hosts.file_operability import (
     FileOperabilityReport,
@@ -27,10 +30,11 @@ from modules.platform.privileges import is_windows_admin
 from modules.runtime.resource_manager import ResourceManager
 
 _HOSTS_PATH_FALLBACK_STATE = {"warned": False}
+type LogFunc = Callable[[str], None]
 
 
 def _append_hosts_block_fallback(
-    hosts_file: str, hosts_block: str, encoding: str, *, log_func=print
+    hosts_file: str, hosts_block: str, encoding: str, *, log_func: LogFunc = print
 ) -> bool:
     """回退为追加写入（不做去重/删除/原子性写回）。"""
     if not hosts_block:
@@ -75,7 +79,7 @@ def _fallback_to_append(  # noqa: PLR0913
     hosts_file: str,
     hosts_block: str,
     encoding: str,
-    log_func,
+    log_func: LogFunc,
     reason: str,
     removed_entries: int = 0,
 ) -> bool:
@@ -91,12 +95,14 @@ def _fallback_to_append(  # noqa: PLR0913
     )
 
 
-def check_hosts_file_operability(hosts_file: str, *, log_func=print) -> FileOperabilityReport:
+def check_hosts_file_operability(
+    hosts_file: str, *, log_func: LogFunc = print
+) -> FileOperabilityReport:
     """对 hosts 文件做可写性预检（仅检查，不改变全局阻断开关）。"""
     return check_file_operability(hosts_file, log_func=log_func)
 
 
-def get_hosts_file_path(log_func=print):
+def get_hosts_file_path(log_func: LogFunc = print) -> str:
     """获取 hosts 文件路径"""
     if os.name == "nt":  # Windows
         warned = _HOSTS_PATH_FALLBACK_STATE
@@ -128,13 +134,13 @@ def get_hosts_file_path(log_func=print):
         return "/etc/hosts"
 
 
-def get_backup_file_path():
+def get_backup_file_path() -> str:
     """获取备份文件路径（持久化到用户数据目录）"""
     resource_manager = ResourceManager()
     return resource_manager.get_hosts_backup_file()
 
 
-def detect_file_encoding(file_path):
+def detect_file_encoding(file_path: str) -> str:
     """检测文件编码"""
     encodings = ["utf-8", "gbk", "gb2312", "latin1", "utf-16"]
     for enc in encodings:
@@ -147,7 +153,7 @@ def detect_file_encoding(file_path):
     return "utf-8"  # 默认编码
 
 
-def backup_hosts_file(log_func=print):
+def backup_hosts_file(log_func: LogFunc = print) -> bool:
     """
     备份 hosts 文件
 
@@ -175,7 +181,7 @@ def backup_hosts_file(log_func=print):
         return False
 
 
-def restore_hosts_file(log_func=print):  # noqa: PLR0911
+def restore_hosts_file(log_func: LogFunc = print) -> bool:  # noqa: PLR0911
     """
     还原 hosts 文件
 
@@ -214,7 +220,9 @@ def restore_hosts_file(log_func=print):  # noqa: PLR0911
         return False
 
 
-def write_hosts_file_with_permission(hosts_file, content, encoding, log_func=print):
+def write_hosts_file_with_permission(
+    hosts_file: str, content: str, encoding: str, log_func: LogFunc = print
+) -> bool:
     """
     使用适当的权限写入 hosts 文件
 
@@ -261,7 +269,11 @@ def write_hosts_file_with_permission(hosts_file, content, encoding, log_func=pri
             return False
 
 
-def add_hosts_entry(domain, ip=DEFAULT_HOSTS_IPS, log_func=print):  # noqa: PLR0911
+def add_hosts_entry(  # noqa: PLR0911
+    domain: str,
+    ip: str | Iterable[object] | object | None = DEFAULT_HOSTS_IPS,
+    log_func: LogFunc = print,
+) -> bool:
     """
     添加 hosts 条目
 
@@ -357,7 +369,9 @@ def add_hosts_entry(domain, ip=DEFAULT_HOSTS_IPS, log_func=print):  # noqa: PLR0
         return False
 
 
-def remove_hosts_entry(domain, log_func=print, *, ip=None):
+def remove_hosts_entry(
+    domain: str, log_func: LogFunc = print, *, ip: str | Iterable[object] | object | None = None
+) -> bool:
     """
     删除 hosts 条目
 
@@ -406,7 +420,7 @@ def remove_hosts_entry(domain, log_func=print, *, ip=None):
         return False
 
 
-def open_hosts_file(log_func=print):
+def open_hosts_file(log_func: LogFunc = print) -> bool:
     """
     根据平台打开 hosts 文件
 
@@ -428,11 +442,17 @@ def open_hosts_file(log_func=print):
             session = get_mac_privileged_session(log_func=log_func)
             if session:
                 success, data = session.run_command(["open", "-t", hosts_file], log_func=log_func)
+                data_dict = data if isinstance(data, dict) else {}
                 if success:
                     log_func("已使用默认文本编辑器打开 hosts 文件")
                     result = True
                 else:
-                    error_msg = data.get("stderr") or data.get("error") or data.get("stdout") or ""
+                    error_msg = (
+                        data_dict.get("stderr")
+                        or data_dict.get("error")
+                        or data_dict.get("stdout")
+                        or ""
+                    )
                     log_func(f"打开 hosts 文件失败: {error_msg or '未知错误'}")
             else:
                 log_func("⚠️ 打开 hosts 文件需要管理员权限，已取消操作")
@@ -456,7 +476,12 @@ def open_hosts_file(log_func=print):
         return False
 
 
-def modify_hosts_file(domain="api.openai.com", action="add", ip=DEFAULT_HOSTS_IPS, log_func=print):
+def modify_hosts_file(
+    domain: str = "api.openai.com",
+    action: str = "add",
+    ip: str | Iterable[object] | object | None = DEFAULT_HOSTS_IPS,
+    log_func: LogFunc = print,
+) -> bool:
     """
     修改 hosts 文件的主函数
 

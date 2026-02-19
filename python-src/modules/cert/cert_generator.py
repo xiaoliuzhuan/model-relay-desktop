@@ -3,9 +3,12 @@
 将 generate_certs.py 的功能模块化，支持直接函数调用
 """
 
+from __future__ import annotations
+
 import atexit
 import os
 import tempfile
+from collections.abc import Callable, Sequence
 
 from modules.cert.ca_metadata import save_ca_info
 from modules.cert.cert_utils import (
@@ -15,8 +18,10 @@ from modules.cert.cert_utils import (
 from modules.runtime.process_utils import run_subprocess
 from modules.runtime.resource_manager import ResourceManager
 
+type LogFunc = Callable[[str], None]
 
-def create_temp_file(content, suffix=".cnf"):
+
+def create_temp_file(content: str, suffix: str = ".cnf") -> str:
     """创建临时文件并写入内容"""
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
         temp_file.write(content.encode("utf-8"))
@@ -26,7 +31,9 @@ def create_temp_file(content, suffix=".cnf"):
     return temp_path
 
 
-def run_openssl_command(command, error_message, log_func=print):
+def run_openssl_command(
+    command: Sequence[str], error_message: str, log_func: LogFunc = print
+) -> tuple[bool, str]:
     """运行 OpenSSL 命令并检查结果"""
     log_func(f"执行命令: {' '.join(command)}")
     result = run_subprocess(command, check=False, capture_output=True, text=True)
@@ -50,7 +57,7 @@ def run_openssl_command(command, error_message, log_func=print):
 def _record_ca_cert_metadata(
     resource_manager: ResourceManager,
     ca_cert_path: str,
-    log_func=print,
+    log_func: LogFunc = print,
 ) -> bool:
     """读取 CA 证书指纹/到期时间并写入元数据文件。"""
     success, output = run_openssl_command(
@@ -84,7 +91,9 @@ def _record_ca_cert_metadata(
     )
 
 
-def create_default_config_files(resource_manager, log_func=print):
+def create_default_config_files(
+    resource_manager: ResourceManager, log_func: LogFunc = print
+) -> bool:
     """创建默认配置文件（如果不存在）"""
     ca_dir = resource_manager.ca_path
 
@@ -164,7 +173,9 @@ DNS.1 = api.openai.com
     return True
 
 
-def generate_ca_cert(resource_manager, log_func=print, *, ca_common_name="MTGA_CA"):
+def generate_ca_cert(
+    resource_manager: ResourceManager, log_func: LogFunc = print, *, ca_common_name: str = "MTGA_CA"
+) -> bool:
     """生成 CA 证书和私钥"""
     log_func("开始生成CA证书和私钥...")
 
@@ -248,7 +259,9 @@ def generate_ca_cert(resource_manager, log_func=print, *, ca_common_name="MTGA_C
     return True
 
 
-def generate_server_cert(resource_manager, domain="api.openai.com", log_func=print):  # noqa: PLR0911, PLR0915
+def generate_server_cert(  # noqa: PLR0911, PLR0915
+    resource_manager: ResourceManager, domain: str = "api.openai.com", log_func: LogFunc = print
+) -> bool:
     """生成服务器证书"""
     log_func(f"开始为 {domain} 生成服务器证书...")
 
@@ -428,7 +441,9 @@ def generate_server_cert(resource_manager, domain="api.openai.com", log_func=pri
     return True
 
 
-def generate_certificates(domain="api.openai.com", *, ca_common_name="MTGA_CA", log_func=print):
+def generate_certificates(
+    domain: str = "api.openai.com", *, ca_common_name: str = "MTGA_CA", log_func: LogFunc = print
+) -> bool:
     """
     一键生成 CA 证书和服务器证书
 

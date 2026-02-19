@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 from modules.services import app_metadata, app_version, bootstrap, logging_service, startup_context
 
@@ -16,7 +17,9 @@ class AppBootstrapResult:
     log_error: Callable[..., None]
 
 
-def build_app_bootstrap(*, project_root, get_user_data_dir) -> AppBootstrapResult:
+def build_app_bootstrap(
+    *, project_root: Path, get_user_data_dir: Callable[[], str]
+) -> AppBootstrapResult:
     app_context = bootstrap.build_app_context()
     metadata = app_metadata.DEFAULT_METADATA
     error_log_path = logging_service.setup_error_logging(

@@ -26,7 +26,7 @@ def _get_project_root() -> Path:
 def register_update_commands(commands: Commands) -> None:
     @commands.command()
     async def check_updates() -> dict[str, Any]:
-        logs, log_func = collect_logs()
+        logs, _ = collect_logs()
         version = resolve_app_version(project_root=_get_project_root())
         # Run sync network I/O off the main event loop to avoid blocking other commands.
         result = await asyncio.to_thread(
@@ -35,3 +35,5 @@ def register_update_commands(commands: Commands) -> None:
             app_version=version,
         )
         return build_result_payload(result, logs, "更新检查完成")
+
+    _ = check_updates

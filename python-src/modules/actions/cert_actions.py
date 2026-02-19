@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from modules.runtime.result_messages import describe_result
+from modules.runtime.thread_manager import ThreadManager
 from modules.services import cert_service
 
 
@@ -10,7 +11,7 @@ def run_generate_certificates(
     *,
     ca_common_name: str,
     log_func: Callable[[str], None],
-    thread_manager,
+    thread_manager: ThreadManager,
 ) -> None:
     def task():
         log_func("开始生成证书...")
@@ -30,7 +31,7 @@ def run_generate_certificates(
 def run_install_ca_cert(
     *,
     log_func: Callable[[str], None],
-    thread_manager,
+    thread_manager: ThreadManager,
 ) -> None:
     def task():
         log_func("开始安装CA证书...")
@@ -48,7 +49,7 @@ def run_clear_ca_cert(
     *,
     ca_common_name: str,
     log_func: Callable[[str], None],
-    thread_manager,
+    thread_manager: ThreadManager,
 ) -> None:
     def task():
         log_func("开始清除CA证书...")

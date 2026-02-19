@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
@@ -19,13 +20,15 @@ from modules.services.user_data_service import (
 
 from .common import build_result_payload, collect_logs
 
+type LogFunc = Callable[[str], None]
+
 
 @lru_cache(maxsize=1)
 def _get_resource_manager() -> ResourceManager:
     return ResourceManager()
 
 
-def _open_directory(path: str, *, log_func) -> OperationResult:
+def _open_directory(path: str, *, log_func: LogFunc) -> OperationResult:
     try:
         if os.name == "nt":
             os.startfile(path)  # type: ignore[attr-defined]
@@ -50,7 +53,7 @@ def register_user_data_commands(commands: Commands) -> None:
 
     @commands.command()
     async def user_data_backup() -> dict[str, Any]:
-        logs, log_func = collect_logs()
+        logs, _ = collect_logs()
         user_dir = _get_resource_manager().user_data_dir
         result = backup_user_data_result(
             user_dir,
@@ -60,14 +63,14 @@ def register_user_data_commands(commands: Commands) -> None:
 
     @commands.command()
     async def user_data_restore_latest() -> dict[str, Any]:
-        logs, log_func = collect_logs()
+        logs, _ = collect_logs()
         user_dir = _get_resource_manager().user_data_dir
         result = restore_latest_backup_result(user_dir)
         return build_result_payload(result, logs, "用户数据还原完成")
 
     @commands.command()
     async def user_data_clear() -> dict[str, Any]:
-        logs, log_func = collect_logs()
+        logs, _ = collect_logs()
         user_dir = _get_resource_manager().user_data_dir
         result = clear_user_data_result(
             user_dir,
@@ -75,3 +78,5 @@ def register_user_data_commands(commands: Commands) -> None:
             copy_template_files_fn=copy_template_files,
         )
         return build_result_payload(result, logs, "用户数据清除完成")
+
+    _ = (user_data_open_dir, user_data_backup, user_data_restore_latest, user_data_clear)

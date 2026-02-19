@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import lru_cache
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel
 from pytauri import Commands
@@ -28,6 +29,8 @@ from modules.services.config_service import ConfigStore
 from modules.services.hosts_service import modify_hosts_file_result
 
 from .common import build_result_payload, collect_logs
+
+type LogFunc = Callable[[str], None]
 
 
 class ProxyStartPayload(BaseModel):
@@ -75,12 +78,19 @@ def _get_proxy_instance() -> Any | None:
     return _get_proxy_state().proxy_instance
 
 
-def stop_proxy_for_shutdown(*, log_func=None) -> OperationResult:
+def stop_proxy_for_shutdown(*, log_func: LogFunc | None = None) -> OperationResult:
+    effective_log: LogFunc
     if log_func is None:
-        log_func = default_push_log
+        def _default_log(message: str) -> None:
+            default_push_log(message)
+
+        effective_log = _default_log
+    else:
+        effective_log = log_func
+
     def _log(message: str) -> None:
         with suppress(Exception):
-            log_func(message)
+            effective_log(message)
 
     _log("收到退出信号，准备停止代理服务器...")
     result = proxy_orchestration.stop_proxy_instance_result(
@@ -98,7 +108,7 @@ def stop_proxy_for_shutdown(*, log_func=None) -> OperationResult:
 
 def _stop_proxy_instance_result(
     *,
-    log_func,
+    log_func: LogFunc,
     reason: str = "stop",
     show_idle_message: bool = False,
 ) -> OperationResult:
@@ -114,7 +124,7 @@ def _stop_proxy_instance_result(
 def _start_proxy_instance_result(
     config: dict[str, Any],
     *,
-    log_func,
+    log_func: LogFunc,
     success_message: str = "✅ 代理服务器启动成功",
     hosts_modified: bool = False,
 ) -> OperationResult:
@@ -137,30 +147,29 @@ def _start_proxy_instance_result(
 def _restart_proxy_result(
     *,
     config: dict[str, Any],
-    log_func,
+    log_func: LogFunc,
     success_message: str = "✅ 代理服务器启动成功",
     hosts_modified: bool = False,
 ) -> OperationResult:
+    def _stop(**kwargs: Any) -> OperationResult:
+        return _stop_proxy_instance_result(log_func=log_func, **kwargs)
+
+    def _start(cfg: dict[str, Any], **kwargs: Any) -> OperationResult:
+        return _start_proxy_instance_result(cfg, log_func=log_func, **kwargs)
+
     return proxy_orchestration.restart_proxy_result(
         config=config,
         deps=proxy_orchestration.RestartProxyDeps(
             log=log_func,
-            stop_proxy_instance=lambda **kwargs: _stop_proxy_instance_result(
-                log_func=log_func,
-                **kwargs,
-            ),
-            start_proxy_instance=lambda cfg, **kwargs: _start_proxy_instance_result(
-                cfg,
-                log_func=log_func,
-                **kwargs,
-            ),
+            stop_proxy_instance=_stop,
+            start_proxy_instance=_start,
         ),
         success_message=success_message,
         hosts_modified=hosts_modified,
     )
 
 
-def _ensure_global_config_ready(*, log_func) -> OperationResult:
+def _ensure_global_config_ready(*, log_func: LogFunc) -> OperationResult:
     config_store = _get_config_store()
     result = proxy_orchestration.ensure_global_config_ready(
         load_global_config=config_store.load_global_config,
@@ -172,7 +181,9 @@ def _ensure_global_config_ready(*, log_func) -> OperationResult:
     return OperationResult.failure("全局配置缺失")
 
 
-def _build_proxy_config(payload: ProxyStartPayload, *, log_func) -> dict[str, Any] | None:
+def _build_proxy_config(
+    payload: ProxyStartPayload, *, log_func: LogFunc
+) -> dict[str, Any] | None:
     config_store = _get_config_store()
     stream_mode = payload.stream_mode if payload.force_stream else None
     config = proxy_orchestration.build_proxy_config(
@@ -211,12 +222,12 @@ def _build_proxy_config_silent(payload: ProxyStartPayload) -> dict[str, Any] | N
     )
 
 
-def _modify_hosts_file(*, log_func, **kwargs: Any) -> OperationResult:
+def _modify_hosts_file(*, log_func: LogFunc, **kwargs: Any) -> OperationResult:
     return modify_hosts_file_result(log_func=log_func, **kwargs)
 
 
 def _push_proxy_step(
-    log_func,
+    log_func: LogFunc,
     *,
     step: Literal["cert", "hosts", "proxy"],
     status: Literal["ok", "skipped", "failed", "started"],
@@ -250,7 +261,7 @@ def _push_proxy_step(
 def _decide_ca_action(
     check_result: OperationResult,
     *,
-    log_func,
+    log_func: LogFunc,
 ) -> tuple[str, str]:
     if not check_result.ok:
         log_func("⚠️ CA 证书检查失败，按规则清理并生成新证书")
@@ -260,7 +271,13 @@ def _decide_ca_action(
     if isinstance(match_count, int) and match_count > 1:
         return "clear_and_generate", "检测到多个匹配证书"
 
-    installed_certs = check_result.details.get("certs") or []
+    installed_certs_obj = cast(object, check_result.details.get("certs") or [])
+    installed_certs: list[dict[str, object]] = []
+    if isinstance(installed_certs_obj, list):
+        installed_certs_list = cast(list[object], installed_certs_obj)
+        for item in installed_certs_list:
+            if isinstance(item, dict):
+                installed_certs.append(cast(dict[str, object], item))
     if not installed_certs:
         return "clear_and_generate", "未检测到系统 CA 证书"
 
@@ -270,7 +287,7 @@ def _decide_ca_action(
 def _decide_ca_action_with_certs(
     installed_certs: list[dict[str, object]],
     *,
-    log_func,
+    log_func: LogFunc,
 ) -> tuple[str, str]:
     resource_manager = _get_resource_manager()
     ca_info = load_ca_info(resource_manager, log_func=log_func)
@@ -302,7 +319,7 @@ def _decide_ca_action_with_certs(
 
 def _proxy_start_all_precheck(
     body: ProxyStartPayload,
-    log_func,
+    log_func: LogFunc,
 ) -> tuple[OperationResult | None, dict[str, Any] | None]:
     ready = _ensure_global_config_ready(log_func=log_func)
     if not ready.ok:
@@ -327,7 +344,7 @@ def _proxy_start_all_precheck(
     return None, config
 
 
-def _proxy_start_all_cert(log_func) -> OperationResult | None:
+def _proxy_start_all_cert(log_func: LogFunc) -> OperationResult | None:
     _push_proxy_step(log_func, step="cert", status="started")
     def _generate_and_install() -> OperationResult | None:
         log_func("步骤 1/4: 生成证书")
@@ -390,7 +407,7 @@ def _proxy_start_all_cert(log_func) -> OperationResult | None:
     return _generate_and_install()
 
 
-def _proxy_start_all_hosts(log_func) -> OperationResult | None:
+def _proxy_start_all_hosts(log_func: LogFunc) -> OperationResult | None:
     _push_proxy_step(log_func, step="hosts", status="started")
     log_func("步骤 3/4: 修改hosts文件")
     hosts_result = modify_hosts_file_result(log_func=log_func)
@@ -406,7 +423,7 @@ def _proxy_start_all_hosts(log_func) -> OperationResult | None:
     return None
 
 
-def _proxy_start_all_proxy(config: dict[str, Any], log_func) -> OperationResult:
+def _proxy_start_all_proxy(config: dict[str, Any], log_func: LogFunc) -> OperationResult:
     _push_proxy_step(log_func, step="proxy", status="started")
     log_func("步骤 4/4: 启动代理服务器")
     start_result = _restart_proxy_result(

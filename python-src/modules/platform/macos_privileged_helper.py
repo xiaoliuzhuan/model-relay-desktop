@@ -19,10 +19,10 @@ import sys
 import threading
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 try:
     from modules.runtime.resource_manager import get_packaging_runtime
@@ -37,12 +37,20 @@ except ImportError:
 
 JsonDict = dict[str, Any]
 JsonMapping = Mapping[str, Any]
+type LogFunc = Callable[[str], None]
 
 REQUEST_TERMINATOR = b"\n"
 CONNECT_TIMEOUT = 12.0
 RETRY_DELAY = 0.15
 HELPER_FLAG = "--run-macos-helper"
 _SOCKET_FAMILY_UNIX = getattr(socket, "AF_UNIX", None)
+
+
+def _as_json_dict(value: Any) -> JsonDict:
+    if not isinstance(value, dict):
+        return {}
+    source = cast(dict[object, Any], value)
+    return {str(key): item for key, item in source.items()}
 
 
 class MacPrivilegeSessionError(RuntimeError):
@@ -70,7 +78,7 @@ class MacPrivilegeSession:
         self._connect_logged_wait = False
         self._security_session = os.environ.get("SECURITYSESSIONID")
 
-    def ensure_ready(self, log_func=print) -> bool:
+    def ensure_ready(self, log_func: LogFunc = print) -> bool:
         """确保 helper 已经启动并建立 socket 连接。"""
         if sys.platform != "darwin":
             log_func("⚠️ macOS 持久化提权仅在 macOS 平台生效")
@@ -90,7 +98,9 @@ class MacPrivilegeSession:
 
         return self._connect(log_func)
 
-    def write_file(self, path: str, content: str, encoding: str, log_func=print) -> bool:
+    def write_file(
+        self, path: str, content: str, encoding: str, log_func: LogFunc = print
+    ) -> bool:
         """以管理员权限写入文本文件。"""
         payload = {
             "action": "write_file",
@@ -106,7 +116,7 @@ class MacPrivilegeSession:
         log_func(f"⚠️ 写入 {path} 失败: {response.get('error')}")
         return False
 
-    def copy_file(self, src: str, dst: str, log_func=print) -> bool:
+    def copy_file(self, src: str, dst: str, log_func: LogFunc = print) -> bool:
         """复制文件，可用于 hosts 备份/还原等场景。"""
         payload = {"action": "copy_file", "src": src, "dst": dst}
         response = self._send_payload(payload, log_func)
@@ -117,16 +127,16 @@ class MacPrivilegeSession:
         log_func(f"⚠️ 复制 {src} -> {dst} 失败: {response.get('error')}")
         return False
 
-    def run_command(self, cmd: list[str], log_func=print) -> tuple[bool, JsonDict]:
+    def run_command(self, cmd: list[str], log_func: LogFunc = print) -> tuple[bool, JsonDict]:
         """运行命令（例如 open -t /etc/hosts），返回 (success, data)。"""
         payload = {"action": "run_command", "cmd": cmd}
         response = self._send_payload(payload, log_func)
         if not response:
             return False, {"error": "通信失败"}
         if response.get("ok"):
-            return True, response.get("data", {})
-        raw_data = response.get("data")
-        data: JsonDict = raw_data if isinstance(raw_data, dict) else {}
+            data = _as_json_dict(response.get("data", {}))
+            return True, data
+        data = _as_json_dict(response.get("data"))
         data.setdefault("error", response.get("error", "未知错误"))
         return False, data
 
@@ -135,7 +145,7 @@ class MacPrivilegeSession:
         cert_path: str,
         *,
         keychain: str = "/Library/Keychains/System.keychain",
-        log_func=print,
+        log_func: LogFunc = print,
     ) -> tuple[bool, JsonDict]:
         """使用管理员权限安装并信任 CA 证书，返回 (success, data)。"""
         if not cert_path:
@@ -169,15 +179,17 @@ class MacPrivilegeSession:
         if not self._helper_started:
             return
         payload = {"action": "shutdown"}
+        def _quiet_log(_message: str) -> None:
+            return None
         try:
-            self._send_payload(payload, log_func=lambda *_: None, allow_retry=False)
+            self._send_payload(payload, log_func=_quiet_log, allow_retry=False)
         except MacPrivilegeSessionError:
             pass
         finally:
             self._cleanup_connection()
             self._helper_started = False
 
-    def _start_helper(self, log_func) -> bool:
+    def _start_helper(self, log_func: LogFunc) -> bool:
         runtime = get_packaging_runtime()
         if runtime == "nuitka":
             launcher = self._locate_packaged_launcher()
@@ -273,7 +285,7 @@ class MacPrivilegeSession:
                 return candidate
         return None
 
-    def _connect(self, log_func) -> bool:
+    def _connect(self, log_func: LogFunc) -> bool:
         if not self._connect_logged_wait:
             log_func("⌛ 正在初始化管理员通信通道，请稍候...")
             self._connect_logged_wait = True
@@ -306,7 +318,7 @@ class MacPrivilegeSession:
     def _send_payload(
         self,
         payload: JsonMapping,
-        log_func,
+        log_func: LogFunc,
         *,
         allow_retry: bool = True,
     ) -> JsonDict | None:
@@ -321,7 +333,7 @@ class MacPrivilegeSession:
                     assert self._connection is not None
                     self._connection.sendall(data)
                     line = self._readline()
-                    return json.loads(line.decode("utf-8"))
+                    return _as_json_dict(json.loads(line.decode("utf-8")))
                 except (OSError, ConnectionError, json.JSONDecodeError):
                     self._cleanup_connection()
                     time.sleep(RETRY_DELAY)
@@ -360,7 +372,7 @@ _mac_session_holder: dict[str, MacPrivilegeSession | None] = {"session": None}
 _mac_session_lock = threading.Lock()
 
 
-def get_mac_privileged_session(log_func=print) -> MacPrivilegeSession | None:
+def get_mac_privileged_session(log_func: LogFunc = print) -> MacPrivilegeSession | None:
     """返回可用的 MacPrivilegeSession，没有可用权限时返回 None。"""
     if sys.platform != "darwin":
         return None
@@ -430,28 +442,45 @@ class _PrivilegeHelperServer:
                 if self._stop:
                     return
 
-    def _process_request(self, line: bytes) -> bytes:
+    def _process_request(self, line: bytes) -> bytes:  # noqa: PLR0912
         try:
-            payload = json.loads(line.decode("utf-8"))
+            payload_obj = json.loads(line.decode("utf-8"))
         except json.JSONDecodeError:
             return json.dumps({"ok": False, "error": "无效的 JSON 请求"}).encode("utf-8")
+        if not isinstance(payload_obj, dict):
+            return json.dumps({"ok": False, "error": "请求必须是 JSON 对象"}).encode("utf-8")
+        payload = _as_json_dict(payload_obj)
 
-        action = payload.get("action")
+        action_obj = payload.get("action")
+        action = action_obj if isinstance(action_obj, str) else ""
         try:
             if action == "write_file":
-                path = payload["path"]
-                encoding = payload.get("encoding", "utf-8")
-                content = payload["content"]
-                with open(path, "w", encoding=encoding) as fh:
-                    fh.write(content)
+                path_obj = payload.get("path")
+                if not isinstance(path_obj, str):
+                    raise ValueError("path 必须是字符串")
+                encoding_obj = payload.get("encoding", "utf-8")
+                encoding = encoding_obj if isinstance(encoding_obj, str) else "utf-8"
+                content_obj = payload.get("content")
+                if not isinstance(content_obj, str):
+                    raise ValueError("content 必须是字符串")
+                with open(path_obj, "w", encoding=encoding) as fh:
+                    fh.write(content_obj)
                 result = {"ok": True}
             elif action == "copy_file":
-                shutil.copy2(payload["src"], payload["dst"])
+                src_obj = payload.get("src")
+                dst_obj = payload.get("dst")
+                if not isinstance(src_obj, str) or not isinstance(dst_obj, str):
+                    raise ValueError("src/dst 必须是字符串")
+                shutil.copy2(src_obj, dst_obj)
                 result = {"ok": True}
             elif action == "run_command":
-                cmd = payload["cmd"]
-                if not isinstance(cmd, list) or not all(isinstance(item, str) for item in cmd):
+                cmd_obj = payload.get("cmd")
+                if not isinstance(cmd_obj, list):
                     raise ValueError("cmd 必须是字符串列表")
+                cmd_list = cast(list[object], cmd_obj)
+                if not all(isinstance(item, str) for item in cmd_list):
+                    raise ValueError("cmd 必须是字符串列表")
+                cmd = cast(list[str], cmd_list)
                 completed = subprocess.run(
                     cmd, capture_output=True, text=True, check=False
                 )

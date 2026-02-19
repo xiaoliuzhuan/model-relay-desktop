@@ -5,7 +5,7 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from modules.hosts.file_operability import check_file_operability
+from modules.hosts.file_operability import FileOperabilityReport, check_file_operability
 from modules.hosts.hosts_manager import get_hosts_file_path
 from modules.hosts.hosts_state import (
     ALLOW_UNSAFE_HOSTS_FLAG,
@@ -13,7 +13,7 @@ from modules.hosts.hosts_state import (
     get_hosts_modify_block_report,
     is_hosts_modify_blocked,
 )
-from modules.network.network_environment import check_network_environment
+from modules.network.network_environment import NetworkEnvironmentReport, check_network_environment
 from modules.platform.system import is_windows
 
 
@@ -23,7 +23,7 @@ class StartupReport:
     env_message: str
 
 
-def run_hosts_preflight():
+def run_hosts_preflight() -> FileOperabilityReport | None:
     """程序启动时预检 hosts 文件，必要时启用受限 hosts 模式。"""
     if not is_windows():
         return None
@@ -57,7 +57,7 @@ def run_hosts_preflight():
     return report
 
 
-def run_network_environment_preflight():
+def run_network_environment_preflight() -> NetworkEnvironmentReport:
     """程序启动时检查网络环境（显式代理），用于提示 hosts 导流可能被绕过。"""
     logger = logging.getLogger("mtga_gui")
 
@@ -72,8 +72,8 @@ def emit_startup_logs(
     log: Callable[[str], None],
     check_environment: Callable[[], tuple[bool, str]],
     is_packaged: Callable[[], bool],
-    hosts_preflight_report,
-    network_env_report,
+    hosts_preflight_report: FileOperabilityReport | None,
+    network_env_report: NetworkEnvironmentReport | None,
 ) -> StartupReport:
     env_ok, env_msg = check_environment()
     if env_ok:

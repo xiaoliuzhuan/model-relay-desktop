@@ -65,3 +65,5 @@ def register_hosts_commands(commands: Commands) -> None:
         logs, log_func = collect_logs()
         result = open_hosts_file_result(log_func=log_func)
         return build_result_payload(result, logs, "hosts 打开完成")
+
+    _ = (hosts_modify, hosts_open)

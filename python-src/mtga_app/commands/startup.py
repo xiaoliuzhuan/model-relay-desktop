@@ -73,3 +73,5 @@ def register_startup_commands(commands: Commands) -> None:
             explicit_proxy_detected=explicit_proxy_detected,
         )
         return build_result_payload(result, logs, "")
+
+    _ = startup_status

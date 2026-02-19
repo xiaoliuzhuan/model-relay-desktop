@@ -5,18 +5,29 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from modules.proxy.proxy_app import ProxyApp
 from modules.proxy.proxy_runtime import ProxyRuntime
 from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 from modules.runtime.thread_manager import ThreadManager
 
+type LogFunc = Callable[[str], None]
+
 
 class ProxyServer:
     """代理服务器类，负责装配领域逻辑与运行时。"""
 
-    def __init__(self, config=None, log_func=print, *, thread_manager: ThreadManager):
-        self.config = config or {}
+    def __init__(
+        self,
+        config: dict[str, Any] | None = None,
+        log_func: LogFunc = print,
+        *,
+        thread_manager: ThreadManager,
+    ) -> None:
+        self.config: dict[str, Any] = config or {}
         self.log_func = log_func
         self.resource_manager = ResourceManager()
         self.thread_manager = thread_manager
@@ -33,7 +44,7 @@ class ProxyServer:
             thread_manager=self.thread_manager,
         )
 
-    def start(self, host="0.0.0.0", port=443) -> bool:
+    def start(self, host: str = "0.0.0.0", port: int = 443) -> bool:
         if not self.app_layer.valid:
             return False
 
@@ -52,7 +63,7 @@ class ProxyServer:
         self.app_layer.close()
         return stop_result
 
-    def apply_runtime_config(self, config: dict) -> OperationResult:
+    def apply_runtime_config(self, config: dict[str, Any]) -> OperationResult:
         if not self.runtime.is_running():
             return OperationResult.failure("代理服务器未运行")
         return self.app_layer.apply_runtime_config(config)
@@ -61,7 +72,12 @@ class ProxyServer:
         return self.runtime.is_running()
 
 
-def start_proxy_server(config, log_func=print, *, thread_manager: ThreadManager):
+def start_proxy_server(
+    config: dict[str, Any] | None,
+    log_func: LogFunc = print,
+    *,
+    thread_manager: ThreadManager,
+) -> ProxyServer | None:
     proxy = ProxyServer(config, log_func, thread_manager=thread_manager)
     if proxy.start():
         return proxy

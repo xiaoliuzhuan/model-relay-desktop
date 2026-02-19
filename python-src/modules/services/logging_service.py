@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from collections.abc import Callable
+from types import TracebackType
 from typing import Any
 
 
@@ -48,7 +49,11 @@ def log_error(message: str, exc_info: Any = None, *, logger_name: str = "mtga_gu
 def install_global_exception_hook(*, log_error: Callable[..., None]) -> None:
     """将未捕获异常写入错误日志。"""
 
-    def handle_exception(exc_type, exc_value, exc_traceback) -> None:
+    def handle_exception(
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        exc_traceback: TracebackType | None,
+    ) -> None:
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return

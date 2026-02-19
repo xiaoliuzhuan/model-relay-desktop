@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import lru_cache
 from typing import Any, Literal
 
@@ -15,8 +16,19 @@ from .common import build_result_payload, collect_logs
 
 
 class InlineThreadManager:
-    def run(self, name: str, target, *args, **kwargs) -> str:
-        target(*args, **kwargs)
+    def run(  # noqa: PLR0913
+        self,
+        name: str,
+        target: Callable[..., None],
+        *,
+        args: tuple[Any, ...] | None = None,
+        kwargs: dict[str, Any] | None = None,
+        wait_for: list[str] | None = None,
+        allow_parallel: bool = False,
+        daemon: bool = True,
+    ) -> str:
+        _ = (wait_for, allow_parallel, daemon)
+        target(*(args or ()), **(kwargs or {}))
         return f"{name}-inline"
 
     def wait(self, _task_id: str | None, _timeout: float | None = None) -> bool:
@@ -58,21 +70,22 @@ def register_model_test_commands(commands: Commands) -> None:
         if body.index < 0 or body.index >= len(config_groups):
             result = OperationResult.failure("配置组索引无效")
             return build_result_payload(result, logs, "配置组测活失败")
-        group = config_groups[body.index]
-        if not isinstance(group, dict):
-            result = OperationResult.failure("配置组数据不正确")
+        group_obj: object = config_groups[body.index]
+        if not isinstance(group_obj, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+            result = OperationResult.failure("配置组格式无效")
             return build_result_payload(result, logs, "配置组测活失败")
+        config_group = {str(key): value for key, value in group_obj.items()}
 
         thread_manager = InlineThreadManager()
         if body.mode == "models":
             model_tests.test_model_in_list(
-                group,
+                config_group,
                 log_func=log_func,
                 thread_manager=thread_manager,
             )
         else:
             model_tests.test_chat_completion(
-                group,
+                config_group,
                 log_func=log_func,
                 thread_manager=thread_manager,
             )
@@ -94,3 +107,5 @@ def register_model_test_commands(commands: Commands) -> None:
             return build_result_payload(result, logs, "模型列表获取失败")
         result = OperationResult.success(models=model_ids)
         return build_result_payload(result, logs, "模型列表获取完成")
+
+    _ = (config_group_test, config_group_models)

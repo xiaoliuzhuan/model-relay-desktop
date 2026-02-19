@@ -6,7 +6,8 @@ import logging
 import threading
 import time
 import uuid
-from typing import Any
+from collections.abc import Callable, Generator
+from typing import Any, cast
 
 import requests
 from flask import Flask, Response, jsonify, request
@@ -22,8 +23,14 @@ from modules.runtime.resource_manager import ResourceManager
 class ProxyApp:
     """代理服务的领域逻辑：配置解析 + Flask 路由 + 上游转发。"""
 
-    def __init__(self, config=None, log_func=print, *, resource_manager: ResourceManager):
-        self.config = config or {}
+    def __init__(
+        self,
+        config: dict[str, Any] | None = None,
+        log_func: Callable[[str], None] = print,
+        *,
+        resource_manager: ResourceManager,
+    ) -> None:
+        self.config: dict[str, Any] = config or {}
         self.log_func = log_func
         self.resource_manager = resource_manager
         self._config_lock = threading.RLock()
@@ -42,7 +49,7 @@ class ProxyApp:
         self.inbound_route = DEFAULT_MIDDLE_ROUTE
         self.custom_model_id = ""
         self.target_model_id = ""
-        self.stream_mode = None
+        self.stream_mode: str | None = None
         self.debug_mode = False
         self.disable_ssl_strict_mode = False
 
@@ -218,10 +225,10 @@ class ProxyApp:
         ms = int((now % 1) * 1000)
         return f"{base}.{ms:03d}"
 
-    def _log_request(self, request_id: str, message: str):
+    def _log_request(self, request_id: str, message: str) -> None:
         self.log_func(f"{self._timestamp_ms()} [{request_id}] {message}")
 
-    def _get_mapped_model_id(self):
+    def _get_mapped_model_id(self) -> str:
         return self.custom_model_id
 
     def _build_route(self, base_route: str, suffix: str) -> str:
@@ -232,7 +239,7 @@ class ProxyApp:
             return f"/{suffix.lstrip('/')}"
         return f"{middle_route.rstrip('/')}/{suffix.lstrip('/')}"
 
-    def _create_app(self):
+    def _create_app(self) -> None:
         self.app = Flask(__name__)
         self._app_logger_default_level = self.app.logger.level
         self._apply_debug_logging(self.debug_mode)
@@ -248,7 +255,7 @@ class ProxyApp:
             methods=["POST"],
         )
 
-    def _get_models(self):
+    def _get_models(self) -> tuple[Response, int] | Response:
         snapshot = self._snapshot_runtime_state()
         inbound_route = str(snapshot["inbound_route"])
         auth = snapshot["auth"]
@@ -298,10 +305,10 @@ class ProxyApp:
         self.log_func(f"返回映射模型: {mapped_model_id}")
         return jsonify(model_data)
 
-    def _chat_completions(self):  # noqa: PLR0911, PLR0912, PLR0915
+    def _chat_completions(self) -> tuple[Response, int] | Response:  # noqa: PLR0911, PLR0912, PLR0915
         request_id = self._new_request_id()
 
-        def log(message: str):
+        def log(message: str) -> None:
             self._log_request(request_id, message)
 
         snapshot = self._snapshot_chat_runtime_state()
@@ -349,9 +356,9 @@ class ProxyApp:
                 log_message += error_msg
             log(log_message)
 
-        request_data = request.get_json(silent=True)
+        request_data_obj = request.get_json(silent=True)
 
-        if request_data is None:
+        if not isinstance(request_data_obj, dict):
             log("解析 JSON 失败或请求不是 JSON 格式")
             log(f"Content-Type: {request.headers.get('Content-Type')}")
             release_transport()
@@ -364,6 +371,7 @@ class ProxyApp:
                     ),
                 }
             ), 400
+        request_data = cast(dict[str, Any], request_data_obj)
 
         client_requested_stream = request_data.get("stream", False)
         log(f"客户端请求的流模式: {client_requested_stream}")
@@ -440,7 +448,7 @@ class ProxyApp:
                     except Exception as log_exc:  # noqa: BLE001
                         log(f"SSE 日志文件创建失败: {log_exc}")
 
-                def generate_stream():  # noqa: PLR0915, PLR0912
+                def generate_stream() -> Generator[bytes]:  # noqa: PLR0915, PLR0912
                     nonlocal log_file, log_file_stack
                     event_index = 0
                     done_sent = False
@@ -536,12 +544,17 @@ class ProxyApp:
                     content_type=downstream_content_type,
                 )
 
-            response_json = response_from_target.json()
+            response_json_obj = response_from_target.json()
+            if not isinstance(response_json_obj, dict):
+                log("上游响应不是 JSON 对象")
+                release_transport()
+                return jsonify({"error": "Invalid response from target API"}), 502
+            response_json = cast(dict[str, Any], response_json_obj)
 
             if client_requested_stream and stream_mode == "false":
                 log("将非流式响应转换为流式格式返回给客户端")
 
-                def simulate_stream():
+                def simulate_stream() -> Generator[str]:
                     choices = response_json.get("choices", [])
                     if not choices:
                         log("响应中没有找到 choices 字段")

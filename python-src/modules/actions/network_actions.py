@@ -3,14 +3,15 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from modules.network.network_environment import check_network_environment
+from modules.runtime.thread_manager import ThreadManager
 
 
 def run_network_environment_check(
     *,
     log_func: Callable[[str], None],
-    thread_manager,
+    thread_manager: ThreadManager,
 ) -> None:
-    def task():
+    def task() -> None:
         log_func("开始检查网络环境...")
         report = check_network_environment(
             log_func=log_func,

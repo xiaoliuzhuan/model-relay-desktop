@@ -43,3 +43,5 @@ def register_cert_commands(commands: Commands) -> None:
             log_func=log_func,
         )
         return build_result_payload(result, logs, "CA 证书清除完成")
+
+    _ = (generate_certificates, install_ca_cert, clear_ca_cert)

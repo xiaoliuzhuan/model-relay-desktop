@@ -6,13 +6,16 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 
 from modules.cert.ca_store import install_ca_cert_file
 from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 
+type LogFunc = Callable[[str], None]
 
-def install_ca_cert_result(log_func=print) -> OperationResult:
+
+def install_ca_cert_result(log_func: LogFunc = print) -> OperationResult:
     """根据操作系统安装 CA 证书，返回结果对象。"""
     log_func("开始安装 CA 证书...")
 
@@ -42,7 +45,7 @@ def install_ca_cert_result(log_func=print) -> OperationResult:
         return OperationResult.failure("安装 CA 证书失败")
 
 
-def install_ca_cert(log_func=print) -> bool:
+def install_ca_cert(log_func: LogFunc = print) -> bool:
     """根据操作系统安装 CA 证书，返回是否成功。"""
     return install_ca_cert_result(log_func=log_func).ok
 

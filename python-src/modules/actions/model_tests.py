@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol, cast
 
 import requests
 
@@ -11,23 +11,54 @@ HTTP_OK = 200
 CONTENT_PREVIEW_LEN = 50
 
 
+class ThreadRunner(Protocol):
+    def run(  # noqa: PLR0913
+        self,
+        name: str,
+        target: Callable[..., None],
+        *,
+        args: tuple[Any, ...] | None = None,
+        kwargs: dict[str, Any] | None = None,
+        wait_for: list[str] | None = None,
+        allow_parallel: bool = False,
+        daemon: bool = True,
+    ) -> str: ...
+
+
 def _extract_model_items(payload: Any) -> list[dict[str, Any]]:
     if not isinstance(payload, dict):
         return []
+    payload_dict = cast(dict[str, Any], payload)
 
-    data = payload.get("data")
+    data = payload_dict.get("data")
     if isinstance(data, list):
-        return [item for item in data if isinstance(item, dict)]
+        items: list[dict[str, Any]] = []
+        data_list = cast(list[object], data)
+        for item in data_list:
+            if isinstance(item, dict):
+                items.append(cast(dict[str, Any], item))
+        return items
 
-    result = payload.get("result")
+    result = payload_dict.get("result")
     if isinstance(result, dict):
-        result_data = result.get("data")
+        result_dict = cast(dict[str, Any], result)
+        result_data = result_dict.get("data")
         if isinstance(result_data, list):
-            return [item for item in result_data if isinstance(item, dict)]
+            items: list[dict[str, Any]] = []
+            result_data_list = cast(list[object], result_data)
+            for item in result_data_list:
+                if isinstance(item, dict):
+                    items.append(cast(dict[str, Any], item))
+            return items
 
-    alt = payload.get("models")
+    alt = payload_dict.get("models")
     if isinstance(alt, list):
-        return [item for item in alt if isinstance(item, dict)]
+        items: list[dict[str, Any]] = []
+        alt_list = cast(list[object], alt)
+        for item in alt_list:
+            if isinstance(item, dict):
+                items.append(cast(dict[str, Any], item))
+        return items
 
     return []
 
@@ -89,8 +120,10 @@ def _parse_model_ids(
     payload: Any,
     log_func: Callable[[str], None],
 ) -> list[str]:
-    if isinstance(payload, dict) and payload.get("object"):
-        log_func(f"   对象类型: {payload['object']}")
+    if isinstance(payload, dict):
+        payload_dict = cast(dict[str, Any], payload)
+        if payload_dict.get("object"):
+            log_func(f"   对象类型: {payload_dict['object']}")
 
     model_items = _extract_model_items(payload)
     if not model_items:
@@ -180,7 +213,7 @@ def test_model_in_list(
     config_group: dict[str, Any],
     *,
     log_func: Callable[[str], None] = print,
-    thread_manager,
+    thread_manager: ThreadRunner,
 ) -> None:
     """测试模型是否在列表中（GET /v1/models）。"""
     thread_manager.run(
@@ -193,7 +226,7 @@ def test_chat_completion(
     config_group: dict[str, Any],
     *,
     log_func: Callable[[str], None] = print,
-    thread_manager,
+    thread_manager: ThreadRunner,
 ) -> None:
     """测试聊天补全连接（POST /v1/chat/completions）。"""
 

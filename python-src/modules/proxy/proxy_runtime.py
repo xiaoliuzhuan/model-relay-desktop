@@ -3,7 +3,9 @@ from __future__ import annotations
 import os
 import ssl
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from werkzeug.serving import BaseWSGIServer, WSGIRequestHandler
 
@@ -12,21 +14,23 @@ from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 from modules.runtime.thread_manager import ThreadManager
 
+type LogFunc = Callable[[str], None]
+
 
 class StoppableWSGIServer(BaseWSGIServer):
     """可停止的 WSGI 服务器"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._stop_event = threading.Event()
         super().__init__(*args, **kwargs)
 
-    def server_close(self):
+    def server_close(self) -> None:
         stop_event = getattr(self, "_stop_event", None)
         if stop_event:
             stop_event.set()
         super().server_close()
 
-    def serve_forever(self, poll_interval=0.5):
+    def serve_forever(self, poll_interval: float = 0.5) -> None:
         self.timeout = poll_interval
         while not self._stop_event.is_set():
             try:
@@ -48,8 +52,8 @@ class ProxyRuntime:
 
     def __init__(
         self,
-        app,
-        log_func,
+        app: Any,
+        log_func: LogFunc,
         *,
         resource_manager: ResourceManager,
         thread_manager: ThreadManager,

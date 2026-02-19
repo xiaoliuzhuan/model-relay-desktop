@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
+
+type LogFunc = Callable[[str], None]
 
 
 @dataclass(frozen=True)
@@ -20,9 +23,9 @@ class ProxyAuth:
         auth_header: str | None,
         api_key: str,
         *,
-        log_func=print,
-    ) -> dict:
-        headers = {"Content-Type": "application/json"}
+        log_func: LogFunc = print,
+    ) -> dict[str, str]:
+        headers: dict[str, str] = {"Content-Type": "application/json"}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
             log_func("使用配置组中的API key")

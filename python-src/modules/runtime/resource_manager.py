@@ -21,7 +21,7 @@ RESOURCE_DIR = os.environ.get("MTGA_RESOURCE_DIR", "").strip()
 RESOURCE_STRICT = os.environ.get("MTGA_PATH_STRICT") == "1"
 
 
-def safe_print(message):
+def safe_print(message: object) -> None:
     """Print helper tolerant of non-ASCII stdout."""
     try:
         print(message)
@@ -57,7 +57,7 @@ def is_packaged() -> bool:
     return get_packaging_runtime() != "dev"
 
 
-def get_user_data_dir():
+def get_user_data_dir() -> str:
     """获取用户数据目录，用于持久化存储。"""
     app_name = "MTGA"
     roaming = os.name == "nt"
@@ -90,7 +90,7 @@ def _get_local_resource_dir() -> str | None:
     return None
 
 
-def get_program_resource_dir():
+def get_program_resource_dir() -> str:
     """获取程序资源目录（临时目录，包含配置模板等）"""
     runtime = get_packaging_runtime()
     override_dir = RESOURCE_DIR
@@ -112,12 +112,12 @@ def get_program_resource_dir():
     return exe_dir
 
 
-def get_base_path():
+def get_base_path() -> str:
     """获取程序基础路径（兼容旧接口）"""
     return get_program_resource_dir()
 
 
-def get_resource_path(relative_path):
+def get_resource_path(relative_path: str) -> str:
     """
     获取程序资源文件的绝对路径（配置模板等）
 
@@ -131,7 +131,7 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-def get_user_data_path(relative_path):
+def get_user_data_path(relative_path: str) -> str:
     """
     获取用户数据文件的绝对路径（配置、证书、备份等）
 
@@ -145,17 +145,17 @@ def get_user_data_path(relative_path):
     return os.path.join(user_dir, relative_path)
 
 
-def get_ca_path():
+def get_ca_path() -> str:
     """获取 CA 目录路径（用户数据目录）"""
     return get_user_data_path("ca")
 
 
-def get_ca_template_path():
+def get_ca_template_path() -> str:
     """获取 CA 配置模板目录路径（程序资源目录）"""
     return get_resource_path("ca")
 
 
-def get_openssl_path():
+def get_openssl_path() -> str:
     """获取 OpenSSL 可执行文件路径"""
     if os.name == "nt":  # Windows
         return get_resource_path("openssl/openssl.exe")
@@ -164,22 +164,22 @@ def get_openssl_path():
         return "openssl"
 
 
-def get_openssl_dir():
+def get_openssl_dir() -> str:
     """获取 OpenSSL 目录路径"""
     return get_resource_path("openssl")
 
 
-def get_temp_dir():
+def get_temp_dir() -> str:
     """获取临时文件目录"""
     return tempfile.gettempdir()
 
 
-def ensure_directory_exists(path):
+def ensure_directory_exists(path: str) -> None:
     """确保目录存在，如果不存在则创建"""
     os.makedirs(path, exist_ok=True)
 
 
-def copy_template_files():
+def copy_template_files() -> list[str]:
     """将配置模板文件复制到用户数据目录"""
     template_ca_dir = get_ca_template_path()
     user_ca_dir = get_ca_path()
@@ -205,7 +205,7 @@ def copy_template_files():
         "youtube.subj",
     ]
 
-    copied_files = []
+    copied_files: list[str] = []
     for filename in template_files:
         src_path = os.path.join(template_ca_dir, filename)
         dst_path = os.path.join(user_ca_dir, filename)
@@ -224,7 +224,7 @@ def copy_template_files():
 class ResourceManager:
     """资源管理器类，提供统一的资源访问接口"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.program_resource_dir = get_program_resource_dir()
         self.user_data_dir = get_user_data_dir()
         self.ca_path = get_ca_path()
@@ -235,7 +235,7 @@ class ResourceManager:
         # 初始化时复制模板文件
         self._ensure_user_data_setup()
 
-    def _ensure_user_data_setup(self):
+    def _ensure_user_data_setup(self) -> None:
         """确保用户数据目录设置正确"""
         # 复制配置模板文件到用户目录
         copied_files = copy_template_files()
@@ -243,52 +243,52 @@ class ResourceManager:
             safe_print(f"已复制模板文件到用户目录: {', '.join(copied_files)}")
 
     @property
-    def base_path(self):
+    def base_path(self) -> str:
         """基础路径（兼容旧接口）"""
         return self.program_resource_dir
 
-    def get_cert_file(self, domain="api.openai.com"):
+    def get_cert_file(self, domain: str = "api.openai.com") -> str:
         """获取证书文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, f"{domain}.crt")
 
-    def get_key_file(self, domain="api.openai.com"):
+    def get_key_file(self, domain: str = "api.openai.com") -> str:
         """获取私钥文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, f"{domain}.key")
 
-    def get_ca_cert_file(self):
+    def get_ca_cert_file(self) -> str:
         """获取 CA 证书文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, "ca.crt")
 
-    def get_ca_key_file(self):
+    def get_ca_key_file(self) -> str:
         """获取 CA 私钥文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, "ca.key")
 
-    def get_ca_info_file(self):
+    def get_ca_info_file(self) -> str:
         """获取 CA 元数据文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, "ca_info.json")
 
-    def get_config_file(self, filename):
+    def get_config_file(self, filename: str) -> str:
         """获取配置文件路径（用户数据目录）"""
         return os.path.join(self.ca_path, filename)
 
-    def get_icon_file(self, filename):
+    def get_icon_file(self, filename: str) -> str:
         """获取图标文件路径（程序资源目录）"""
         return os.path.join(self.program_resource_dir, "icons", filename)
 
-    def get_user_config_file(self):
+    def get_user_config_file(self) -> str:
         """获取用户配置文件路径"""
         return get_user_data_path("mtga_config.yaml")
 
-    def get_hosts_backup_file(self):
+    def get_hosts_backup_file(self) -> str:
         """获取 hosts 备份文件路径"""
         return get_user_data_path("hosts.backup")
 
-    def check_resources(self):
+    def check_resources(self) -> list[str]:
         """检查必要资源是否存在"""
-        missing_resources = []
+        missing_resources: list[str] = []
 
         # 添加调试信息
-        debug_info = []
+        debug_info: list[str] = []
         debug_info.append(f"当前工作目录: {os.getcwd()}")
         debug_info.append(f"程序资源目录: {self.program_resource_dir}")
         debug_info.append(f"用户数据目录: {self.user_data_dir}")
@@ -300,8 +300,10 @@ class ResourceManager:
         if is_packaged():
             debug_info.append(f"可执行文件路径: {sys.executable}")
             main_module = sys.modules.get("__main__")
-            if main_module and hasattr(main_module, "__file__"):
-                debug_info.append(f"主模块文件路径: {main_module.__file__}")
+            if main_module is not None:
+                main_file = getattr(main_module, "__file__", None)
+                if isinstance(main_file, str):
+                    debug_info.append(f"主模块文件路径: {main_file}")
 
         # 打印调试信息
         safe_print("=== 资源路径调试信息 ===")

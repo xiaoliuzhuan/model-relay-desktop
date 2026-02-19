@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ctypes
 import shlex
+from collections.abc import Callable
 from ctypes import wintypes
 from functools import lru_cache
 from typing import Any, cast
@@ -32,6 +33,7 @@ CERT_SHA1_HASH_PROP_ID = 3
 MULTI_MATCH_THRESHOLD = 2
 SYSTEM_STORE_PROVIDER = b"System"
 SYSTEM_STORE_ROOT = "ROOT"
+type LogFunc = Callable[[str], None]
 
 
 class CRYPT_DATA_BLOB(ctypes.Structure):
@@ -75,19 +77,7 @@ class CERT_CONTEXT(ctypes.Structure):
 
 
 PCCERT_CONTEXT = ctypes.POINTER(CERT_CONTEXT)
-def _to_unix_int(value: object) -> int | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, (int, float)):
-        return int(value)
-    if isinstance(value, str):
-        try:
-            return int(value)
-        except ValueError:
-            return None
-    return None
+
 
 
 def _split_pem_blocks(pem_text: str) -> list[str]:
@@ -126,7 +116,7 @@ def _parse_openssl_cert_output(output: str) -> dict[str, object]:
     }
 
 
-def _filetime_to_unix(filetime) -> int | None:
+def _filetime_to_unix(filetime: Any) -> int | None:
     if not filetime:
         return None
     value = (int(filetime.dwHighDateTime) << 32) + int(filetime.dwLowDateTime)
@@ -183,7 +173,7 @@ def _get_crypt32():
     return crypt32
 
 
-def _open_windows_cert_store(crypt32) -> wintypes.HANDLE:
+def _open_windows_cert_store(crypt32: Any) -> wintypes.HANDLE:
     store = crypt32.CertOpenStore(
         SYSTEM_STORE_PROVIDER,
         0,
@@ -197,8 +187,8 @@ def _open_windows_cert_store(crypt32) -> wintypes.HANDLE:
 
 
 def _find_windows_cert_context(
-    crypt32,
-    store,
+    crypt32: Any,
+    store: Any,
     ca_common_name: str,
 ) -> tuple[int, object | None]:
     match_count = 0
@@ -228,7 +218,7 @@ def _find_windows_cert_context(
     return match_count, first_context
 
 
-def _get_windows_cert_name(crypt32, context, flag: int) -> str:
+def _get_windows_cert_name(crypt32: Any, context: Any, flag: int) -> str:
     size = crypt32.CertGetNameStringW(
         context,
         CERT_NAME_SIMPLE_DISPLAY_TYPE,
@@ -251,7 +241,7 @@ def _get_windows_cert_name(crypt32, context, flag: int) -> str:
     return buffer.value
 
 
-def _get_windows_cert_fingerprint(crypt32, context) -> str | None:
+def _get_windows_cert_fingerprint(crypt32: Any, context: Any) -> str | None:
     hash_size = wintypes.DWORD(0)
     if not crypt32.CertGetCertificateContextProperty(
         context,
@@ -305,7 +295,7 @@ def _load_windows_cert_info(
         crypt32.CertCloseStore(store, 0)
 
 
-def check_ca_cert(ca_common_name: str, log_func=print) -> OperationResult:
+def check_ca_cert(ca_common_name: str, log_func: LogFunc = print) -> OperationResult:
     """检查系统信任存储中是否存在指定 CA。"""
     if is_macos():
         return _check_ca_on_macos(ca_common_name, log_func=log_func)
@@ -319,7 +309,7 @@ def check_ca_cert(ca_common_name: str, log_func=print) -> OperationResult:
     )
 
 
-def install_ca_cert_file(ca_cert_file: str, log_func=print) -> OperationResult:
+def install_ca_cert_file(ca_cert_file: str, log_func: LogFunc = print) -> OperationResult:
     """将指定 CA 证书安装到系统信任存储。"""
     if not ca_cert_file:
         return OperationResult.failure("证书路径为空")
@@ -335,7 +325,7 @@ def install_ca_cert_file(ca_cert_file: str, log_func=print) -> OperationResult:
     return OperationResult.failure("不支持的操作系统")
 
 
-def clear_ca_cert_store(ca_common_name: str, log_func=print) -> OperationResult:
+def clear_ca_cert_store(ca_common_name: str, log_func: LogFunc = print) -> OperationResult:
     """从系统信任存储中清除指定 CA。"""
     if is_macos():
         return _clear_ca_on_macos(ca_common_name, log_func=log_func)
@@ -346,7 +336,7 @@ def clear_ca_cert_store(ca_common_name: str, log_func=print) -> OperationResult:
     return OperationResult.failure("当前平台不支持自动清除CA证书")
 
 
-def _check_ca_on_windows(ca_common_name: str, log_func=print) -> OperationResult:
+def _check_ca_on_windows(ca_common_name: str, log_func: LogFunc = print) -> OperationResult:
     log_func("检查 Windows 受信任根证书存储中的 CA 证书...")
     try:
         match_count, certs = _load_windows_cert_info(ca_common_name)
@@ -377,7 +367,7 @@ def _check_ca_on_windows(ca_common_name: str, log_func=print) -> OperationResult
     return OperationResult.success(exists=False, match_count=0, certs=[])
 
 
-def _check_ca_on_macos(ca_common_name: str, log_func=print) -> OperationResult:
+def _check_ca_on_macos(ca_common_name: str, log_func: LogFunc = print) -> OperationResult:
     log_func("检查 macOS 系统钥匙串中的 CA 证书...")
     cmd = [
         "security",
@@ -443,7 +433,7 @@ def _check_ca_on_macos(ca_common_name: str, log_func=print) -> OperationResult:
     return OperationResult.success(exists=False, certs=[])
 
 
-def _install_ca_on_windows(ca_cert_file: str, log_func=print) -> OperationResult:
+def _install_ca_on_windows(ca_cert_file: str, log_func: LogFunc = print) -> OperationResult:
     log_func("正在 Windows 系统中安装 CA 证书...")
     cmd = f'certutil -addstore -f "ROOT" "{ca_cert_file}"'
     log_func(f"执行命令: {cmd}")
@@ -465,7 +455,7 @@ def _install_ca_on_windows(ca_cert_file: str, log_func=print) -> OperationResult
     )
 
 
-def _install_ca_on_macos(ca_cert_file: str, log_func=print) -> OperationResult:
+def _install_ca_on_macos(ca_cert_file: str, log_func: LogFunc = print) -> OperationResult:
     log_func("正在 macOS 系统中安装 CA 证书...")
     session = get_mac_privileged_session(log_func=log_func)
     if not session:
@@ -478,8 +468,8 @@ def _install_ca_on_macos(ca_cert_file: str, log_func=print) -> OperationResult:
         keychain="/Library/Keychains/System.keychain",
         log_func=log_func,
     )
-    stdout = data.get("stdout") if isinstance(data, dict) else None
-    stderr = data.get("stderr") if isinstance(data, dict) else None
+    stdout = data.get("stdout")
+    stderr = data.get("stderr")
     log_lines(stdout, log_func)
     log_lines(stderr, log_func)
 
@@ -487,10 +477,9 @@ def _install_ca_on_macos(ca_cert_file: str, log_func=print) -> OperationResult:
         log_func("✅ CA 证书已添加到系统钥匙串并设为信任")
         return OperationResult.success()
 
-    return_code = data.get("returncode") if isinstance(data, dict) else None
+    return_code = data.get("returncode")
     error_msg = ""
-    if isinstance(data, dict):
-        error_msg = stderr or data.get("error") or ""
+    error_msg = stderr or data.get("error") or ""
     log_func(
         f"❌ 证书安装失败 (返回码: {return_code if return_code is not None else '未知'})"
     )
@@ -504,7 +493,7 @@ def _install_ca_on_macos(ca_cert_file: str, log_func=print) -> OperationResult:
     )
 
 
-def _install_ca_on_linux(ca_cert_file: str, log_func=print) -> OperationResult:
+def _install_ca_on_linux(ca_cert_file: str, log_func: LogFunc = print) -> OperationResult:
     log_func("正在 Linux 系统中安装 CA 证书...")
     cmd = f'sudo cp "{ca_cert_file}" /usr/local/share/ca-certificates/'
     log_func(f"执行命令: {cmd}")
@@ -542,7 +531,7 @@ def _install_ca_on_linux(ca_cert_file: str, log_func=print) -> OperationResult:
     )
 
 
-def _clear_ca_on_windows(ca_common_name: str, log_func=print) -> OperationResult:
+def _clear_ca_on_windows(ca_common_name: str, log_func: LogFunc = print) -> OperationResult:
     log_func("开始清除 Windows 受信任根中的CA证书...")
     list_cmd = ["cmd", "/d", "/s", "/c", "certutil -store Root"]
     return_code, stdout, stderr = run_command(list_cmd)
@@ -592,7 +581,7 @@ def _clear_ca_on_windows(ca_common_name: str, log_func=print) -> OperationResult
     return OperationResult.success()
 
 
-def _clear_ca_on_macos(ca_common_name: str, log_func=print) -> OperationResult:
+def _clear_ca_on_macos(ca_common_name: str, log_func: LogFunc = print) -> OperationResult:
     session = get_mac_privileged_session(log_func=log_func)
     if not session:
         log_func("❌ 无法获取管理员权限，无法清除CA证书")
@@ -609,8 +598,6 @@ def _clear_ca_on_macos(ca_common_name: str, log_func=print) -> OperationResult:
         "done"
     )
     success, data = session.run_command(["bash", "-lc", command], log_func=log_func)
-    if not isinstance(data, dict):
-        data = {}
     log_lines(data.get("stdout"), log_func)
     log_lines(data.get("stderr"), log_func)
     if success:

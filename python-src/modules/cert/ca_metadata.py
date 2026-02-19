@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from modules.cert.cert_utils import normalize_fingerprint
 from modules.runtime.resource_manager import ResourceManager
+
+type LogFunc = Callable[[str], None]
 
 
 def _to_unix_int(value: object) -> int | None:
@@ -38,7 +42,9 @@ def build_ca_info(fingerprint_sha1: str, not_after_unix: int) -> dict[str, objec
     }
 
 
-def load_ca_info(resource_manager: ResourceManager, log_func=print) -> dict[str, object] | None:
+def load_ca_info(
+    resource_manager: ResourceManager, log_func: LogFunc = print
+) -> dict[str, object] | None:
     path = resource_manager.get_ca_info_file()
     if not os.path.exists(path):
         log_func(f"未找到 CA 元数据文件: {path}")
@@ -53,9 +59,10 @@ def load_ca_info(resource_manager: ResourceManager, log_func=print) -> dict[str,
     if not isinstance(payload, dict):
         log_func("CA 元数据格式无效：不是对象")
         return None
+    payload_dict = cast(dict[str, Any], payload)
 
-    fingerprint = normalize_fingerprint(payload.get("fingerprint_sha1"))
-    not_after_unix = _to_unix_int(payload.get("not_after_unix"))
+    fingerprint = normalize_fingerprint(payload_dict.get("fingerprint_sha1"))
+    not_after_unix = _to_unix_int(payload_dict.get("not_after_unix"))
 
     if not fingerprint or not_after_unix is None:
         log_func("CA 元数据缺少指纹或到期时间")
@@ -69,7 +76,7 @@ def save_ca_info(
     *,
     fingerprint_sha1: str,
     not_after_unix: int,
-    log_func=print,
+    log_func: LogFunc = print,
 ) -> bool:
     normalized = normalize_fingerprint(fingerprint_sha1)
     if not normalized:

@@ -24,5 +24,7 @@ def register_log_commands(commands: Commands) -> None:
         )
         return result
 
+    _ = pull_logs_command
+
 
 __all__ = ["register_log_commands"]

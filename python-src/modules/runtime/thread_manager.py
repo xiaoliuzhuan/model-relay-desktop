@@ -9,6 +9,7 @@ import time
 import traceback
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from typing import Any
 
 TaskFn = Callable[..., None]
 Snapshot = dict[str, float | str | None]
@@ -63,8 +64,8 @@ class ThreadManager:
         name: str,
         target: TaskFn,
         *,
-        args: tuple | None = None,
-        kwargs: dict | None = None,
+        args: tuple[Any, ...] | None = None,
+        kwargs: dict[str, Any] | None = None,
         wait_for: Iterable[str] | None = None,
         allow_parallel: bool = False,
         daemon: bool = True,
@@ -104,8 +105,8 @@ class ThreadManager:
         self,
         record: TaskRecord,
         target: TaskFn,
-        args: tuple,
-        kwargs: dict,
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
     ) -> None:
         record.status = "running"
         record.started_at = time.time()

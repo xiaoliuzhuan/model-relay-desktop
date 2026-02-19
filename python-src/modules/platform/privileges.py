@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 import os
 import sys
+from ctypes import wintypes
 from typing import Any, cast
 
 from .system import is_posix, is_windows
@@ -32,7 +33,7 @@ def is_windows_elevated() -> bool:
     TOKEN_QUERY = 0x0008
     TokenElevation = 20
 
-    token = ctypes.wintypes.HANDLE()  # type: ignore[attr-defined]
+    token = wintypes.HANDLE()
     try:
         if not advapi32.OpenProcessToken(
             kernel32.GetCurrentProcess(),
@@ -41,8 +42,8 @@ def is_windows_elevated() -> bool:
         ):
             return False
 
-        elevation = ctypes.wintypes.DWORD()  # type: ignore[attr-defined]
-        returned_size = ctypes.wintypes.DWORD()  # type: ignore[attr-defined]
+        elevation = wintypes.DWORD()
+        returned_size = wintypes.DWORD()
         if not advapi32.GetTokenInformation(
             token,
             TokenElevation,

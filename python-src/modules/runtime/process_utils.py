@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import subprocess
 from collections.abc import Sequence
+from typing import Any, cast
 
 WINDOWS_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -23,13 +24,15 @@ def _get_creationflags(hide_window: bool) -> int:
     return 0
 
 
-def run_command(cmd: Sequence[str] | str, *, shell: bool = False, hide_window: bool = True):
+def run_command(
+    cmd: Sequence[str] | str, *, shell: bool = False, hide_window: bool = True
+) -> tuple[int, str, str]:
     """Run a command with safe defaults; never inherit stdin.
 
     Returns (returncode, stdout, stderr). On exception, returns (-1, "", str(exc)).
     """
 
-    popen_kwargs: dict = {
+    popen_kwargs: dict[str, Any] = {
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
         "stdin": subprocess.DEVNULL,
@@ -56,11 +59,11 @@ def run_subprocess(  # noqa: PLR0913
     check: bool = False,
     shell: bool = False,
     hide_window: bool = True,
-    **kwargs,
-) -> subprocess.CompletedProcess:
+    **kwargs: Any,
+) -> subprocess.CompletedProcess[str]:
     """Wrapper over subprocess.run with safe stdin and optional window hiding."""
 
-    run_kwargs: dict = {
+    run_kwargs: dict[str, Any] = {
         "capture_output": capture_output,
         "text": text,
         "shell": shell,
@@ -73,7 +76,10 @@ def run_subprocess(  # noqa: PLR0913
     if creationflags:
         run_kwargs["creationflags"] = creationflags
 
-    return subprocess.run(command, check=check, **run_kwargs)
+    return cast(
+        subprocess.CompletedProcess[str],
+        subprocess.run(command, check=check, **run_kwargs),
+    )
 
 
 __all__ = ["run_command", "run_subprocess"]

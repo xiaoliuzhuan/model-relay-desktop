@@ -10,6 +10,7 @@ import ctypes
 import os
 import stat
 import tempfile
+from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import Enum
@@ -19,6 +20,7 @@ from modules.platform.privileges import is_windows_admin, is_windows_elevated
 from modules.platform.system import is_windows
 
 _CTYPES = cast(Any, ctypes)
+type LogFunc = Callable[[str], None]
 
 
 class FileOperabilityStatus(Enum):
@@ -49,7 +51,9 @@ class FileOperabilityReport:
         return self.status is FileOperabilityStatus.OK
 
 
-def _get_windows_file_attributes(file_path: str, log_func):
+def _get_windows_file_attributes(
+    file_path: str, log_func: LogFunc
+) -> tuple[int | None, tuple[str, ...]]:
     """读取 Windows 文件属性位并返回 (attrs, flags)。"""
     attrs = None
     attr_names: list[str] = []
@@ -114,7 +118,7 @@ def _windows_probe_open(file_path: str, desired_access: int):
     return True, None
 
 
-def check_file_operability(file_path: str, *, log_func=print) -> FileOperabilityReport:
+def check_file_operability(file_path: str, *, log_func: LogFunc = print) -> FileOperabilityReport:
     """
     检查指定文件在当前环境下是否“可操作”（尽量以可断言的状态码返回）。
 
@@ -196,7 +200,7 @@ def check_file_operability(file_path: str, *, log_func=print) -> FileOperability
     )
 
 
-def ensure_windows_file_writable(file_path: str, *, log_func=print) -> None:
+def ensure_windows_file_writable(file_path: str, *, log_func: LogFunc = print) -> None:
     """
     尝试清理 Windows 文件的只读属性，避免因只读属性导致写入失败。
     """

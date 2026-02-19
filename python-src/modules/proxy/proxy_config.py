@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import yaml
 
@@ -9,6 +11,7 @@ from modules.runtime.resource_manager import ResourceManager
 
 PLACEHOLDER_API_URL = "YOUR_REVERSE_ENGINEERED_API_ENDPOINT_BASE_URL"
 DEFAULT_MIDDLE_ROUTE = "/v1"
+type LogFunc = Callable[[str], None]
 
 
 @dataclass(frozen=True)
@@ -24,7 +27,9 @@ class ProxyConfig:
     mtga_auth_key: str
 
 
-def load_global_config(*, resource_manager: ResourceManager, log_func=print) -> dict:
+def load_global_config(
+    *, resource_manager: ResourceManager, log_func: LogFunc = print
+) -> dict[str, Any]:
     try:
         config_file = resource_manager.get_user_config_file()
         if os.path.exists(config_file):
@@ -35,13 +40,15 @@ def load_global_config(*, resource_manager: ResourceManager, log_func=print) -> 
     return {}
 
 
-def _resolve_custom_model_id(*, global_config: dict, raw_config: dict) -> str:
+def _resolve_custom_model_id(
+    *, global_config: dict[str, Any], raw_config: dict[str, Any]
+) -> str:
     global_mapped_model_id = (global_config.get("mapped_model_id") or "").strip()
     legacy_group_mapped_model_id = (raw_config.get("mapped_model_id") or "").strip()
     return global_mapped_model_id or legacy_group_mapped_model_id or "CUSTOM_MODEL_ID"
 
 
-def _resolve_target_model_id(*, raw_config: dict, custom_model_id: str) -> str:
+def _resolve_target_model_id(*, raw_config: dict[str, Any], custom_model_id: str) -> str:
     target_model_id = (raw_config.get("model_id") or "").strip()
     return target_model_id if target_model_id else custom_model_id
 
@@ -60,10 +67,10 @@ def normalize_middle_route(value: str | None) -> str:
 
 
 def build_proxy_config(
-    raw_config: dict | None,
+    raw_config: dict[str, Any] | None,
     *,
     resource_manager: ResourceManager,
-    log_func=print,
+    log_func: LogFunc = print,
 ) -> ProxyConfig | None:
     raw_config = raw_config or {}
     global_config = load_global_config(resource_manager=resource_manager, log_func=log_func)

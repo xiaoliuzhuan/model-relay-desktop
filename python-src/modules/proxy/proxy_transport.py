@@ -6,28 +6,35 @@ import os
 import ssl
 import time
 import uuid
-from collections.abc import Generator
+from collections.abc import Callable, Generator
+from typing import Any, cast
 
 import requests
 from requests.adapters import HTTPAdapter
 
 from modules.runtime.resource_manager import ResourceManager, is_packaged
 
+type LogFunc = Callable[[str], None]
+
 
 class SSLContextAdapter(HTTPAdapter):
     """支持自定义 SSLContext 的适配器，用于调整验证策略。"""
 
-    def __init__(self, ssl_context, *args, **kwargs):
+    def __init__(self, ssl_context: ssl.SSLContext, *args: Any, **kwargs: Any) -> None:
         self.ssl_context = ssl_context
         super().__init__(*args, **kwargs)
 
-    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+    def init_poolmanager(
+        self, connections: int, maxsize: int, block: bool = False, **pool_kwargs: Any
+    ) -> None:
         pool_kwargs.setdefault("ssl_context", self.ssl_context)
-        return super().init_poolmanager(connections, maxsize, block=block, **pool_kwargs)
+        super_adapter = cast(Any, super())
+        super_adapter.init_poolmanager(connections, maxsize, block=block, **pool_kwargs)
 
-    def proxy_manager_for(self, proxy, **proxy_kwargs):
+    def proxy_manager_for(self, proxy: str, **proxy_kwargs: Any) -> Any:
         proxy_kwargs.setdefault("ssl_context", self.ssl_context)
-        return super().proxy_manager_for(proxy, **proxy_kwargs)
+        super_adapter = cast(Any, super())
+        return super_adapter.proxy_manager_for(proxy, **proxy_kwargs)
 
 
 class ProxyTransport:
@@ -38,7 +45,7 @@ class ProxyTransport:
         *,
         resource_manager: ResourceManager,
         disable_ssl_strict_mode: bool,
-        log_func=print,
+        log_func: LogFunc = print,
     ) -> None:
         self._resource_manager = resource_manager
         self._log = log_func
@@ -79,7 +86,11 @@ class ProxyTransport:
         return os.path.join(log_dir, filename)
 
     def extract_sse_events(
-        self, response, *, log_file=None, log
+        self,
+        response: requests.Response,
+        *,
+        log_file: Any = None,
+        log: LogFunc,
     ) -> Generator[tuple[int, bytes]]:
         buffer = b""
         chunk_index = 0
@@ -111,18 +122,34 @@ class ProxyTransport:
         return uuid.uuid4().hex[:6]
 
     def normalize_openai_event(
-        self, data_str: str, event_index: int, *, model_name: str, log
+        self, data_str: str, event_index: int, *, model_name: str, log: LogFunc
     ) -> tuple[bytes, str | None]:
         try:
-            payload = json.loads(data_str)
+            payload_obj = json.loads(data_str)
         except Exception as exc:  # noqa: BLE001
             log(f"chunk#{event_index} JSON 解析失败，原样透传: {exc}")
             return f"data: {data_str}\n\n".encode(), None
+        if not isinstance(payload_obj, dict):
+            return f"data: {data_str}\n\n".encode(), None
+        payload = cast(dict[str, Any], payload_obj)
 
-        choices = payload.get("choices") or []
-        choice0 = choices[0] if choices else {}
-        raw_delta = choice0.get("delta") or {}
-        message = choice0.get("message") or {}
+        choices_obj = payload.get("choices")
+        choices: list[dict[str, Any]] = []
+        if isinstance(choices_obj, list):
+            choices_list = cast(list[object], choices_obj)
+            for item in choices_list:
+                if isinstance(item, dict):
+                    choices.append(cast(dict[str, Any], item))
+
+        choice0: dict[str, Any] = choices[0] if choices else {}
+        raw_delta_obj = choice0.get("delta")
+        raw_delta: dict[str, Any] = (
+            cast(dict[str, Any], raw_delta_obj) if isinstance(raw_delta_obj, dict) else {}
+        )
+        message_obj = choice0.get("message")
+        message: dict[str, Any] = (
+            cast(dict[str, Any], message_obj) if isinstance(message_obj, dict) else {}
+        )
 
         delta: dict[str, object] = {}
         role = raw_delta.get("role") or message.get("role")
@@ -138,8 +165,9 @@ class ProxyTransport:
             if value not in (None, []):
                 delta[key] = value
 
-        finish_reason = choice0.get("finish_reason")
-        normalized_finish = finish_reason if finish_reason not in (None, "") else None
+        finish_reason_obj = choice0.get("finish_reason")
+        finish_reason = finish_reason_obj if isinstance(finish_reason_obj, str) else None
+        normalized_finish = finish_reason if finish_reason else None
 
         chunk_obj = {
             "id": payload.get("id") or self._new_request_id(),

@@ -39,16 +39,6 @@ dev = [
 [tool.pyright]
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
-reportUnknownArgumentType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnknownLambdaType = "none"
-reportMissingParameterType = "none"
-reportMissingTypeArgument = "none"
-reportUnusedFunction = "none"
-reportUnusedVariable = "none"
-reportUnnecessaryIsInstance = "none"
 pythonVersion = "3.13"
 venvPath = "."
 venv = ".venv"

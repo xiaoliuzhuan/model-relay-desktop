@@ -7,8 +7,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from contextlib import suppress
 from dataclasses import dataclass
+from typing import Any
 
 try:
     import winreg  # type: ignore
@@ -36,6 +38,7 @@ class NetworkEnvironmentReport:
     env_https_proxy: str | None = None
     env_all_proxy: str | None = None
     env_no_proxy: str | None = None
+type LogFunc = Callable[[str], None]
 
 
 def _read_env_proxy_settings() -> dict[str, str | None]:
@@ -54,7 +57,7 @@ def _read_env_proxy_settings() -> dict[str, str | None]:
     }
 
 
-def _read_wininet_proxy_settings(log_func) -> dict[str, object | None]:
+def _read_wininet_proxy_settings(log_func: LogFunc) -> dict[str, object | None]:
     if os.name != "nt":
         return {
             "wininet_proxy_enabled": None,
@@ -110,7 +113,7 @@ def _read_wininet_proxy_settings(log_func) -> dict[str, object | None]:
     return values
 
 
-def _read_winhttp_proxy_settings(log_func) -> dict[str, str | None]:
+def _read_winhttp_proxy_settings(log_func: LogFunc) -> dict[str, str | None]:
     if os.name != "nt":
         return {"winhttp_proxy": None, "winhttp_proxy_bypass": None}
 
@@ -145,7 +148,7 @@ def _read_winhttp_proxy_settings(log_func) -> dict[str, str | None]:
         log_func(f"⚠️ 读取系统代理（WinHTTP）失败: winerror={err}")
         return {"winhttp_proxy": None, "winhttp_proxy_bypass": None}
 
-    def _consume(ptr) -> str | None:
+    def _consume(ptr: Any) -> str | None:
         if not ptr:
             return None
         try:
@@ -164,7 +167,7 @@ def _read_winhttp_proxy_settings(log_func) -> dict[str, str | None]:
 
 def check_network_environment(
     *,
-    log_func=print,
+    log_func: LogFunc = print,
     emit_logs: bool = False,
 ) -> NetworkEnvironmentReport:
     """
@@ -228,7 +231,7 @@ def check_network_environment(
     return report
 
 
-def _emit_proxy_warnings(report: NetworkEnvironmentReport, log_func) -> None:
+def _emit_proxy_warnings(report: NetworkEnvironmentReport, log_func: LogFunc) -> None:
     log_func("⚠️" * 21 + "\n检测到显式代理配置：部分应用可能优先走代理，从而绕过 hosts 导流。")
     if report.wininet_proxy_enabled:
         server = report.wininet_proxy_server or "none"

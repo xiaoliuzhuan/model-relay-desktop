@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from modules.runtime.log_bus import push_log
 from modules.runtime.operation_result import OperationResult
@@ -28,11 +28,14 @@ def _coerce_detail(value: Any) -> Any:
     if isinstance(value, Path):
         return str(value)
     if isinstance(value, dict):
-        return {key: _coerce_detail(item) for key, item in value.items()}
+        value_dict = cast(dict[str, Any], value)
+        return {str(key): _coerce_detail(item) for key, item in value_dict.items()}
     if isinstance(value, list):
-        return [_coerce_detail(item) for item in value]
+        value_list = cast(list[Any], value)
+        return [_coerce_detail(item) for item in value_list]
     if isinstance(value, tuple):
-        return tuple(_coerce_detail(item) for item in value)
+        value_tuple = cast(tuple[Any, ...], value)
+        return tuple(_coerce_detail(item) for item in value_tuple)
     return value
 
 

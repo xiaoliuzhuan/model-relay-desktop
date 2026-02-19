@@ -1,22 +1,24 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 
+from modules.hosts.file_operability import FileOperabilityReport
+from modules.network.network_environment import NetworkEnvironmentReport
 from modules.services import startup_checks
 
 
 @dataclass(frozen=True)
 class StartupContext:
-    hosts_preflight_report: Any
-    network_env_report: Any
+    hosts_preflight_report: FileOperabilityReport | None
+    network_env_report: NetworkEnvironmentReport | None
 
     def emit_logs(
         self,
         *,
-        log,
-        check_environment,
-        is_packaged,
+        log: Callable[[str], None],
+        check_environment: Callable[[], tuple[bool, str]],
+        is_packaged: Callable[[], bool],
     ) -> startup_checks.StartupReport:
         return startup_checks.emit_startup_logs(
             log=log,

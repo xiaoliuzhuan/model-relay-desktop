@@ -11,6 +11,7 @@ from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
 from threading import Lock, Thread
+from types import TracebackType
 from typing import Any, cast
 
 from platformdirs import user_data_dir
@@ -61,7 +62,11 @@ def _try_push_log(message: str) -> None:
 def _install_bootstrap_excepthook() -> None:
     original = sys.excepthook
 
-    def handler(exc_type, exc_value, exc_traceback) -> None:
+    def handler(
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        exc_traceback: TracebackType | None,
+    ) -> None:
         _boot_log("Uncaught exception during startup:")
         for line in traceback.format_exception(exc_type, exc_value, exc_traceback):
             _boot_log(line.rstrip("\n"))
@@ -329,18 +334,15 @@ def _start_log_event_stream(app_handle: AppHandle) -> None:
                 time.sleep(0.2)
                 continue
 
-            if not isinstance(result, dict):
-                time.sleep(0.2)
-                continue
-
             items = result.get("items")
             next_id = result.get("next_id")
             if isinstance(next_id, int):
                 after_id = next_id
             if isinstance(items, list) and items:
+                safe_items = cast(list[object], items)
                 try:
                     payload = LogEventPayload(
-                        items=[str(item) for item in items],
+                        items=[str(item) for item in safe_items],
                         next_id=after_id or 0,
                     )
                     Emitter.emit(app_handle, "mtga:logs", payload)
@@ -366,16 +368,13 @@ def _start_proxy_step_event_stream(app_handle: AppHandle) -> None:
                 time.sleep(0.2)
                 continue
 
-            if not isinstance(result, dict):
-                time.sleep(0.2)
-                continue
-
             items = result.get("items")
             next_id = result.get("next_id")
             if isinstance(next_id, int):
                 after_id = next_id
             if isinstance(items, list) and items:
-                for item in items:
+                safe_items = cast(list[object], items)
+                for item in safe_items:
                     try:
                         Emitter.emit_str(app_handle, "mtga:proxy-step", str(item))
                     except Exception as exc:
@@ -403,12 +402,14 @@ def main() -> int:
         base_config["build"] = build_config
 
         app_config = dict(base_config.get("app", {}))
-        windows = app_config.get("windows")
-        if isinstance(windows, list):
+        windows_obj = app_config.get("windows")
+        if isinstance(windows_obj, list):
+            windows_list = cast(list[object], windows_obj)
             new_windows: list[dict[str, Any]] = []
-            for window in windows:
-                if not isinstance(window, dict):
+            for window_obj in windows_list:
+                if not isinstance(window_obj, dict):
                     continue
+                window = cast(dict[str, Any], window_obj)
                 label = window.get("label")
                 if label == "splash":
                     continue
