@@ -1,17 +1,15 @@
 {
   "extends": "python-src/pyproject.toml",
-  "include": [
-    "python-src/mtga_app",
-    "python-src/modules"
-  ],
+  "include": ["python-src/mtga_app", "python-src/modules"],
   "exclude": [
     "**/node_modules",
-    "**/.nuxt",
     "**/dist",
     "src-tauri/target",
     "src-tauri/pyembed",
     "python-src/.venv",
     "python-src/build",
-    "python-src/mtga_app.egg-info"
+    "python-src/mtga_app.egg-info",
+    "**/__pycache__",
+    "**/.*"
   ]
 }
