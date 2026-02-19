@@ -1,0 +1,48 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "format:scan (manual fallback)",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/prettier-check-locations.mjs"],
+      "presentation": {
+        "reveal": "always",
+        "revealProblems": "onProblem",
+        "panel": "shared",
+        "clear": true
+      },
+      "group": "test",
+      "problemMatcher": [
+        {
+          "owner": "prettier",
+          "source": "prettier",
+          "severity": "warning",
+          "applyTo": "allDocuments",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        }
+      ]
+    },
+    {
+      "label": "app:check",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["app:check"],
+      "group": "test"
+    },
+    {
+      "label": "app:fix",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["app:fix"],
+      "group": "build"
+    }
+  ]
+}

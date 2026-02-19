@@ -1,5 +1,7 @@
 import withNuxt from "./.nuxt/eslint.config.mjs"
 import betterTailwind from "eslint-plugin-better-tailwindcss"
+import eslintConfigPrettier from "eslint-config-prettier/flat"
+import eslintPluginPrettier from "eslint-plugin-prettier"
 import * as yamlParser from "yaml-eslint-parser"
 import * as eslintPluginYml from "eslint-plugin-yml"
 
@@ -26,6 +28,16 @@ export default withNuxt(
     rules: {
       "@typescript-eslint/no-unsafe-type-assertion": "warn",
       "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+    },
+  },
+  // 让 Prettier 作为 ESLint 诊断来源（Problems 面板会实时显示具体差异信息）
+  {
+    files: ["**/*.{js,mjs,cjs,ts,tsx,vue}"],
+    plugins: {
+      prettier: eslintPluginPrettier,
+    },
+    rules: {
+      "prettier/prettier": "warn",
     },
   },
   // 添加 YAML 支持
@@ -80,5 +92,7 @@ export default withNuxt(
         entryPoint: "app/assets/css/tailwind.css",
       },
     },
-  }
+  },
+  // 关闭与 Prettier 冲突的 ESLint 规则
+  eslintConfigPrettier
 )

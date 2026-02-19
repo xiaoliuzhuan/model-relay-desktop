@@ -1,30 +1,34 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		}
-	],
-	"settings": {
-		"editor.formatOnSave": true,
-		"editor.codeActionsOnSave": {
-			"source.fixAll.eslint": "explicit"
-		},
-		"eslint.workingDirectories": [
-			{
-				"mode": "auto"
-			}
-		],
-		"eslint.validate": [
-			"javascript",
-			"javascriptreact",
-			"typescript",
-			"typescriptreact",
-			"vue"
-		],
-		"yaml.format.enable": true,
-		"yaml.format.printWidth": 150,
-		"yaml.format.singleQuote": false,
-		"yaml.format.bracketSpacing": true,
-		"yaml.format.proseWrap": "preserve"
-	}
+  "folders": [
+    {
+      "path": "..",
+    },
+  ],
+  "settings": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "prettier.requireConfig": true,
+    "prettier.prettierPath": "./node_modules/prettier",
+    "prettier.configPath": ".prettierrc.json",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+    },
+    "eslint.useFlatConfig": true,
+    "eslint.run": "onType",
+    "eslint.lintTask.enable": true,
+    "eslint.workingDirectories": [
+      {
+        "mode": "auto",
+      },
+    ],
+    "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "vue"],
+    "yaml.format.enable": true,
+    "yaml.format.printWidth": 150,
+    "yaml.format.singleQuote": false,
+    "yaml.format.bracketSpacing": true,
+    "yaml.format.proseWrap": "preserve",
+    "[tailwindcss]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+  },
 }

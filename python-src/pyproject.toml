@@ -37,6 +37,8 @@ dev = [
 ]
 
 [tool.pyright]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
 pythonVersion = "3.13"
 venvPath = "."
 venv = ".venv"
