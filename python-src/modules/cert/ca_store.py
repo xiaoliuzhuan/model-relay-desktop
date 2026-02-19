@@ -294,7 +294,7 @@ def _load_windows_cert_info(
         not_after_unix = _filetime_to_unix(context.contents.pCertInfo.contents.NotAfter)
         crypt32.CertFreeCertificateContext(first_context)
 
-        cert = {
+        cert: dict[str, object] = {
             "subject": subject,
             "issuer": issuer,
             "fingerprint_sha1": normalize_fingerprint(fingerprint),

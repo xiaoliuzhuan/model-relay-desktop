@@ -154,9 +154,8 @@ class ProxyApp:
                 self._retired_transports[key] = transport
                 return
             close_target = transport
-        if close_target is not None:
-            with contextlib.suppress(Exception):
-                close_target.close()
+        with contextlib.suppress(Exception):
+            close_target.close()
 
     def _apply_debug_logging(self, debug_mode: bool) -> None:
         app = self.app

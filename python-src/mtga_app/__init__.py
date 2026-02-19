@@ -175,9 +175,10 @@ except Exception as exc:
 
 # 迁移期：仍需仓库根用于版本号读取
 try:
-    REPO_ROOT = find_repo_root(Path(__file__).resolve())
+    repo_root = find_repo_root(Path(__file__).resolve())
 except RuntimeError:
-    REPO_ROOT = TAURI_PROJECT_ROOT
+    repo_root = TAURI_PROJECT_ROOT
+REPO_ROOT = repo_root
 
 from anyio.from_thread import start_blocking_portal
 from pydantic import BaseModel
