@@ -25,7 +25,8 @@ async function getUnformattedFiles() {
     );
     return parseFileList(stdout);
   } catch (error) {
-    if (typeof error?.stdout === "string") {
+    const exitCode = typeof error?.code === "number" ? error.code : null;
+    if (exitCode === 1 && typeof error?.stdout === "string") {
       return parseFileList(error.stdout);
     }
     throw error;
