@@ -1,8 +1,8 @@
 use std::ffi::CString;
 use std::path::{Path, PathBuf};
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc, OnceLock,
+    atomic::{AtomicBool, Ordering},
 };
 use std::time::Duration;
 
@@ -10,8 +10,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use serde::{Deserialize, Serialize};
 use tauri::{
-    ipc::Channel, webview::PageLoadEvent, AppHandle, Emitter, Listener, Manager, RunEvent, Url,
-    WindowEvent,
+    AppHandle, Emitter, Listener, Manager, RunEvent, Url, WindowEvent, ipc::Channel,
+    webview::PageLoadEvent,
 };
 
 fn resolve_python_home() -> Option<PathBuf> {
@@ -47,6 +47,17 @@ static BACKEND_READY: AtomicBool = AtomicBool::new(false);
 static MAIN_PAGE_READY: AtomicBool = AtomicBool::new(false);
 static MAIN_WINDOW_SHOWN: AtomicBool = AtomicBool::new(false);
 static LOG_STREAM_STARTED: AtomicBool = AtomicBool::new(false);
+
+fn set_env_var_during_startup<K, V>(key: K, value: V)
+where
+    K: AsRef<std::ffi::OsStr>,
+    V: AsRef<std::ffi::OsStr>,
+{
+    // SAFETY: 仅在应用启动早期主线程调用，尚未启动后台线程或 Python 运行时。
+    unsafe {
+        std::env::set_var(key, value);
+    }
+}
 
 #[derive(Clone, Serialize)]
 struct LogEventPayload {
@@ -192,7 +203,7 @@ fn ensure_python_env() -> Option<PathBuf> {
     let home_path = home.as_ref()?;
 
     if std::env::var_os("PYTHONHOME").is_none() {
-        std::env::set_var("PYTHONHOME", home_path);
+        set_env_var_during_startup("PYTHONHOME", home_path);
     }
 
     if std::env::var_os("PYTHONPATH").is_none() {
@@ -204,13 +215,13 @@ fn ensure_python_env() -> Option<PathBuf> {
                 .map(|path| path.to_string_lossy())
                 .collect::<Vec<_>>()
                 .join(separator);
-            std::env::set_var("PYTHONPATH", joined);
+            set_env_var_during_startup("PYTHONPATH", joined);
         }
     }
 
     if std::env::var_os("MTGA_ENV_FILE").is_none() {
         if let Some(env_file) = resolve_env_file(home_path) {
-            std::env::set_var("MTGA_ENV_FILE", env_file);
+            set_env_var_during_startup("MTGA_ENV_FILE", env_file);
         }
     }
 
@@ -477,7 +488,7 @@ fn inject_runtime_tag(window: &tauri::WebviewWindow) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     if !cfg!(debug_assertions) && std::env::var("MTGA_RUNTIME").is_err() {
-        std::env::set_var("MTGA_RUNTIME", "tauri");
+        set_env_var_during_startup("MTGA_RUNTIME", "tauri");
     }
 
     init_python_runtime();
