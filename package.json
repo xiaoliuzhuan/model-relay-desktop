@@ -14,7 +14,7 @@
     "postinstall": "nuxt prepare",
     "app:fix": "prettier . --write && eslint . --fix && pnpm postinstall && vue-tsc -p .nuxt/tsconfig.app.json --noEmit",
     "app:check": "prettier . --check && eslint . && pnpm postinstall && vue-tsc -p .nuxt/tsconfig.app.json --noEmit",
-    "rs:check": "cd src-tauri && cargo fmt && cargo check -p mtga-tauri",
+    "rs:check": "node ./scripts/rs-check.mjs",
     "py:check": "cd python-src && concurrently \"uv run pyright\" \"uv run ruff check --fix .\"",
     "dev:py": "cd python-src && cross-env DEV_SERVER=http://localhost:3000 MTGA_SRC_TAURI_DIR=../src-tauri uv run python -m mtga_app",
     "dev:all": "concurrently -k \"pnpm dev\" \"pnpm dev:py\"",
