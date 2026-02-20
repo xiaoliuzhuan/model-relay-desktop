@@ -65,5 +65,8 @@
     "editor.defaultFormatter": "redhat.vscode-yaml",
     "editor.formatOnSave": true
   },
-  "python.languageServer": "Pylance"
+  "python.languageServer": "Pylance",
+  "rust-analyzer.cargo.extraEnv": {
+    "PYO3_PYTHON": "${workspaceFolder}/src-tauri/pyembed/python/python.exe"
+  }
 }
