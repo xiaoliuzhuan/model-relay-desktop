@@ -1,0 +1,68 @@
+name: PR Target Guard
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  enforce_dev_base:
+    name: Enforce PR Base Branch
+    if: ${{ github.event.pull_request.base.ref != 'dev' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Comment with friendly guidance
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = '<!-- pr-target-guard -->';
+            const base = context.payload.pull_request.base.ref;
+            const body = `${marker}
+            👋 感谢提交 PR！
+
+            当前 PR 的目标分支是 \`${base}\`，本仓库目前只接受目标分支为 \`dev\` 的 PR。
+            请将该 PR 的 base branch 修改为 \`dev\` 后再继续。`;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find(
+              (comment) => comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Fail when base branch is not dev
+        run: |
+          echo "Only PRs targeting dev are allowed."
+          exit 1

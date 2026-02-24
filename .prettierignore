@@ -4,6 +4,7 @@ node_modules/
 dist/
 dist-onefile/
 src-tauri/target/
+src-tauri/gen/
 src-tauri/pyembed/
 python-src/.venv/
 pnpm-lock.yaml
