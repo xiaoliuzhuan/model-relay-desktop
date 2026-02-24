@@ -22,6 +22,12 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v6
 
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
       - name: 设置 Node
         uses: actions/setup-node@v6
         with:
@@ -29,12 +35,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: 启用 Corepack
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
-        run: |
-          corepack enable
-          pnpm --version
+      - name: 检查 pnpm 版本
+        run: pnpm --version
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -74,6 +76,12 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v6
 
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
       - name: 设置 Node
         uses: actions/setup-node@v6
         with:
@@ -81,12 +89,8 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: 启用 Corepack
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
-        run: |
-          corepack enable
-          pnpm --version
+      - name: 检查 pnpm 版本
+        run: pnpm --version
 
       - name: 安装前端依赖
         run: pnpm install --frozen-lockfile
