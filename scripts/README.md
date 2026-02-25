@@ -4,70 +4,41 @@
 
 ## 前置依赖
 
-- 已安装 [git-flow-next](https://git-flow.sh/)。
-- 脚本调用命令名为 `git-flow`，请确保该命令在 `PATH` 中可用。
 - Node.js 版本需满足仓库要求（见根目录 `package.json` 的 `engines.node`）。
+- 已安装 `pnpm`。
+- 使用 `gitflow.mjs` 时需安装 [git-flow-next](https://github.com/gittower/git-flow-next) 且 `git-flow` 在 `PATH` 中可用。
+- 使用 `ci-gate.mjs` 的 `py` 目标时需安装 `uv`。
+- 使用 `rs-check.mjs` 时需安装 Rust 工具链（`cargo`）。
 
-## 推荐入口（统一）
+## 当前脚本清单
 
-- `node ./scripts/gitflow.mjs setup`
-- `node ./scripts/gitflow.mjs finish`
-- `node ./scripts/gitflow.mjs finish -v 2.0.0-beta.10 -r origin -m tauri -d dev`
+- `ci-gate.mjs`
+  - 统一质量检查入口，支持目标：`app`、`py`、`rs`、`all`。
+  - `app`：执行 `postinstall`、`prettier --check`、`eslint`、`vue-tsc`。
+  - `py`：在 `python-src` 下执行 `uv run pyright` 与 `uv run ruff check .`。
+  - `rs`：调用 `node ./scripts/rs-check.mjs gate`。
+- `gitflow.mjs`
+  - `setup`：清理本地 `gitflow.*` 配置，重新 `git-flow init`，并配置 release 默认打 tag。
+  - `finish`：在 `release/<version>` 分支执行发布收尾，包含工作区、版本、tag 冲突检查，完成后推送分支与 tag，并切回开发分支。
+  - `finish` 参数：
+    - `-v, --version`（兼容 `--Version`）
+    - `-r, --remote`（兼容 `--Remote`）
+    - `-m, --main-branch`（兼容 `--MainBranch`）
+    - `-d, --dev-branch`（兼容 `--DevBranch`）
+- `prettier-check-locations.mjs`
+  - 定位 Prettier 不一致位置，按 `file:line:column: message` 输出，便于编辑器问题匹配器跳转。
+- `rs-check.mjs`
+  - Rust 检查入口，模式：`dev`（默认）与 `gate`。
+  - `dev`：要求本地 pyembed Python 存在，并设置 `PYO3_PYTHON` 后执行 `cargo fmt` + `cargo check -p mtga-tauri`。
+  - `gate`：执行 `cargo fmt --check` + `cargo check -p mtga-tauri`，并准备 `src-tauri/pyembed/python` 目录。
 
-也可通过 `pnpm`：
+## package.json 对应入口
 
+- `pnpm gate -- <app|py|rs|all>`
+- `pnpm app:gate`
+- `pnpm py:gate`
+- `pnpm rs:gate`
+- `pnpm rs:check`
 - `pnpm gitflow:setup`
 - `pnpm release:push`
 - `pnpm release:push -- -v 2.0.0-beta.10 -r origin -m tauri -d dev`
-
-## 文件列表
-
-- `gitflow.mjs`
-  - `setup`：清理本地旧 `gitflow.*` 配置，重新初始化 git-flow，并配置 release 默认打 tag。
-  - `finish`：执行 release finish 全流程校验、finish、推送分支与 tag，最后签回开发分支。
-
-- `setup-gitflow.ps1` / `setup-gitflow.sh`
-  - 兼容脚本（与 `gitflow.mjs setup` 目标一致）。
-  - 清理本地旧 `gitflow.*` 配置。
-  - 重新初始化 git-flow（`main=tauri`、`develop=dev`，且不创建分支）。
-  - 配置 release finish 默认创建 tag。
-
-- `release-finish.ps1` / `release-finish.sh`
-  - 兼容脚本（与 `gitflow.mjs finish` 目标一致）。
-  - 在 `release/<version>` 分支执行发布收尾。
-  - 检查工作区是否干净、版本参数是否与分支一致、远程/本地 tag 是否冲突。
-  - 执行 `git-flow release finish`，并推送目标分支与当前提交上的 tag。
-
-## 用法
-
-### setup-gitflow
-
-PowerShell:
-
-```powershell
-.\scripts\setup-gitflow.ps1
-```
-
-Bash:
-
-```bash
-./scripts/setup-gitflow.sh
-```
-
-### release-finish
-
-PowerShell:
-
-```powershell
-.\scripts\release-finish.ps1
-.\scripts\release-finish.ps1 -v 2.0.0-beta.10
-.\scripts\release-finish.ps1 -v 2.0.0-beta.10 -r origin -m tauri -d dev
-```
-
-Bash:
-
-```bash
-./scripts/release-finish.sh
-./scripts/release-finish.sh -v 2.0.0-beta.10
-./scripts/release-finish.sh -v 2.0.0-beta.10 -r origin -m tauri -d dev
-```
