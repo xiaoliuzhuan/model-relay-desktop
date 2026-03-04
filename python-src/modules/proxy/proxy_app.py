@@ -274,6 +274,7 @@ class ProxyApp:
             "parallel_tool_calls",
             "metadata",
             "user",
+            "reasoning",
         )
         for key in passthrough_keys:
             value = request_data.get(key)
@@ -283,6 +284,22 @@ class ProxyApp:
         max_tokens = request_data.get("max_tokens")
         if max_tokens is not None:
             payload["max_output_tokens"] = max_tokens
+        max_completion_tokens = request_data.get("max_completion_tokens")
+        if max_completion_tokens is not None:
+            payload["max_output_tokens"] = max_completion_tokens
+
+        reasoning_effort_obj = request_data.get("reasoning_effort")
+        if isinstance(reasoning_effort_obj, str) and reasoning_effort_obj.strip():
+            reasoning_obj = payload.get("reasoning")
+            if isinstance(reasoning_obj, dict):
+                reasoning = cast(dict[str, Any], reasoning_obj)
+                reasoning.setdefault("effort", reasoning_effort_obj.strip())
+            else:
+                payload["reasoning"] = {"effort": reasoning_effort_obj.strip()}
+
+        stream_obj = request_data.get("stream")
+        if isinstance(stream_obj, bool):
+            payload["stream"] = stream_obj
 
         messages_obj = request_data.get("messages")
         input_messages: list[dict[str, str]] = []
@@ -477,6 +494,42 @@ class ProxyApp:
             time.sleep(0.01)
 
         yield "data: [DONE]\n\n"
+
+    @staticmethod
+    def _build_chat_chunk_bytes(  # noqa: PLR0913
+        *,
+        request_id: str,
+        model_name: str,
+        created: int,
+        include_role: bool,
+        content: str | None = None,
+        reasoning_content: str | None = None,
+        finish_reason: str | None = None,
+    ) -> bytes:
+        delta: dict[str, Any] = {}
+        if include_role:
+            delta["role"] = "assistant"
+        if content:
+            delta["content"] = content
+        if reasoning_content:
+            delta["reasoning_content"] = reasoning_content
+
+        chunk_obj = {
+            "id": request_id,
+            "object": "chat.completion.chunk",
+            "created": created,
+            "model": model_name,
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": delta,
+                    "logprobs": None,
+                    "finish_reason": finish_reason,
+                }
+            ],
+        }
+        chunk_json = json.dumps(chunk_obj, ensure_ascii=False)
+        return f"data: {chunk_json}\n\n".encode()
 
     def _create_app(self) -> None:
         self.app = Flask(__name__)
@@ -687,10 +740,127 @@ class ProxyApp:
                     responses_url,
                     json=responses_payload,
                     headers=forward_headers,
-                    stream=False,
+                    stream=is_stream,
                     timeout=300,
                 )
                 responses_response.raise_for_status()
+
+                if is_stream:
+                    upstream_content_type = responses_response.headers.get("content-type", "")
+                    if "text/event-stream" in upstream_content_type.lower():
+                        log("Responses 返回流式响应，实时转换为 chat.completion.chunk")
+
+                        def generate_responses_stream() -> Generator[bytes]:  # noqa: PLR0912, PLR0915
+                            request_id_for_stream = self._new_request_id()
+                            created = int(time.time())
+                            role_sent = False
+                            done_sent = False
+                            event_index = 0
+                            try:
+                                for upstream_chunk_index, raw_event in transport.extract_sse_events(
+                                    responses_response, log=log
+                                ):
+                                    event_index += 1
+                                    event_text = raw_event.decode("utf-8", errors="replace")
+                                    data_lines = [
+                                        line[len("data:") :].lstrip()
+                                        for line in event_text.splitlines()
+                                        if line.startswith("data:")
+                                    ]
+                                    if not data_lines:
+                                        continue
+                                    data_str = "\n".join(data_lines).strip()
+                                    if not data_str:
+                                        continue
+
+                                    if debug_mode:
+                                        log(
+                                            "RESP<< "
+                                            f"evt#{event_index} "
+                                            f"src_chunk#{upstream_chunk_index} "
+                                            f"| {data_str}"
+                                        )
+
+                                    if data_str == "[DONE]":
+                                        done_sent = True
+                                        yield b"data: [DONE]\n\n"
+                                        break
+
+                                    try:
+                                        payload_obj = json.loads(data_str)
+                                    except Exception:  # noqa: BLE001
+                                        continue
+                                    if not isinstance(payload_obj, dict):
+                                        continue
+                                    payload = cast(dict[str, Any], payload_obj)
+
+                                    event_type_obj = payload.get("type")
+                                    event_type = (
+                                        event_type_obj if isinstance(event_type_obj, str) else ""
+                                    )
+
+                                    if event_type == "response.output_text.delta":
+                                        delta_obj = payload.get("delta")
+                                        delta = delta_obj if isinstance(delta_obj, str) else ""
+                                        if delta:
+                                            yield self._build_chat_chunk_bytes(
+                                                request_id=request_id_for_stream,
+                                                model_name=target_model_id,
+                                                created=created,
+                                                include_role=not role_sent,
+                                                content=delta,
+                                            )
+                                            role_sent = True
+                                        continue
+
+                                    if event_type in {
+                                        "response.reasoning.delta",
+                                        "response.reasoning_summary.delta",
+                                        "response.reasoning_summary_text.delta",
+                                    }:
+                                        reasoning_obj = payload.get("delta") or payload.get("text")
+                                        reasoning = (
+                                            reasoning_obj if isinstance(reasoning_obj, str) else ""
+                                        )
+                                        if reasoning:
+                                            yield self._build_chat_chunk_bytes(
+                                                request_id=request_id_for_stream,
+                                                model_name=target_model_id,
+                                                created=created,
+                                                include_role=not role_sent,
+                                                reasoning_content=reasoning,
+                                            )
+                                            role_sent = True
+                                        continue
+
+                                    if event_type == "response.completed":
+                                        yield self._build_chat_chunk_bytes(
+                                            request_id=request_id_for_stream,
+                                            model_name=target_model_id,
+                                            created=created,
+                                            include_role=not role_sent,
+                                            finish_reason="stop",
+                                        )
+                                        role_sent = True
+                                        continue
+
+                                if not done_sent:
+                                    with contextlib.suppress(Exception):
+                                        yield b"data: [DONE]\n\n"
+                            finally:
+                                release_transport()
+                                with contextlib.suppress(Exception):
+                                    responses_response.close()
+
+                        return Response(
+                            generate_responses_stream(),
+                            content_type="text/event-stream",
+                        )
+
+                    log(
+                        "Responses 流模式未返回 SSE，回退为非流式适配"
+                        f" (content-type={upstream_content_type})"
+                    )
 
                 responses_json_obj = responses_response.json()
                 if not isinstance(responses_json_obj, dict):
