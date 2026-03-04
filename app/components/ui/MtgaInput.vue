@@ -472,6 +472,6 @@ const handleClear = (e: MouseEvent) => {
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary, #f0bb32);
+  background: var(--color-primary, #4f46e5);
 }
 </style>

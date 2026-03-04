@@ -18,19 +18,19 @@
      在 Tailwind CSS 4 中定义主题颜色。
      直接使用颜色值，确保 Tailwind 的实用类（如 bg-primary）能正确生成。
   */
-  --color-primary: #f0bb32;
-  --color-primary-content: #1e293b;
+  --color-primary: #4f46e5;
+  --color-primary-content: #eef2ff;
 
   /* 品牌色变量定义，供 Tailwind 实用类使用（如 text-mtga-accent） */
-  --color-mtga-bg: #f7f8fb;
+  --color-mtga-bg: #f1f5ff;
   --color-mtga-surface: #ffffff;
-  --color-mtga-surface-soft: #f3f6fa;
-  --color-mtga-border: #e5e7eb;
-  --color-mtga-accent: #f0bb32;
-  --color-mtga-accent-strong: #d9a307;
+  --color-mtga-surface-soft: #eef2ff;
+  --color-mtga-border: #dbe3f5;
+  --color-mtga-accent: #6366f1;
+  --color-mtga-accent-strong: #4338ca;
   --color-mtga-warn: #f59e0b;
   --color-mtga-text: #0f172a;
-  --color-mtga-text-muted: #64748b;
+  --color-mtga-text-muted: #5b6475;
 
   @keyframes bounce-subtle {
     0%,
@@ -63,19 +63,19 @@
   */
   :root,
   [data-theme] {
-    --color-primary: #f0bb32 !important;
-    --color-primary-content: #1e293b !important;
+    --color-primary: #4f46e5 !important;
+    --color-primary-content: #eef2ff !important;
 
     /* 同时也定义一份 CSS 变量，供非 Tailwind 样式（如 scrollbar）通过 var() 引用 */
-    --mtga-bg: #f7f8fb;
+    --mtga-bg: #f1f5ff;
     --mtga-surface: #ffffff;
-    --mtga-surface-soft: #f3f6fa;
-    --mtga-border: #e5e7eb;
-    --mtga-accent: #f0bb32;
-    --mtga-accent-strong: #d9a307;
+    --mtga-surface-soft: #eef2ff;
+    --mtga-border: #dbe3f5;
+    --mtga-accent: #6366f1;
+    --mtga-accent-strong: #4338ca;
     --mtga-warn: #f59e0b;
     --mtga-text: #0f172a;
-    --mtga-text-muted: #64748b;
+    --mtga-text-muted: #5b6475;
   }
   /* 自定义全局滚动条样式 */
   ::-webkit-scrollbar {
@@ -110,12 +110,10 @@
   body {
     background-color: var(--mtga-bg);
     background-image:
-      /* 左上角：琥珀金光晕，增强温暖感 */
-      radial-gradient(circle at 15% 15%, rgba(251, 191, 36, 0.15), transparent 50%),
-      /* 右下角：极淡的夕阳粉，增加层次感 */
-        radial-gradient(circle at 85% 85%, rgba(251, 113, 133, 0.05), transparent 40%),
-      /* 基础线性渐变：以 #fffbeb 为核心的暖色调过渡 */
-        linear-gradient(135deg, #fffbeb 0%, #fff9e6 45%, #fff2e0 100%);
+      radial-gradient(circle at 10% 12%, rgba(99, 102, 241, 0.18), transparent 45%),
+      radial-gradient(circle at 88% 15%, rgba(56, 189, 248, 0.12), transparent 40%),
+      radial-gradient(circle at 82% 86%, rgba(168, 85, 247, 0.12), transparent 42%),
+      linear-gradient(135deg, #f8faff 0%, #eef2ff 45%, #eef6ff 100%);
     color: var(--mtga-text);
   }
 }
@@ -135,14 +133,14 @@
   @apply btn btn-outline btn-sm rounded-xl border-slate-200 text-error hover:bg-error/10 hover:border-error w-full;
 }
 
-/* 3. 次要/检查操作按钮 (Outline with Amber hover) */
+/* 3. 次要/检查操作按钮 (Outline with Indigo hover) */
 @utility mtga-btn-outline {
-  @apply btn btn-outline btn-sm rounded-xl border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-600 w-full;
+  @apply btn btn-outline btn-sm rounded-xl border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/70 hover:text-indigo-600 w-full;
 }
 
 /* 4. NEW 标签样式 (用于版本更新提醒) */
 @utility mtga-badge-new {
-  @apply absolute flex h-3.5 px-1.5 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white animate-bounce-subtle antialiased;
+  @apply absolute flex h-3.5 px-1.5 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white shadow-sm ring-1 ring-white animate-bounce-subtle antialiased;
   /* 使用 tabular-nums 保持字符宽度一致 */
   font-variant-numeric: tabular-nums;
   padding-top: 1px; /* 视觉补偿：解决小字号大写字母偏上的问题 */
@@ -182,11 +180,11 @@
   }
 
   .mtga-input-wrapper:hover {
-    @apply border-amber-500/30 bg-amber-50/30 shadow-[0_0_10px_rgba(245,158,11,0.2)] shadow-amber-500/30;
+    @apply border-indigo-500/30 bg-indigo-50/40 shadow-[0_0_12px_rgba(99,102,241,0.22)] shadow-indigo-500/30;
   }
 
   .mtga-input-wrapper:focus-within {
-    @apply border-amber-500/60 ring-amber-500/60 bg-amber-50/60;
+    @apply border-indigo-500/65 ring-indigo-500/65 bg-indigo-50/70;
   }
 
   .mtga-input {
@@ -198,7 +196,7 @@
   }
 
   .mtga-input-wrapper:focus-within .mtga-input-addon {
-    @apply bg-amber-50/40 text-amber-600/70 border-amber-500/20;
+    @apply border-indigo-500/20 bg-indigo-50/50 text-indigo-600/75;
   }
 
   .mtga-input-clear {
@@ -281,15 +279,15 @@
     pointer-events: none;
 
     /* 基础视觉样式：匹配按钮悬停态与品牌色 */
-    background-color: #fffbeb; /* amber-50 */
+    background-color: #eef2ff;
     color: var(--mtga-text);
-    border: 1px solid var(--mtga-accent); /* 使用品牌金黄色 */
+    border: 1px solid var(--mtga-accent);
     padding: 0.5rem 0.75rem;
     border-radius: 0.75rem; /* 匹配按钮的 rounded-xl */
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1.25rem;
-    box-shadow: 0 10px 15px -3px rgba(240, 187, 50, 0.2); /* 带有品牌色的阴影 */
+    box-shadow: 0 10px 20px -6px rgba(99, 102, 241, 0.28);
     white-space: pre-line;
     text-align: left;
     word-break: break-all;
@@ -319,7 +317,7 @@
     translate: -50% 0;
     width: 8px;
     height: 8px;
-    background-color: #fffbeb;
+    background-color: #eef2ff;
     border-right: 1px solid var(--mtga-accent);
     border-bottom: 1px solid var(--mtga-accent);
     transform: rotate(45deg);

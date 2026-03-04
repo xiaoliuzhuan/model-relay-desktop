@@ -135,7 +135,7 @@ const handleOpenRelease = () => {
         <h3 class="mtga-card-title text-lg!">发现新版本</h3>
         <div
           v-if="props.versionLabel"
-          class="mtga-chip bg-amber-50 border-amber-200! text-amber-700 font-medium"
+          class="mtga-chip border-indigo-200! bg-indigo-50 text-indigo-700 font-medium"
         >
           {{ props.versionLabel }}
         </div>
@@ -151,7 +151,7 @@ const handleOpenRelease = () => {
         <!-- eslint-disable vue/no-v-html -->
         <div
           v-if="sanitizedNotesHtml"
-          class="text-sm text-slate-600 leading-relaxed wrap-break-word space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1 [&_a]:text-amber-600 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-amber-700"
+          class="text-sm text-slate-600 leading-relaxed wrap-break-word space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1 [&_a]:text-indigo-600 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-indigo-700"
           v-html="sanitizedNotesHtml"
         />
         <!-- eslint-enable vue/no-v-html -->

@@ -13,7 +13,7 @@ const handleStartAll = () => {
       <div class="text-xs text-slate-500">一键启动会依次检查网络、证书与 hosts 配置</div>
     </div>
     <button
-      class="btn btn-primary px-8 rounded-xl shadow-[0_12px_25px_-10px_rgba(240,187,50,0.6)]"
+      class="btn btn-primary px-8 rounded-xl shadow-[0_14px_30px_-12px_rgba(79,70,229,0.6)]"
       @click="handleStartAll"
     >
       一键启动全部服务

@@ -153,15 +153,15 @@ onBeforeUnmount(() => {
       <template #left>
         <div class="flex items-stretch h-full min-h-0">
           <!-- 垂直菜单栏 -->
-          <div class="w-38 border-r border-slate-200/50 flex flex-col p-3 shrink-0">
+          <div class="w-38 border-r border-indigo-100/80 flex flex-col bg-white/45 p-3 shrink-0">
             <ul class="menu p-0 gap-1">
               <li v-for="item in navigation" :key="item.id">
                 <a
                   :class="[
                     'flex flex-row items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 group border',
                     activeTab === item.id
-                      ? 'bg-amber-500/15 text-amber-600 border-amber-500/40 shadow-sm shadow-amber-500/10'
-                      : 'text-slate-500 border-transparent hover:bg-slate-200/40',
+                      ? 'bg-indigo-500/14 text-indigo-700 border-indigo-500/35 shadow-sm shadow-indigo-500/20'
+                      : 'text-slate-500 border-transparent hover:bg-indigo-50/80 hover:text-slate-700',
                   ]"
                   @click="selectTab(item.id)"
                 >
@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
               </div>
 
               <button
-                class="btn btn-xs btn-outline rounded-lg border-slate-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600 font-bold w-full"
+                class="btn btn-xs btn-outline rounded-lg border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 font-bold w-full"
                 @click="runCheckUpdates"
               >
                 检查更新

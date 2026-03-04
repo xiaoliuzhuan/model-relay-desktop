@@ -346,7 +346,7 @@ const moveDown = async () => {
     </div>
     <div class="flex items-center gap-2">
       <button
-        class="btn btn-sm btn-outline rounded-xl border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-600 tooltip mtga-tooltip"
+        class="btn btn-sm btn-outline rounded-xl border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/70 hover:text-indigo-600 tooltip mtga-tooltip"
         :data-tip="testTooltip"
         style="--mtga-tooltip-max: 250px"
         @click="requestTest"
@@ -354,7 +354,7 @@ const moveDown = async () => {
         测活
       </button>
       <button
-        class="btn btn-sm btn-outline rounded-xl border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-600 tooltip mtga-tooltip"
+        class="btn btn-sm btn-outline rounded-xl border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/70 hover:text-indigo-600 tooltip mtga-tooltip"
         :data-tip="refreshTooltip"
         style="--mtga-tooltip-max: 250px"
         @click="refreshList"
@@ -383,8 +383,8 @@ const moveDown = async () => {
             <tr
               v-for="(group, index) in configGroups"
               :key="index"
-              class="cursor-pointer transition-colors hover:bg-amber-100/30 group"
-              :class="selectedIndex === index ? 'bg-amber-100/70' : ''"
+              class="group cursor-pointer transition-colors hover:bg-indigo-100/40"
+              :class="selectedIndex === index ? 'bg-indigo-100/75' : ''"
               :style="{ height: 'var(--row-h)' }"
               :title="group.name || ''"
               @click="selectedIndex = index"
@@ -393,7 +393,7 @@ const moveDown = async () => {
                 class="w-16 border-l-4 text-center transition-all"
                 :class="
                   selectedIndex === index
-                    ? 'border-amber-400 text-slate-900'
+                    ? 'border-indigo-500 text-slate-900'
                     : 'border-transparent text-slate-600'
                 "
               >
@@ -401,19 +401,19 @@ const moveDown = async () => {
               </td>
               <td
                 class="truncate max-w-[200px] text-slate-700 transition-all"
-                :class="selectedIndex === index ? 'border-amber-400' : 'border-transparent'"
+                :class="selectedIndex === index ? 'border-indigo-500' : 'border-transparent'"
               >
                 {{ group.api_url || "(未填写)" }}
               </td>
               <td
                 class="truncate max-w-[150px] text-slate-700 transition-all"
-                :class="selectedIndex === index ? 'border-amber-400' : 'border-transparent'"
+                :class="selectedIndex === index ? 'border-indigo-500' : 'border-transparent'"
               >
                 {{ group.model_id || "(未填写)" }}
               </td>
               <td
                 class="truncate max-w-[200px] text-slate-700 transition-all"
-                :class="selectedIndex === index ? 'border-amber-400' : 'border-transparent'"
+                :class="selectedIndex === index ? 'border-indigo-500' : 'border-transparent'"
               >
                 {{ getApiKeyDisplay(group) }}
               </td>

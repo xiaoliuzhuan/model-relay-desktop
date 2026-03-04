@@ -350,11 +350,11 @@ const handleBackgroundFileChange = (event: Event) => {
         <div
           v-for="field in THEME_COLOR_FIELDS"
           :key="field.key"
-          class="group flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/50 p-2 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm"
+          class="group flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/50 p-2 transition-all hover:border-indigo-200 hover:bg-white hover:shadow-sm"
         >
           <!-- 标签 -->
           <span
-            class="text-sm font-semibold text-slate-500 min-w-[80px] pl-1 group-hover:text-amber-600 transition-colors"
+            class="text-sm font-semibold text-slate-500 min-w-[80px] pl-1 group-hover:text-indigo-600 transition-colors"
           >
             {{ field.label }}
           </span>
@@ -391,7 +391,7 @@ const handleBackgroundFileChange = (event: Event) => {
       </div>
 
       <div
-        class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm"
+        class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 transition-all hover:border-indigo-200 hover:bg-white hover:shadow-sm"
       >
         <label class="mb-2 block text-sm font-semibold text-slate-500">字体</label>
         <MtgaInput
@@ -409,7 +409,7 @@ const handleBackgroundFileChange = (event: Event) => {
       </div>
 
       <div
-        class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 space-y-3 transition-all hover:border-amber-200 hover:bg-white hover:shadow-sm"
+        class="rounded-2xl border border-slate-200/60 bg-white/50 p-4 space-y-3 transition-all hover:border-indigo-200 hover:bg-white hover:shadow-sm"
       >
         <div class="flex items-center justify-between gap-3">
           <div>
@@ -417,7 +417,7 @@ const handleBackgroundFileChange = (event: Event) => {
           </div>
           <div class="flex items-center gap-2">
             <button
-              class="btn btn-xs h-7 rounded-lg border-slate-200 bg-white px-3 font-medium text-slate-600 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-all"
+              class="btn btn-xs h-7 rounded-lg border-slate-200 bg-white px-3 font-medium text-slate-600 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
               @click="openBackgroundPicker"
             >
               上传图片

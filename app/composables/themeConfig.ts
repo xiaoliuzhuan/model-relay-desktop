@@ -67,14 +67,14 @@ const DAISY_COLOR_CLASS_MAP: Partial<Record<ThemeColorKey, string>> = {
 };
 
 const COLOR_HARD_FALLBACK: Record<ThemeColorKey, string> = {
-  primaryColor: "#F0BB32",
-  secondaryColor: "#D9A307",
+  primaryColor: "#4F46E5",
+  secondaryColor: "#4338CA",
   textPrimaryColor: "#0F172A",
-  textSecondaryColor: "#64748B",
-  infoColor: "#007AFF",
+  textSecondaryColor: "#5B6475",
+  infoColor: "#3B82F6",
   warningColor: "#F59E0B",
-  errorColor: "#FF3B30",
-  successColor: "#06943D",
+  errorColor: "#EF4444",
+  successColor: "#16A34A",
 };
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
