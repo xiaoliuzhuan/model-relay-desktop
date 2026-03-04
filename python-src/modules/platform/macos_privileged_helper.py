@@ -37,7 +37,7 @@ except ImportError:
 
 JsonDict = dict[str, Any]
 JsonMapping = Mapping[str, Any]
-type LogFunc = Callable[[str], None]
+LogFunc = Callable[[str], None]
 
 REQUEST_TERMINATOR = b"\n"
 CONNECT_TIMEOUT = 12.0
@@ -247,13 +247,19 @@ class MacPrivilegeSession:
 
         exec_path = Path(sys.executable)
         exec_dir = exec_path.parent if exec_path.exists() else Path.cwd()
-        candidates = sorted(exec_dir.glob("MTGA_GUI-*"))
-        for candidate in candidates:
-            if candidate.is_file() and os.access(candidate, os.X_OK):
-                return candidate
+        patterns = (
+            "MTGA_GUI-*",
+            "Model-Relay-Desktop-*",
+            "model-relay-desktop-*",
+        )
+        for pattern in patterns:
+            candidates = sorted(exec_dir.glob(pattern))
+            for candidate in candidates:
+                if candidate.is_file() and os.access(candidate, os.X_OK):
+                    return candidate
         return None
 
-    def _locate_python_executable(self) -> Path | None:
+    def _locate_python_executable(self) -> Path | None:  # noqa: PLR0912
         candidates: list[Path] = []
         exec_path = Path(sys.executable)
         if exec_path.is_file():
@@ -262,11 +268,17 @@ class MacPrivilegeSession:
             else:
                 exe_dir = exec_path.parent
                 contents_dir = exe_dir.parent
-                resources_bin = contents_dir / "Resources" / "bin"
-                for bin_name in ("python3", "python3.13", "python"):
-                    candidate = resources_bin / bin_name
-                    if candidate.is_file():
-                        candidates.append(candidate)
+                resource_bins = (
+                    contents_dir / "Resources" / "pyembed" / "python" / "bin",
+                    contents_dir / "Resources" / "bin",
+                )
+                for resource_bin in resource_bins:
+                    for bin_name in ("python3.13", "python3", "python"):
+                        candidate = resource_bin / bin_name
+                        if candidate.is_file():
+                            candidates.append(candidate)
+                            break
+                    if candidates:
                         break
         python_home = os.environ.get("PYTHONHOME")
         if python_home:
