@@ -161,8 +161,6 @@ export const useMtgaStore = () => {
       if (!step) {
         continue;
       }
-      panelNavTarget.value = "main-tabs";
-      panelNavSignal.value += 1;
       mainTabTarget.value = step;
       mainTabSignal.value += 1;
       await nextTick();
