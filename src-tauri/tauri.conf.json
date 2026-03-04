@@ -19,7 +19,7 @@
         "width": 1200,
         "height": 800,
         "visible": false,
-        "backgroundColor": "#fffbeb",
+        "backgroundColor": "#eef2ff",
         "resizable": true,
         "fullscreen": false
       },
@@ -31,7 +31,7 @@
         "url": "splashscreen.html",
         "resizable": true,
         "fullscreen": false,
-        "backgroundColor": "#fffbeb"
+        "backgroundColor": "#eef2ff"
       }
     ],
     "security": {

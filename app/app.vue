@@ -33,6 +33,7 @@ if (import.meta.client) {
  */
 const activeTab = ref("config-group");
 const direction = ref<"down" | "up">("down");
+const configGroupView = ref<"groups" | "logs">("groups");
 
 /**
  * 处理导航切换
@@ -45,6 +46,9 @@ const selectTab = (id: string) => {
   if (newIndex !== oldIndex) {
     direction.value = newIndex > oldIndex ? "down" : "up";
     activeTab.value = id;
+    if (id !== "config-group") {
+      configGroupView.value = "groups";
+    }
   }
 };
 
@@ -149,7 +153,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div @mouseover="handleGlobalMouseOver">
-    <AppShell>
+    <AppShell :right-hidden="activeTab === 'config-group'">
       <template #left>
         <div class="flex items-stretch h-full min-h-0">
           <!-- 垂直菜单栏 -->
@@ -222,10 +226,41 @@ onBeforeUnmount(() => {
               mode="out-in"
             >
               <div
-                :key="activeTab"
+                :key="activeTab === 'config-group' ? `${activeTab}-${configGroupView}` : activeTab"
                 class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
               >
-                <ConfigGroupPanel v-if="activeTab === 'config-group'" />
+                <div v-if="activeTab === 'config-group'" class="h-full flex flex-col">
+                  <div
+                    class="inline-flex w-fit items-center rounded-xl border border-indigo-100/80 bg-white/70 p-1"
+                  >
+                    <button
+                      class="btn btn-xs h-8 rounded-lg border-0 px-4"
+                      :class="
+                        configGroupView === 'groups'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-transparent text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
+                      "
+                      @click="configGroupView = 'groups'"
+                    >
+                      配置组
+                    </button>
+                    <button
+                      class="btn btn-xs h-8 rounded-lg border-0 px-4"
+                      :class="
+                        configGroupView === 'logs'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-transparent text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
+                      "
+                      @click="configGroupView = 'logs'"
+                    >
+                      运行日志
+                    </button>
+                  </div>
+                  <div class="mt-4 flex-1 min-h-0">
+                    <ConfigGroupPanel v-if="configGroupView === 'groups'" />
+                    <LogPanel v-else :logs="logs" class="h-full" />
+                  </div>
+                </div>
                 <GlobalConfigPanel v-if="activeTab === 'global-config'" />
                 <MainTabs v-if="activeTab === 'main-tabs'" />
                 <SettingsPanel v-if="activeTab === 'settings'" />
@@ -236,7 +271,7 @@ onBeforeUnmount(() => {
       </template>
 
       <template #right>
-        <div class="h-full flex flex-col p-6">
+        <div v-if="activeTab !== 'config-group'" class="h-full flex flex-col p-6">
           <LogPanel :logs="logs" class="flex-1" />
         </div>
       </template>

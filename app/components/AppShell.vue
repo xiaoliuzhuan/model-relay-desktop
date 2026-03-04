@@ -1,3 +1,14 @@
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    rightHidden?: boolean;
+  }>(),
+  {
+    rightHidden: false,
+  },
+);
+</script>
+
 <template>
   <div class="h-screen flex flex-col overflow-hidden">
     <!-- 统一的容器：更清晰的层次与轻玻璃 -->
@@ -21,18 +32,16 @@
 
       <!-- 中间内容区域 -->
       <main class="flex-1 flex min-h-0">
-        <!-- 左侧区域 (占据 7/12) -->
-        <section class="flex-7 flex flex-col min-w-0">
+        <section class="flex flex-col min-w-0" :class="rightHidden ? 'flex-1' : 'flex-7'">
           <slot name="left" />
         </section>
 
-        <!-- 垂直分割线 -->
-        <div class="w-px bg-indigo-100/80 self-stretch shrink-0"></div>
-
-        <!-- 右侧区域 (占据 5/12) -->
-        <section class="flex-5 flex flex-col min-w-0">
-          <slot name="right" />
-        </section>
+        <template v-if="!rightHidden">
+          <div class="w-px bg-indigo-100/80 self-stretch shrink-0"></div>
+          <section class="flex-5 flex flex-col min-w-0">
+            <slot name="right" />
+          </section>
+        </template>
       </main>
 
       <!-- 底部操作区域 -->
