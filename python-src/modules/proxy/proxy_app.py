@@ -258,7 +258,7 @@ class ProxyApp:
             return "".join(chunks)
         return ""
 
-    def _build_responses_payload_from_chat(  # noqa: PLR0912
+    def _build_responses_payload_from_chat(  # noqa: PLR0912, PLR0915
         self, request_data: dict[str, Any]
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {}
@@ -289,13 +289,25 @@ class ProxyApp:
             payload["max_output_tokens"] = max_completion_tokens
 
         reasoning_effort_obj = request_data.get("reasoning_effort")
-        if isinstance(reasoning_effort_obj, str) and reasoning_effort_obj.strip():
-            reasoning_obj = payload.get("reasoning")
-            if isinstance(reasoning_obj, dict):
-                reasoning = cast(dict[str, Any], reasoning_obj)
-                reasoning.setdefault("effort", reasoning_effort_obj.strip())
-            else:
-                payload["reasoning"] = {"effort": reasoning_effort_obj.strip()}
+        reasoning_effort = (
+            reasoning_effort_obj.strip().lower()
+            if isinstance(reasoning_effort_obj, str) and reasoning_effort_obj.strip()
+            else ""
+        )
+        reasoning_obj = payload.get("reasoning")
+        reasoning = cast(dict[str, Any], reasoning_obj) if isinstance(reasoning_obj, dict) else {}
+        existing_effort_obj = reasoning.get("effort")
+        existing_effort = (
+            existing_effort_obj.strip().lower()
+            if isinstance(existing_effort_obj, str) and existing_effort_obj.strip()
+            else ""
+        )
+        if reasoning_effort:
+            reasoning["effort"] = reasoning_effort
+        elif not existing_effort or existing_effort == "none":
+            reasoning["effort"] = "high"
+        if reasoning:
+            payload["reasoning"] = reasoning
 
         stream_obj = request_data.get("stream")
         if isinstance(stream_obj, bool):
@@ -531,6 +543,16 @@ class ProxyApp:
         yield "data: [DONE]\n\n"
 
     @staticmethod
+    def _remaining_text(full_text: str, streamed_text: str) -> str:
+        if not streamed_text:
+            return full_text
+        if full_text.startswith(streamed_text):
+            return full_text[len(streamed_text) :]
+        if streamed_text.startswith(full_text):
+            return ""
+        return full_text if full_text != streamed_text else ""
+
+    @staticmethod
     def _build_chat_chunk_bytes(  # noqa: PLR0913
         *,
         request_id: str,
@@ -539,6 +561,7 @@ class ProxyApp:
         include_role: bool,
         content: str | None = None,
         reasoning_content: str | None = None,
+        tool_calls: list[dict[str, Any]] | None = None,
         finish_reason: str | None = None,
     ) -> bytes:
         delta: dict[str, Any] = {}
@@ -548,6 +571,8 @@ class ProxyApp:
             delta["content"] = content
         if reasoning_content:
             delta["reasoning_content"] = reasoning_content
+        if tool_calls:
+            delta["tool_calls"] = tool_calls
 
         chunk_obj = {
             "id": request_id,
@@ -803,6 +828,9 @@ class ProxyApp:
                             role_sent = False
                             done_sent = False
                             event_index = 0
+                            output_text_buffers: dict[int, str] = {}
+                            tool_call_index_by_item_id: dict[str, int] = {}
+                            tool_call_arguments_buffers: dict[str, str] = {}
                             try:
                                 for upstream_chunk_index, raw_event in transport.extract_sse_events(
                                     responses_response, log=log
@@ -850,6 +878,14 @@ class ProxyApp:
                                         delta_obj = payload.get("delta")
                                         delta = delta_obj if isinstance(delta_obj, str) else ""
                                         if delta:
+                                            content_index_obj = payload.get("content_index")
+                                            content_index = (
+                                                int(content_index_obj)
+                                                if isinstance(content_index_obj, int)
+                                                else 0
+                                            )
+                                            previous = output_text_buffers.get(content_index, "")
+                                            output_text_buffers[content_index] = previous + delta
                                             yield self._build_chat_chunk_bytes(
                                                 request_id=request_id_for_stream,
                                                 model_name=target_model_id,
@@ -858,6 +894,185 @@ class ProxyApp:
                                                 content=delta,
                                             )
                                             role_sent = True
+                                        continue
+
+                                    if event_type in {
+                                        "response.output_text.done",
+                                        "response.content_part.done",
+                                    }:
+                                        done_text = ""
+                                        content_index_obj = payload.get("content_index")
+                                        content_index = (
+                                            int(content_index_obj)
+                                            if isinstance(content_index_obj, int)
+                                            else 0
+                                        )
+                                        if event_type == "response.output_text.done":
+                                            done_text_obj = payload.get("text")
+                                            done_text = (
+                                                done_text_obj
+                                                if isinstance(done_text_obj, str)
+                                                else ""
+                                            )
+                                        else:
+                                            part_obj = payload.get("part")
+                                            if isinstance(part_obj, dict):
+                                                part = cast(dict[str, Any], part_obj)
+                                                if part.get("type") == "output_text":
+                                                    done_text_obj = part.get("text")
+                                                    done_text = (
+                                                        done_text_obj
+                                                        if isinstance(done_text_obj, str)
+                                                        else ""
+                                                    )
+                                        if done_text:
+                                            streamed_text = output_text_buffers.get(
+                                                content_index,
+                                                "",
+                                            )
+                                            remainder = self._remaining_text(
+                                                done_text,
+                                                streamed_text,
+                                            )
+                                            output_text_buffers[content_index] = done_text
+                                            if remainder:
+                                                yield self._build_chat_chunk_bytes(
+                                                    request_id=request_id_for_stream,
+                                                    model_name=target_model_id,
+                                                    created=created,
+                                                    include_role=not role_sent,
+                                                    content=remainder,
+                                                )
+                                                role_sent = True
+                                        continue
+
+                                    if event_type == "response.output_item.added":
+                                        item_obj = payload.get("item")
+                                        if isinstance(item_obj, dict):
+                                            item = cast(dict[str, Any], item_obj)
+                                            item_type_obj = item.get("type")
+                                            item_type = (
+                                                item_type_obj
+                                                if isinstance(item_type_obj, str)
+                                                else ""
+                                            )
+                                            if item_type == "function_call":
+                                                item_id_obj = item.get("id")
+                                                item_id = (
+                                                    item_id_obj
+                                                    if isinstance(item_id_obj, str)
+                                                    else ""
+                                                )
+                                                if item_id:
+                                                    if item_id not in tool_call_index_by_item_id:
+                                                        tool_call_index_by_item_id[item_id] = len(
+                                                            tool_call_index_by_item_id
+                                                        )
+                                                    tool_call_index = tool_call_index_by_item_id[
+                                                        item_id
+                                                    ]
+                                                    function_name_obj = item.get("name")
+                                                    function_name = (
+                                                        function_name_obj
+                                                        if isinstance(function_name_obj, str)
+                                                        else ""
+                                                    )
+                                                    yield self._build_chat_chunk_bytes(
+                                                        request_id=request_id_for_stream,
+                                                        model_name=target_model_id,
+                                                        created=created,
+                                                        include_role=not role_sent,
+                                                        tool_calls=[
+                                                            {
+                                                                "index": tool_call_index,
+                                                                "id": item_id,
+                                                                "type": "function",
+                                                                "function": {
+                                                                    "name": function_name,
+                                                                    "arguments": "",
+                                                                },
+                                                            }
+                                                        ],
+                                                    )
+                                                    role_sent = True
+                                        continue
+
+                                    if event_type == "response.function_call_arguments.delta":
+                                        item_id_obj = payload.get("item_id")
+                                        item_id = (
+                                            item_id_obj if isinstance(item_id_obj, str) else ""
+                                        )
+                                        delta_obj = payload.get("delta")
+                                        delta = delta_obj if isinstance(delta_obj, str) else ""
+                                        if item_id and delta:
+                                            if item_id not in tool_call_index_by_item_id:
+                                                tool_call_index_by_item_id[item_id] = len(
+                                                    tool_call_index_by_item_id
+                                                )
+                                            tool_call_index = tool_call_index_by_item_id[item_id]
+                                            previous = tool_call_arguments_buffers.get(item_id, "")
+                                            tool_call_arguments_buffers[item_id] = previous + delta
+                                            yield self._build_chat_chunk_bytes(
+                                                request_id=request_id_for_stream,
+                                                model_name=target_model_id,
+                                                created=created,
+                                                include_role=not role_sent,
+                                                tool_calls=[
+                                                    {
+                                                        "index": tool_call_index,
+                                                        "id": item_id,
+                                                        "type": "function",
+                                                        "function": {"arguments": delta},
+                                                    }
+                                                ],
+                                            )
+                                            role_sent = True
+                                        continue
+
+                                    if event_type == "response.function_call_arguments.done":
+                                        item_id_obj = payload.get("item_id")
+                                        item_id = (
+                                            item_id_obj if isinstance(item_id_obj, str) else ""
+                                        )
+                                        done_arguments_obj = payload.get("arguments")
+                                        done_arguments = (
+                                            done_arguments_obj
+                                            if isinstance(done_arguments_obj, str)
+                                            else ""
+                                        )
+                                        if item_id and done_arguments:
+                                            if item_id not in tool_call_index_by_item_id:
+                                                tool_call_index_by_item_id[item_id] = len(
+                                                    tool_call_index_by_item_id
+                                                )
+                                            tool_call_index = tool_call_index_by_item_id[
+                                                item_id
+                                            ]
+                                            streamed_args = tool_call_arguments_buffers.get(
+                                                item_id,
+                                                "",
+                                            )
+                                            remainder = self._remaining_text(
+                                                done_arguments,
+                                                streamed_args,
+                                            )
+                                            tool_call_arguments_buffers[item_id] = done_arguments
+                                            if remainder:
+                                                yield self._build_chat_chunk_bytes(
+                                                    request_id=request_id_for_stream,
+                                                    model_name=target_model_id,
+                                                    created=created,
+                                                    include_role=not role_sent,
+                                                    tool_calls=[
+                                                        {
+                                                            "index": tool_call_index,
+                                                            "id": item_id,
+                                                            "type": "function",
+                                                            "function": {"arguments": remainder},
+                                                        }
+                                                    ],
+                                                )
+                                                role_sent = True
                                         continue
 
                                     if event_type in {
