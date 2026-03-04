@@ -343,10 +343,17 @@ class ProxyApp:
         return payload
 
     @staticmethod
-    def _extract_text_from_responses_output(response_json: dict[str, Any]) -> str:
+    def _extract_text_from_responses_output(  # noqa: PLR0912
+        response_json: dict[str, Any]
+    ) -> str:
         output_text_obj = response_json.get("output_text")
         if isinstance(output_text_obj, str) and output_text_obj:
             return output_text_obj
+        if isinstance(output_text_obj, list):
+            output_text_list = cast(list[object], output_text_obj)
+            text_chunks = [item for item in output_text_list if isinstance(item, str)]
+            if text_chunks:
+                return "".join(text_chunks)
 
         output_obj = response_json.get("output")
         if not isinstance(output_obj, list):
@@ -358,17 +365,45 @@ class ProxyApp:
             if not isinstance(raw_output_item, dict):
                 continue
             output_item = cast(dict[str, Any], raw_output_item)
+
+            # 兼容 output 层直接携带文本
+            direct_text_obj = output_item.get("text") or output_item.get("output_text")
+            if isinstance(direct_text_obj, str):
+                chunks.append(direct_text_obj)
+
             content_obj = output_item.get("content")
+            if isinstance(content_obj, str):
+                chunks.append(content_obj)
+                continue
             if not isinstance(content_obj, list):
                 continue
+
             content_list = cast(list[object], content_obj)
             for raw_content in content_list:
                 if not isinstance(raw_content, dict):
                     continue
                 content_item = cast(dict[str, Any], raw_content)
-                text_obj = content_item.get("text")
+                text_obj = content_item.get("text") or content_item.get("output_text")
                 if isinstance(text_obj, str):
                     chunks.append(text_obj)
+                    continue
+                if isinstance(text_obj, dict):
+                    text_dict = cast(dict[str, Any], text_obj)
+                    text_value = text_dict.get("value")
+                    if isinstance(text_value, str):
+                        chunks.append(text_value)
+
+            summary_obj = output_item.get("summary")
+            if isinstance(summary_obj, list):
+                summary_list = cast(list[object], summary_obj)
+                for raw_summary in summary_list:
+                    if not isinstance(raw_summary, dict):
+                        continue
+                    summary_item = cast(dict[str, Any], raw_summary)
+                    summary_text_obj = summary_item.get("text")
+                    if isinstance(summary_text_obj, str):
+                        chunks.append(summary_text_obj)
+
         return "".join(chunks)
 
     def _convert_responses_to_chat_completion(
@@ -735,6 +770,18 @@ class ProxyApp:
                     release_transport()
                     return jsonify({"error": "Invalid chat request for responses fallback"}), 400
                 log(f"转发请求到: {responses_url}")
+                reasoning_obj = responses_payload.get("reasoning")
+                reasoning_effort_log = "-"
+                if isinstance(reasoning_obj, dict):
+                    reasoning_dict = cast(dict[str, Any], reasoning_obj)
+                    effort_obj = reasoning_dict.get("effort")
+                    if isinstance(effort_obj, str) and effort_obj:
+                        reasoning_effort_log = effort_obj
+                log(
+                    "responses 参数: "
+                    f"stream={responses_payload.get('stream', False)}, "
+                    f"reasoning_effort={reasoning_effort_log}"
+                )
 
                 responses_response = http_client.post(
                     responses_url,
@@ -872,6 +919,14 @@ class ProxyApp:
                     responses_json,
                     model_name=target_model_id,
                 )
+                content_obj = (
+                    chat_response_json.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content", "")
+                )
+                if not isinstance(content_obj, str) or not content_obj.strip():
+                    response_keys = ",".join(sorted(responses_json.keys()))
+                    log(f"Responses 转换后内容为空，原始响应 keys: {response_keys}")
 
                 if is_stream or (client_requested_stream and stream_mode == "false"):
                     log("将 Responses 非流式响应转换为流式格式返回给客户端")
