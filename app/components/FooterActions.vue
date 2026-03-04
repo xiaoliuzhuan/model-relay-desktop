@@ -1,8 +1,10 @@
 <script setup lang="ts">
-const store = useMtgaStore();
+const emit = defineEmits<{
+  startAll: [];
+}>();
 
 const handleStartAll = () => {
-  store.runProxyStartAll();
+  emit("startAll");
 };
 </script>
 

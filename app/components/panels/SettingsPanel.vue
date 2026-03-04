@@ -144,16 +144,18 @@ const handleThemeSave = (value: ThemeConfig) => {
         <div class="text-sm font-semibold text-slate-900">用户数据</div>
         <div class="text-xs text-slate-500">备份与恢复历史数据</div>
       </div>
-      <div class="space-y-2">
+      <div
+        class="flex flex-wrap items-center gap-2 rounded-xl border border-indigo-100/80 bg-white/70 p-2"
+      >
         <button
-          class="mtga-btn-outline tooltip mtga-tooltip"
+          class="btn btn-sm btn-outline min-w-[92px] rounded-xl border-slate-200 px-4 hover:border-indigo-500 hover:bg-indigo-50/70 hover:text-indigo-600 tooltip mtga-tooltip"
           :data-tip="openDirTooltip"
           @click="handleOpen"
         >
           打开目录
         </button>
         <button
-          class="mtga-btn-primary tooltip mtga-tooltip"
+          class="btn btn-sm min-w-[92px] rounded-xl border-0 bg-indigo-600 px-4 text-white shadow-sm shadow-indigo-500/25 hover:bg-indigo-500 tooltip mtga-tooltip"
           :data-tip="backupTooltip"
           style="--mtga-tooltip-max: 360px"
           @click="handleBackup"
@@ -161,7 +163,7 @@ const handleThemeSave = (value: ThemeConfig) => {
           备份数据
         </button>
         <button
-          class="mtga-btn-outline tooltip mtga-tooltip"
+          class="btn btn-sm btn-outline min-w-[92px] rounded-xl border-slate-200 px-4 hover:border-indigo-500 hover:bg-indigo-50/70 hover:text-indigo-600 tooltip mtga-tooltip"
           :data-tip="restoreTooltip"
           style="--mtga-tooltip-max: 360px"
           @click="handleRestore"
@@ -169,7 +171,7 @@ const handleThemeSave = (value: ThemeConfig) => {
           还原数据
         </button>
         <button
-          class="mtga-btn-error tooltip mtga-tooltip"
+          class="btn btn-sm btn-outline min-w-[92px] rounded-xl border-rose-300/80 px-4 text-rose-500 hover:border-rose-400 hover:bg-rose-50/70 hover:text-rose-600 tooltip mtga-tooltip"
           :data-tip="clearTooltip"
           style="--mtga-tooltip-max: 360px"
           @click="handleClear"

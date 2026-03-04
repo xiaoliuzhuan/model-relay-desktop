@@ -19,6 +19,7 @@ const {
   stopProxyStepListener,
   panelNavTarget,
   panelNavSignal,
+  runProxyStartAll,
 } = useMtgaStore();
 
 if (import.meta.client) {
@@ -33,7 +34,6 @@ if (import.meta.client) {
  */
 const activeTab = ref("config-group");
 const direction = ref<"down" | "up">("down");
-const configGroupView = ref<"groups" | "logs">("groups");
 
 /**
  * 处理导航切换
@@ -46,10 +46,12 @@ const selectTab = (id: string) => {
   if (newIndex !== oldIndex) {
     direction.value = newIndex > oldIndex ? "down" : "up";
     activeTab.value = id;
-    if (id !== "config-group") {
-      configGroupView.value = "groups";
-    }
   }
+};
+
+const handleStartAll = () => {
+  selectTab("run-logs");
+  runProxyStartAll();
 };
 
 /**
@@ -118,6 +120,7 @@ const navigation = [
   { id: "config-group", name: "代理配置组", icon: ICONS.CONFIG_GROUP },
   { id: "global-config", name: "全局配置", icon: ICONS.GLOBAL_CONFIG },
   { id: "main-tabs", name: "主要流程", icon: ICONS.MAIN_TABS },
+  { id: "run-logs", name: "运行日志", icon: ICONS.RUN_LOGS },
   { id: "settings", name: "设置", icon: ICONS.SETTINGS },
 ];
 
@@ -153,7 +156,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div @mouseover="handleGlobalMouseOver">
-    <AppShell :right-hidden="activeTab === 'config-group'">
+    <AppShell :right-hidden="true">
       <template #left>
         <div class="flex items-stretch h-full min-h-0">
           <!-- 垂直菜单栏 -->
@@ -162,16 +165,16 @@ onBeforeUnmount(() => {
               <li v-for="item in navigation" :key="item.id">
                 <a
                   :class="[
-                    'flex flex-row items-center justify-start gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 group border',
+                    'group flex flex-row items-center justify-start gap-2 px-2.5 py-2 rounded-lg border transition-all duration-200',
                     activeTab === item.id
-                      ? 'bg-indigo-500/14 text-indigo-700 border-indigo-500/35 shadow-sm shadow-indigo-500/20'
-                      : 'text-slate-500 border-transparent hover:bg-indigo-50/80 hover:text-slate-700',
+                      ? 'border-indigo-300/60 bg-indigo-500/12 text-indigo-700'
+                      : 'border-transparent text-slate-500 hover:bg-indigo-50/70 hover:text-slate-700',
                   ]"
                   @click="selectTab(item.id)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 opacity-80 shrink-0"
+                    class="h-[18px] w-[18px] opacity-85 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -179,11 +182,13 @@ onBeforeUnmount(() => {
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
-                      stroke-width="2"
+                      stroke-width="1.8"
                       :d="item.icon"
                     />
                   </svg>
-                  <span class="text-sm font-bold tracking-wide truncate">{{ item.name }}</span>
+                  <span class="truncate text-sm font-semibold tracking-[0.01em]">{{
+                    item.name
+                  }}</span>
                 </a>
               </li>
             </ul>
@@ -226,43 +231,13 @@ onBeforeUnmount(() => {
               mode="out-in"
             >
               <div
-                :key="activeTab === 'config-group' ? `${activeTab}-${configGroupView}` : activeTab"
+                :key="activeTab"
                 class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
               >
-                <div v-if="activeTab === 'config-group'" class="h-full flex flex-col">
-                  <div
-                    class="inline-flex w-fit items-center rounded-xl border border-indigo-100/80 bg-white/70 p-1"
-                  >
-                    <button
-                      class="btn btn-xs h-8 rounded-lg border-0 px-4"
-                      :class="
-                        configGroupView === 'groups'
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-transparent text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
-                      "
-                      @click="configGroupView = 'groups'"
-                    >
-                      配置组
-                    </button>
-                    <button
-                      class="btn btn-xs h-8 rounded-lg border-0 px-4"
-                      :class="
-                        configGroupView === 'logs'
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-transparent text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
-                      "
-                      @click="configGroupView = 'logs'"
-                    >
-                      运行日志
-                    </button>
-                  </div>
-                  <div class="mt-4 flex-1 min-h-0">
-                    <ConfigGroupPanel v-if="configGroupView === 'groups'" />
-                    <LogPanel v-else :logs="logs" class="h-full" />
-                  </div>
-                </div>
+                <ConfigGroupPanel v-if="activeTab === 'config-group'" />
                 <GlobalConfigPanel v-if="activeTab === 'global-config'" />
                 <MainTabs v-if="activeTab === 'main-tabs'" />
+                <LogPanel v-if="activeTab === 'run-logs'" :logs="logs" class="h-full" />
                 <SettingsPanel v-if="activeTab === 'settings'" />
               </div>
             </Transition>
@@ -270,14 +245,8 @@ onBeforeUnmount(() => {
         </div>
       </template>
 
-      <template #right>
-        <div v-if="activeTab !== 'config-group'" class="h-full flex flex-col p-6">
-          <LogPanel :logs="logs" class="flex-1" />
-        </div>
-      </template>
-
       <template #footer>
-        <FooterActions />
+        <FooterActions @start-all="handleStartAll" />
       </template>
     </AppShell>
 
