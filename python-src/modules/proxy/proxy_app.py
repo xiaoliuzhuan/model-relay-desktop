@@ -19,6 +19,8 @@ from modules.runtime.error_codes import ErrorCode
 from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 
+HTTP_BAD_REQUEST = 400
+
 
 class ProxyApp:
     """代理服务的领域逻辑：配置解析 + Flask 路由 + 上游转发。"""
@@ -239,6 +241,243 @@ class ProxyApp:
             return f"/{suffix.lstrip('/')}"
         return f"{middle_route.rstrip('/')}/{suffix.lstrip('/')}"
 
+    @staticmethod
+    def _extract_text_from_message_content(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            chunks: list[str] = []
+            content_list = cast(list[object], content)
+            for raw_item in content_list:
+                if not isinstance(raw_item, dict):
+                    continue
+                item = cast(dict[str, Any], raw_item)
+                text_value = item.get("text")
+                if isinstance(text_value, str):
+                    chunks.append(text_value)
+            return "".join(chunks)
+        return ""
+
+    def _build_responses_payload_from_chat(  # noqa: PLR0912
+        self, request_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {}
+
+        passthrough_keys = (
+            "model",
+            "temperature",
+            "top_p",
+            "presence_penalty",
+            "frequency_penalty",
+            "tools",
+            "tool_choice",
+            "parallel_tool_calls",
+            "metadata",
+            "user",
+        )
+        for key in passthrough_keys:
+            value = request_data.get(key)
+            if value is not None:
+                payload[key] = value
+
+        max_tokens = request_data.get("max_tokens")
+        if max_tokens is not None:
+            payload["max_output_tokens"] = max_tokens
+
+        messages_obj = request_data.get("messages")
+        input_messages: list[dict[str, str]] = []
+        if isinstance(messages_obj, list):
+            messages_list = cast(list[object], messages_obj)
+            for raw_message in messages_list:
+                if not isinstance(raw_message, dict):
+                    continue
+                message = cast(dict[str, Any], raw_message)
+                role_obj = message.get("role")
+                role = role_obj if isinstance(role_obj, str) else "user"
+                if role not in {"system", "developer", "user", "assistant"}:
+                    role = "user"
+
+                content_text = self._extract_text_from_message_content(message.get("content"))
+                if content_text:
+                    input_messages.append({"role": role, "content": content_text})
+
+        if input_messages:
+            payload["input"] = input_messages
+
+        response_format_obj = request_data.get("response_format")
+        if isinstance(response_format_obj, dict):
+            response_format = cast(dict[str, Any], response_format_obj)
+            response_format_type = response_format.get("type")
+            if response_format_type == "json_object":
+                payload["text"] = {"format": {"type": "json_object"}}
+            elif response_format_type == "json_schema":
+                json_schema_obj = response_format.get("json_schema")
+                if isinstance(json_schema_obj, dict):
+                    json_schema = cast(dict[str, Any], json_schema_obj)
+                    payload["text"] = {
+                        "format": {
+                            "type": "json_schema",
+                            "name": json_schema.get("name") or "schema",
+                            "schema": json_schema.get("schema") or {},
+                            "strict": bool(json_schema.get("strict", False)),
+                        }
+                    }
+
+        return payload
+
+    @staticmethod
+    def _extract_text_from_responses_output(response_json: dict[str, Any]) -> str:
+        output_text_obj = response_json.get("output_text")
+        if isinstance(output_text_obj, str) and output_text_obj:
+            return output_text_obj
+
+        output_obj = response_json.get("output")
+        if not isinstance(output_obj, list):
+            return ""
+
+        output_list = cast(list[object], output_obj)
+        chunks: list[str] = []
+        for raw_output_item in output_list:
+            if not isinstance(raw_output_item, dict):
+                continue
+            output_item = cast(dict[str, Any], raw_output_item)
+            content_obj = output_item.get("content")
+            if not isinstance(content_obj, list):
+                continue
+            content_list = cast(list[object], content_obj)
+            for raw_content in content_list:
+                if not isinstance(raw_content, dict):
+                    continue
+                content_item = cast(dict[str, Any], raw_content)
+                text_obj = content_item.get("text")
+                if isinstance(text_obj, str):
+                    chunks.append(text_obj)
+        return "".join(chunks)
+
+    def _convert_responses_to_chat_completion(
+        self,
+        response_json: dict[str, Any],
+        *,
+        model_name: str,
+    ) -> dict[str, Any]:
+        content = self._extract_text_from_responses_output(response_json)
+
+        created_obj = response_json.get("created_at")
+        created = int(created_obj) if isinstance(created_obj, (int, float)) else int(time.time())
+
+        usage_obj = response_json.get("usage")
+        usage = None
+        if isinstance(usage_obj, dict):
+            usage_dict = cast(dict[str, Any], usage_obj)
+            input_tokens_obj = usage_dict.get("input_tokens")
+            output_tokens_obj = usage_dict.get("output_tokens")
+            total_tokens_obj = usage_dict.get("total_tokens")
+
+            prompt_tokens = int(input_tokens_obj) if isinstance(input_tokens_obj, int) else 0
+            completion_tokens = int(output_tokens_obj) if isinstance(output_tokens_obj, int) else 0
+            total_tokens = (
+                int(total_tokens_obj)
+                if isinstance(total_tokens_obj, int)
+                else prompt_tokens + completion_tokens
+            )
+            usage = {
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens,
+            }
+
+        chat_completion = {
+            "id": response_json.get("id") or self._new_request_id(),
+            "object": "chat.completion",
+            "created": created,
+            "model": response_json.get("model") or model_name,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+        if usage is not None:
+            chat_completion["usage"] = usage
+        return chat_completion
+
+    @staticmethod
+    def _should_fallback_to_responses(response: requests.Response) -> bool:
+        if response.status_code != HTTP_BAD_REQUEST:
+            return False
+        response_text = response.text.lower()
+        return (
+            "unsupported legacy protocol" in response_text
+            and "/v1/chat/completions" in response_text
+            and "/v1/responses" in response_text
+        )
+
+    @staticmethod
+    def _simulate_stream_from_chat_response(
+        response_json: dict[str, Any],
+        *,
+        log: Callable[[str], None],
+    ) -> Generator[str]:
+        choices_obj = response_json.get("choices")
+        if not isinstance(choices_obj, list) or not choices_obj:
+            log("响应中没有找到 choices 字段")
+            yield f"data: {json.dumps({'error': 'No choices in response'})}\n\n"
+            return
+        choices = cast(list[object], choices_obj)
+
+        first_choice_obj = choices[0]
+        if not isinstance(first_choice_obj, dict):
+            log("响应 choices[0] 不是对象")
+            yield f"data: {json.dumps({'error': 'Invalid first choice in response'})}\n\n"
+            return
+        first_choice = cast(dict[str, Any], first_choice_obj)
+
+        message_obj = first_choice.get("message")
+        message = cast(dict[str, Any], message_obj) if isinstance(message_obj, dict) else {}
+        content_obj = message.get("content")
+        content = content_obj if isinstance(content_obj, str) else ""
+
+        if not content:
+            log("响应中没有找到内容")
+            yield f"data: {json.dumps({'error': 'No content in response'})}\n\n"
+            return
+
+        model_obj = response_json.get("model")
+        model = model_obj if isinstance(model_obj, str) else ""
+        id_obj = response_json.get("id")
+        id_value = id_obj if isinstance(id_obj, str) else ""
+        created_obj = response_json.get("created")
+        created = int(created_obj) if isinstance(created_obj, int) else int(time.time())
+
+        chunk_size = 10
+        total_chars = len(content)
+
+        for index in range(0, total_chars, chunk_size):
+            chunk = content[index : index + chunk_size]
+
+            chunk_data = {
+                "id": id_value,
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": model,
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {"content": chunk},
+                        "finish_reason": None
+                        if index + chunk_size < total_chars
+                        else first_choice.get("finish_reason", "stop"),
+                    }
+                ],
+            }
+
+            yield f"data: {json.dumps(chunk_data)}\n\n"
+            time.sleep(0.01)
+
+        yield "data: [DONE]\n\n"
+
     def _create_app(self) -> None:
         self.app = Flask(__name__)
         self._app_logger_default_level = self.app.logger.level
@@ -428,6 +667,53 @@ class ProxyApp:
                 stream=is_stream,
                 timeout=300,
             )
+            if self._should_fallback_to_responses(response_from_target):
+                log("上游仅支持 /v1/responses，自动切换协议")
+                with contextlib.suppress(Exception):
+                    response_from_target.close()
+
+                responses_url = (
+                    f"{target_api_base_url.rstrip('/')}"
+                    f"{self._build_route(middle_route, 'responses')}"
+                )
+                responses_payload = self._build_responses_payload_from_chat(request_data)
+                if not responses_payload.get("input"):
+                    log("无法从 chat/completions 请求构建 responses input 字段")
+                    release_transport()
+                    return jsonify({"error": "Invalid chat request for responses fallback"}), 400
+                log(f"转发请求到: {responses_url}")
+
+                responses_response = http_client.post(
+                    responses_url,
+                    json=responses_payload,
+                    headers=forward_headers,
+                    stream=False,
+                    timeout=300,
+                )
+                responses_response.raise_for_status()
+
+                responses_json_obj = responses_response.json()
+                if not isinstance(responses_json_obj, dict):
+                    log("Responses 上游响应不是 JSON 对象")
+                    release_transport()
+                    return jsonify({"error": "Invalid response from target API"}), 502
+                responses_json = cast(dict[str, Any], responses_json_obj)
+                chat_response_json = self._convert_responses_to_chat_completion(
+                    responses_json,
+                    model_name=target_model_id,
+                )
+
+                if is_stream or (client_requested_stream and stream_mode == "false"):
+                    log("将 Responses 非流式响应转换为流式格式返回给客户端")
+                    release_transport()
+                    return Response(
+                        self._simulate_stream_from_chat_response(chat_response_json, log=log),
+                        content_type="text/event-stream",
+                    )
+
+                release_transport()
+                return jsonify(chat_response_json), responses_response.status_code
+
             response_from_target.raise_for_status()
             if debug_mode:
                 log(f"上游响应状态码: {response_from_target.status_code}")
@@ -553,56 +839,11 @@ class ProxyApp:
 
             if client_requested_stream and stream_mode == "false":
                 log("将非流式响应转换为流式格式返回给客户端")
-
-                def simulate_stream() -> Generator[str]:
-                    choices = response_json.get("choices", [])
-                    if not choices:
-                        log("响应中没有找到 choices 字段")
-                        yield f"data: {json.dumps({'error': 'No choices in response'})}\\n\\n"
-                        return
-
-                    first_choice = choices[0]
-                    message = first_choice.get("message", {})
-                    content = message.get("content", "")
-
-                    if not content:
-                        log("响应中没有找到内容")
-                        yield f"data: {json.dumps({'error': 'No content in response'})}\\n\\n"
-                        return
-
-                    model = response_json.get("model", "")
-                    id_value = response_json.get("id", "")
-                    created = response_json.get("created", 0)
-
-                    chunk_size = 10
-                    total_chars = len(content)
-
-                    for i in range(0, total_chars, chunk_size):
-                        chunk = content[i : i + chunk_size]
-
-                        chunk_data = {
-                            "id": id_value,
-                            "object": "chat.completion.chunk",
-                            "created": created,
-                            "model": model,
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": {"content": chunk},
-                                    "finish_reason": None
-                                    if i + chunk_size < total_chars
-                                    else first_choice.get("finish_reason", "stop"),
-                                }
-                            ],
-                        }
-
-                        yield f"data: {json.dumps(chunk_data)}\\n\\n"
-                        time.sleep(0.01)
-
-                    yield "data: [DONE]\\n\\n"
-
                 release_transport()
-                return Response(simulate_stream(), content_type="text/event-stream")
+                return Response(
+                    self._simulate_stream_from_chat_response(response_json, log=log),
+                    content_type="text/event-stream",
+                )
 
             if debug_mode:
                 response_str = json.dumps(response_json, indent=2, ensure_ascii=False)
