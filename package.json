@@ -3,7 +3,7 @@
   "engines": {
     "node": ">=24 <25"
   },
-  "name": "mtga-tauri",
+  "name": "model-relay-desktop",
   "type": "module",
   "private": true,
   "scripts": {

@@ -22,16 +22,16 @@ const mappedModelTooltip = [
 ].join("\n");
 
 const mtgaAuthTooltip = [
-  "必填：MTGA鉴权Key",
+  "必填：代理鉴权Key",
   "对应 Trae 端填写的 API 密钥，自定义，",
   "与实际 API Key 是互相独立的概念。",
-  "作为 MTGA 代理服务的全局密钥。",
+  "作为本代理服务的全局密钥。",
   "示例：111",
 ].join("\n");
 
 const handleSave = async () => {
   if (!store.mappedModelId.value || !store.mtgaAuthKey.value) {
-    store.appendLog("错误: 映射模型ID和MTGA鉴权Key都是必填项");
+    store.appendLog("错误: 映射模型ID和代理鉴权Key都是必填项");
     return;
   }
   saving.value = true;
@@ -70,7 +70,7 @@ const handleSave = async () => {
       >
         <MtgaInput
           v-model="mtgaAuthKey"
-          label="MTGA鉴权Key"
+          label="代理鉴权Key"
           placeholder="例如：111"
           type="password"
           required

@@ -22,10 +22,10 @@ type RuntimeOptions = {
 type PanelTarget = "config-group" | "global-config" | "main-tabs" | "settings";
 
 const DEFAULT_APP_INFO: AppInfo = {
-  display_name: "MTGA",
+  display_name: "Model Relay Desktop",
   version: "v0.0.0",
-  github_repo: "",
-  ca_common_name: "MTGA_CA",
+  github_repo: "xiaoliuzhuan/model-relay-desktop",
+  ca_common_name: "MODEL_RELAY_DESKTOP_CA",
   api_key_visible_chars: 4,
   user_data_dir: "",
   default_user_data_dir: "",
@@ -482,7 +482,7 @@ export const useMtgaStore = () => {
       appendLog("      2. 检查 Trae 的代理设置。\n" + "⚠️".repeat(21));
     }
 
-    appendLog("MTGA 已启动");
+    appendLog("Model Relay Desktop 已启动");
     appendLog("请选择操作或直接使用一键启动...");
   };
 

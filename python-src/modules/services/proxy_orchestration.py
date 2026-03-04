@@ -45,7 +45,7 @@ def ensure_global_config_ready(
     if not mapped_model_id:
         missing_fields.append("映射模型ID")
     if not mtga_auth_key:
-        missing_fields.append("MTGA鉴权Key")
+        missing_fields.append("代理鉴权Key")
 
     return GlobalConfigCheckResult(ok=not missing_fields, missing_fields=missing_fields)
 

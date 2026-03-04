@@ -21,7 +21,7 @@ withDefaults(
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-indigo-400">Console</p>
             <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
-              <slot name="title">MTGA</slot>
+              <slot name="title">Model Relay Desktop</slot>
             </h1>
             <div class="mt-2 text-sm text-slate-600">
               <slot name="subtitle">一站式 AI 代理服务器管理面板</slot>

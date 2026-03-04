@@ -13,9 +13,9 @@ class AppMetadata:
 
 
 DEFAULT_METADATA = AppMetadata(
-    display_name="MTGA",
-    github_repo="BiFangKNT/mtga",
-    error_log_filename="mtga_error.log",
-    ca_common_name="MTGA_CA",
+    display_name="Model Relay Desktop",
+    github_repo="xiaoliuzhuan/model-relay-desktop",
+    error_log_filename="model_relay_desktop_error.log",
+    ca_common_name="MODEL_RELAY_DESKTOP_CA",
     api_key_visible_chars=4,
 )

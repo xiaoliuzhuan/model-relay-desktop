@@ -7,7 +7,7 @@ const inputCommonName = ref("");
 const showInputError = ref(false);
 
 const clearCaTooltip = computed(() => {
-  const commonName = appInfo.value.ca_common_name || "MTGA_CA";
+  const commonName = appInfo.value.ca_common_name || "MODEL_RELAY_DESKTOP_CA";
   return [
     "macOS: 删除系统钥匙串中匹配的CA证书；",
     "Windows: 删除本地计算机/Root 中匹配的CA证书",
@@ -28,7 +28,7 @@ const handleInstall = () => {
  * 触发清除系统 CA 证书流程，先打开确认弹窗
  */
 const handleClear = () => {
-  inputCommonName.value = appInfo.value.ca_common_name || "MTGA_CA";
+  inputCommonName.value = appInfo.value.ca_common_name || "MODEL_RELAY_DESKTOP_CA";
   showInputError.value = false;
   isConfirmOpen.value = true;
 };

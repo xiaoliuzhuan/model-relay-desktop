@@ -1,7 +1,7 @@
 [package]
 name = "mtga-tauri"
 version = "2.2.0"
-description = "MTGA 的 Tauri App"
+description = "Model Relay Desktop 的 Tauri App"
 authors = ["BiFangKNT"]
 license = "AGPL-3.0-only"
 repository = "."
