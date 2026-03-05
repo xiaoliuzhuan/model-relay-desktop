@@ -505,6 +505,33 @@ jobs:
         run: pnpm tauri:bundle:win:ci
         working-directory: .
 
+      - name: ✅ 验证 Windows 安装包内容
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Get-ChildItem "src-tauri/target/bundle-release/bundle/nsis" -Filter "*.exe" | Select-Object -First 1
+          if (-not $installer) {
+            throw "❌ 未找到 NSIS 安装包"
+          }
+
+          if (-not (Get-Command 7z -ErrorAction SilentlyContinue)) {
+            throw "❌ 7z 不可用，无法执行安装包内容校验"
+          }
+
+          $listOutput = & 7z l $installer.FullName
+          if ($LASTEXITCODE -ne 0) {
+            throw "❌ 7z 列出安装包内容失败"
+          }
+
+          if (-not ($listOutput -match "model-relay-desktop\.exe")) {
+            throw "❌ 安装包缺少 model-relay-desktop.exe"
+          }
+
+          if (-not ($listOutput -match "pyembed/python/python313\.dll")) {
+            throw "❌ 安装包缺少 pyembed/python/python313.dll"
+          }
+
+          Write-Host "✅ 安装包验证通过：包含 model-relay-desktop.exe 与 pyembed/python/python313.dll"
+
       - name: 🏷️ 重命名 Windows 安装包
         run: |
           $versionRaw = "${{ needs.prepare-version.outputs.version }}"
