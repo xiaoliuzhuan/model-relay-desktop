@@ -13,7 +13,13 @@ import requests
 from flask import Flask, Response, jsonify, request
 
 from modules.proxy.proxy_auth import ProxyAuth
-from modules.proxy.proxy_config import DEFAULT_MIDDLE_ROUTE, ProxyConfig, build_proxy_config
+from modules.proxy.proxy_config import (
+    ANTHROPIC_MESSAGES_PROTOCOL,
+    DEFAULT_MIDDLE_ROUTE,
+    DEFAULT_PROTOCOL,
+    ProxyConfig,
+    build_proxy_config,
+)
 from modules.proxy.proxy_transport import ProxyTransport
 from modules.runtime.error_codes import ErrorCode
 from modules.runtime.operation_result import OperationResult
@@ -51,6 +57,8 @@ class ProxyApp:
         self.inbound_route = DEFAULT_MIDDLE_ROUTE
         self.custom_model_id = ""
         self.target_model_id = ""
+        self.protocol = DEFAULT_PROTOCOL
+        self.anthropic_version = ""
         self.stream_mode: str | None = None
         self.debug_mode = False
         self.disable_ssl_strict_mode = False
@@ -69,6 +77,8 @@ class ProxyApp:
         self.middle_route = proxy_config.middle_route
         self.custom_model_id = proxy_config.custom_model_id
         self.target_model_id = proxy_config.target_model_id
+        self.protocol = proxy_config.protocol
+        self.anthropic_version = proxy_config.anthropic_version
         self.stream_mode = proxy_config.stream_mode  # None, 'true', 'false'
         self.debug_mode = proxy_config.debug_mode
         self.disable_ssl_strict_mode = proxy_config.disable_ssl_strict_mode
@@ -105,6 +115,8 @@ class ProxyApp:
                 "middle_route": self.middle_route,
                 "custom_model_id": self.custom_model_id,
                 "target_model_id": self.target_model_id,
+                "protocol": self.protocol,
+                "anthropic_version": self.anthropic_version,
                 "stream_mode": self.stream_mode,
                 "debug_mode": self.debug_mode,
                 "auth": self.auth,
@@ -127,6 +139,8 @@ class ProxyApp:
                 "middle_route": self.middle_route,
                 "custom_model_id": self.custom_model_id,
                 "target_model_id": self.target_model_id,
+                "protocol": self.protocol,
+                "anthropic_version": self.anthropic_version,
                 "stream_mode": self.stream_mode,
                 "debug_mode": self.debug_mode,
                 "auth": self.auth,
@@ -204,6 +218,8 @@ class ProxyApp:
             self.middle_route = new_proxy_config.middle_route
             self.custom_model_id = new_proxy_config.custom_model_id
             self.target_model_id = new_proxy_config.target_model_id
+            self.protocol = new_proxy_config.protocol
+            self.anthropic_version = new_proxy_config.anthropic_version
             self.stream_mode = new_proxy_config.stream_mode
             self.debug_mode = new_proxy_config.debug_mode
             self.disable_ssl_strict_mode = new_proxy_config.disable_ssl_strict_mode
@@ -257,6 +273,163 @@ class ProxyApp:
                     chunks.append(text_value)
             return "".join(chunks)
         return ""
+
+    @staticmethod
+    def _map_anthropic_stop_reason(stop_reason: str | None) -> str:
+        if stop_reason == "max_tokens":
+            return "length"
+        if stop_reason == "tool_use":
+            return "tool_calls"
+        return "stop"
+
+    def _build_anthropic_payload_from_chat(self, request_data: dict[str, Any]) -> dict[str, Any]:
+        payload: dict[str, Any] = {}
+
+        passthrough_keys = (
+            "temperature",
+            "top_p",
+            "top_k",
+            "stop_sequences",
+            "tools",
+            "tool_choice",
+            "metadata",
+            "system",
+        )
+        for key in passthrough_keys:
+            value = request_data.get(key)
+            if value is not None:
+                payload[key] = value
+
+        payload["model"] = request_data.get("model")
+        max_tokens_obj = request_data.get("max_tokens") or request_data.get("max_completion_tokens")
+        payload["max_tokens"] = int(max_tokens_obj) if isinstance(max_tokens_obj, int) else 1024
+
+        stream_obj = request_data.get("stream")
+        if isinstance(stream_obj, bool):
+            payload["stream"] = stream_obj
+
+        messages_obj = request_data.get("messages")
+        anthropic_messages: list[dict[str, Any]] = []
+        system_messages: list[str] = []
+        if isinstance(messages_obj, list):
+            messages_list = cast(list[object], messages_obj)
+            for raw_message in messages_list:
+                if not isinstance(raw_message, dict):
+                    continue
+                message = cast(dict[str, Any], raw_message)
+                role_obj = message.get("role")
+                role = role_obj if isinstance(role_obj, str) else "user"
+                text = self._extract_text_from_message_content(message.get("content"))
+                if not text:
+                    continue
+                if role in {"system", "developer"}:
+                    system_messages.append(text)
+                    continue
+                if role not in {"user", "assistant"}:
+                    role = "user"
+                anthropic_messages.append(
+                    {
+                        "role": role,
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": text,
+                            }
+                        ],
+                    }
+                )
+
+        if system_messages and "system" not in payload:
+            payload["system"] = "\n\n".join(system_messages)
+
+        payload["messages"] = anthropic_messages or [
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": "1"}],
+            }
+        ]
+        return payload
+
+    @staticmethod
+    def _extract_text_from_anthropic_content(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if not isinstance(content, list):
+            return ""
+
+        text_parts: list[str] = []
+        content_list = cast(list[object], content)
+        for raw_item in content_list:
+            if not isinstance(raw_item, dict):
+                continue
+            item = cast(dict[str, Any], raw_item)
+            if item.get("type") == "text":
+                text_obj = item.get("text")
+                if isinstance(text_obj, str):
+                    text_parts.append(text_obj)
+        return "".join(text_parts)
+
+    def _convert_anthropic_to_chat_completion(
+        self,
+        response_json: dict[str, Any],
+        *,
+        model_name: str,
+    ) -> dict[str, Any]:
+        content = self._extract_text_from_anthropic_content(response_json.get("content"))
+        stop_reason_obj = response_json.get("stop_reason")
+        stop_reason = stop_reason_obj if isinstance(stop_reason_obj, str) else None
+
+        usage_obj = response_json.get("usage")
+        usage = None
+        if isinstance(usage_obj, dict):
+            usage_dict = cast(dict[str, Any], usage_obj)
+            prompt_tokens_obj = usage_dict.get("input_tokens")
+            completion_tokens_obj = usage_dict.get("output_tokens")
+            prompt_tokens = int(prompt_tokens_obj) if isinstance(prompt_tokens_obj, int) else 0
+            completion_tokens = (
+                int(completion_tokens_obj) if isinstance(completion_tokens_obj, int) else 0
+            )
+            usage = {
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": prompt_tokens + completion_tokens,
+            }
+
+        result: dict[str, Any] = {
+            "id": response_json.get("id") or self._new_request_id(),
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": response_json.get("model") or model_name,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": self._map_anthropic_stop_reason(stop_reason),
+                }
+            ],
+        }
+        if usage is not None:
+            result["usage"] = usage
+        return result
+
+    def _build_anthropic_headers(
+        self,
+        *,
+        auth: ProxyAuth,
+        auth_header: str | None,
+        target_api_key: str,
+        anthropic_version: str,
+        request_headers: Any,
+    ) -> dict[str, str]:
+        return auth.build_forward_headers(
+            auth_header,
+            target_api_key,
+            protocol=ANTHROPIC_MESSAGES_PROTOCOL,
+            anthropic_version=anthropic_version,
+            request_headers=request_headers,
+            x_api_key=request.headers.get("x-api-key"),
+            log_func=self.log_func,
+        )
 
     def _build_responses_payload_from_chat(  # noqa: PLR0912, PLR0915
         self, request_data: dict[str, Any]
@@ -598,12 +771,19 @@ class ProxyApp:
 
         models_route = self._build_route(self.inbound_route, "models")
         chat_route = self._build_route(self.inbound_route, "chat/completions")
+        messages_route = self._build_route(self.inbound_route, "messages")
 
         self.app.add_url_rule(models_route, "get_models", self._get_models, methods=["GET"])
         self.app.add_url_rule(
             chat_route,
             "chat_completions",
             self._chat_completions,
+            methods=["POST"],
+        )
+        self.app.add_url_rule(
+            messages_route,
+            "messages",
+            self._messages,
             methods=["POST"],
         )
 
@@ -620,7 +800,8 @@ class ProxyApp:
             ), 500
 
         auth_header = request.headers.get("Authorization")
-        if not auth.verify(auth_header):
+        x_api_key = request.headers.get("x-api-key")
+        if not auth.verify(auth_header, x_api_key):
             self.log_func("模型列表请求鉴权失败")
             return jsonify(
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
@@ -657,6 +838,136 @@ class ProxyApp:
         self.log_func(f"返回映射模型: {mapped_model_id}")
         return jsonify(model_data)
 
+    def _messages(self) -> tuple[Response, int] | Response:  # noqa: PLR0911, PLR0912, PLR0915
+        request_id = self._new_request_id()
+
+        def log(message: str) -> None:
+            self._log_request(request_id, message)
+
+        snapshot = self._snapshot_chat_runtime_state()
+        inbound_route = str(snapshot["inbound_route"])
+        target_model_id = str(snapshot["target_model_id"])
+        target_api_base_url = str(snapshot["target_api_base_url"])
+        middle_route = str(snapshot["middle_route"])
+        protocol = str(snapshot.get("protocol") or DEFAULT_PROTOCOL)
+        anthropic_version = str(snapshot.get("anthropic_version") or "")
+        stream_mode = snapshot["stream_mode"]
+        debug_mode = bool(snapshot["debug_mode"])
+        auth = snapshot["auth"]
+        transport = snapshot["transport"]
+        http_client = snapshot["http_client"]
+        proxy_config = snapshot["proxy_config"]
+        transport_released = False
+
+        def release_transport() -> None:
+            nonlocal transport_released
+            if transport_released:
+                return
+            transport_released = True
+            self._release_transport_ref(transport)
+
+        if protocol != ANTHROPIC_MESSAGES_PROTOCOL:
+            release_transport()
+            return jsonify({"error": "messages endpoint requires anthropic_messages protocol"}), 400
+
+        log(f"收到 Messages 请求 {self._build_route(inbound_route, 'messages')}")
+        if not (auth and transport and http_client):
+            release_transport()
+            return jsonify({"error": "Proxy not ready"}), 500
+
+        request_data_obj = request.get_json(silent=True)
+        if not isinstance(request_data_obj, dict):
+            release_transport()
+            return jsonify({"error": "Invalid JSON or Content-Type"}), 400
+        request_data = cast(dict[str, Any], request_data_obj)
+
+        auth_header = request.headers.get("Authorization")
+        x_api_key = request.headers.get("x-api-key")
+        if not auth.verify(auth_header, x_api_key):
+            release_transport()
+            return jsonify(
+                {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
+            ), 401
+
+        if "model" in request_data:
+            request_data["model"] = target_model_id
+        else:
+            request_data["model"] = target_model_id
+
+        if stream_mode is not None:
+            request_data["stream"] = stream_mode == "true"
+
+        target_api_key = ""
+        if isinstance(proxy_config, ProxyConfig):
+            target_api_key = proxy_config.api_key
+
+        forward_headers = auth.build_forward_headers(
+            auth_header,
+            target_api_key,
+            protocol=ANTHROPIC_MESSAGES_PROTOCOL,
+            anthropic_version=anthropic_version,
+            request_headers=request.headers,
+            x_api_key=x_api_key,
+            log_func=log,
+        )
+
+        try:
+            is_stream = request_data.get("stream", False)
+            target_url = (
+                f"{target_api_base_url.rstrip('/')}"
+                f"{self._build_route(middle_route, 'messages')}"
+            )
+            log(f"转发请求到: {target_url}")
+            response_from_target = http_client.post(
+                target_url,
+                json=request_data,
+                headers=forward_headers,
+                stream=is_stream,
+                timeout=300,
+            )
+            response_from_target.raise_for_status()
+
+            if is_stream:
+                def generate_stream() -> Generator[bytes]:
+                    try:
+                        for _, raw_event in transport.extract_sse_events(
+                            response_from_target,
+                            log=log,
+                        ):
+                            yield raw_event
+                    finally:
+                        release_transport()
+                        with contextlib.suppress(Exception):
+                            response_from_target.close()
+
+                return Response(generate_stream(), content_type="text/event-stream")
+
+            response_json_obj = response_from_target.json()
+            if not isinstance(response_json_obj, dict):
+                release_transport()
+                return jsonify({"error": "Invalid response from target API"}), 502
+
+            if debug_mode:
+                response_str = json.dumps(response_json_obj, indent=2, ensure_ascii=False)
+                log(
+                    f"--- 完整响应体 (调试模式) ---\\n{response_str}\\n"
+                    "--------------------------------------"
+                )
+
+            release_transport()
+            return jsonify(response_json_obj), response_from_target.status_code
+        except requests.exceptions.HTTPError as e:
+            release_transport()
+            return jsonify(
+                {"error": f"Target API error: {e.response.status_code}", "details": e.response.text}
+            ), e.response.status_code
+        except requests.exceptions.RequestException as e:
+            release_transport()
+            return jsonify({"error": f"Error contacting target API: {str(e)}"}), 503
+        except Exception:
+            release_transport()
+            return jsonify({"error": "An internal server error occurred"}), 500
+
     def _chat_completions(self) -> tuple[Response, int] | Response:  # noqa: PLR0911, PLR0912, PLR0915
         request_id = self._new_request_id()
 
@@ -668,6 +979,8 @@ class ProxyApp:
         target_model_id = str(snapshot["target_model_id"])
         target_api_base_url = str(snapshot["target_api_base_url"])
         middle_route = str(snapshot["middle_route"])
+        protocol = str(snapshot.get("protocol") or DEFAULT_PROTOCOL)
+        anthropic_version = str(snapshot.get("anthropic_version") or "")
         stream_mode = snapshot["stream_mode"]
         debug_mode = bool(snapshot["debug_mode"])
         auth = snapshot["auth"]
@@ -747,7 +1060,8 @@ class ProxyApp:
                 request_data["stream"] = stream_value
 
         auth_header = request.headers.get("Authorization")
-        if not auth.verify(auth_header):
+        x_api_key = request.headers.get("x-api-key")
+        if not auth.verify(auth_header, x_api_key):
             log("聊天补全请求MTGA鉴权失败")
             release_transport()
             return jsonify(
@@ -760,18 +1074,158 @@ class ProxyApp:
         forward_headers = auth.build_forward_headers(
             auth_header,
             target_api_key,
+            protocol=protocol,
+            anthropic_version=anthropic_version,
+            request_headers=request.headers,
+            x_api_key=x_api_key,
             log_func=log,
         )
 
         try:
+            is_stream = request_data.get("stream", False)
+            log(f"流模式: {is_stream}")
+
+            if protocol == ANTHROPIC_MESSAGES_PROTOCOL:
+                anthropic_request_data = self._build_anthropic_payload_from_chat(request_data)
+                target_url = (
+                    f"{target_api_base_url.rstrip('/')}"
+                    f"{self._build_route(middle_route, 'messages')}"
+                )
+                log(f"转发 Claude Messages 请求到: {target_url}")
+                response_from_target = http_client.post(
+                    target_url,
+                    json=anthropic_request_data,
+                    headers=forward_headers,
+                    stream=is_stream,
+                    timeout=300,
+                )
+                response_from_target.raise_for_status()
+
+                if is_stream:
+                    log("Anthropic 流式响应转换为 chat.completion.chunk")
+
+                    def generate_anthropic_stream() -> Generator[bytes]:  # noqa: PLR0912, PLR0915
+                        request_id_for_stream = self._new_request_id()
+                        created = int(time.time())
+                        include_role = True
+                        done_sent = False
+                        finish_reason = "stop"
+                        try:
+                            for upstream_chunk_index, raw_event in transport.extract_sse_events(
+                                response_from_target, log=log
+                            ):
+                                event_text = raw_event.decode("utf-8", errors="replace")
+                                data_lines = [
+                                    line[len("data:") :].lstrip()
+                                    for line in event_text.splitlines()
+                                    if line.startswith("data:")
+                                ]
+                                if not data_lines:
+                                    continue
+                                data_str = "\n".join(data_lines).strip()
+                                if not data_str:
+                                    continue
+                                if debug_mode:
+                                    log(f"ANTH<< src_chunk#{upstream_chunk_index} | {data_str}")
+
+                                if data_str == "[DONE]":
+                                    done_sent = True
+                                    yield b"data: [DONE]\\n\\n"
+                                    break
+
+                                payload_obj = None
+                                with contextlib.suppress(Exception):
+                                    payload_obj = json.loads(data_str)
+                                if not isinstance(payload_obj, dict):
+                                    continue
+                                payload = cast(dict[str, Any], payload_obj)
+                                event_type_obj = payload.get("type")
+                                event_type = (
+                                    event_type_obj if isinstance(event_type_obj, str) else ""
+                                )
+
+                                if event_type == "content_block_delta":
+                                    delta_obj = payload.get("delta")
+                                    if not isinstance(delta_obj, dict):
+                                        continue
+                                    delta = cast(dict[str, Any], delta_obj)
+                                    if delta.get("type") == "text_delta":
+                                        text_obj = delta.get("text")
+                                        text = text_obj if isinstance(text_obj, str) else ""
+                                        if text:
+                                            yield self._build_chat_chunk_bytes(
+                                                request_id=request_id_for_stream,
+                                                model_name=target_model_id,
+                                                created=created,
+                                                include_role=include_role,
+                                                content=text,
+                                            )
+                                            include_role = False
+                                    continue
+
+                                if event_type == "message_delta":
+                                    delta_obj = payload.get("delta")
+                                    if isinstance(delta_obj, dict):
+                                        delta = cast(dict[str, Any], delta_obj)
+                                        stop_reason_obj = delta.get("stop_reason")
+                                        stop_reason = (
+                                            stop_reason_obj
+                                            if isinstance(stop_reason_obj, str)
+                                            else None
+                                        )
+                                        finish_reason = self._map_anthropic_stop_reason(stop_reason)
+                                    continue
+
+                                if event_type == "message_stop":
+                                    yield self._build_chat_chunk_bytes(
+                                        request_id=request_id_for_stream,
+                                        model_name=target_model_id,
+                                        created=created,
+                                        include_role=include_role,
+                                        finish_reason=finish_reason,
+                                    )
+                                    include_role = False
+                                    continue
+
+                            if not done_sent:
+                                with contextlib.suppress(Exception):
+                                    yield b"data: [DONE]\\n\\n"
+                        finally:
+                            release_transport()
+                            with contextlib.suppress(Exception):
+                                response_from_target.close()
+
+                    return Response(
+                        generate_anthropic_stream(),
+                        content_type="text/event-stream",
+                    )
+
+                response_json_obj = response_from_target.json()
+                if not isinstance(response_json_obj, dict):
+                    release_transport()
+                    return jsonify({"error": "Invalid response from target API"}), 502
+                response_json = cast(dict[str, Any], response_json_obj)
+                chat_response_json = self._convert_anthropic_to_chat_completion(
+                    response_json,
+                    model_name=target_model_id,
+                )
+
+                if client_requested_stream and stream_mode == "false":
+                    log("将 Claude 非流式响应转换为流式格式返回给客户端")
+                    release_transport()
+                    return Response(
+                        self._simulate_stream_from_chat_response(chat_response_json, log=log),
+                        content_type="text/event-stream",
+                    )
+
+                release_transport()
+                return jsonify(chat_response_json), response_from_target.status_code
+
             target_url = (
                 f"{target_api_base_url.rstrip('/')}"
                 f"{self._build_route(middle_route, 'chat/completions')}"
             )
             log(f"转发请求到: {target_url}")
-
-            is_stream = request_data.get("stream", False)
-            log(f"流模式: {is_stream}")
 
             response_from_target = http_client.post(
                 target_url,

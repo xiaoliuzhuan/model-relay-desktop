@@ -621,6 +621,8 @@ export const useMtgaStore = () => {
     api_key?: string;
     middle_route?: string;
     model_id?: string;
+    protocol?: "openai" | "anthropic_messages";
+    anthropic_version?: string;
   }) => {
     const result = await api.configGroupModels(payload);
     const ok = applyInvokeResult(result, "获取模型列表");

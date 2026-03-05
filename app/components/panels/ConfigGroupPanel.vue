@@ -26,6 +26,7 @@ const form = reactive({
   api_url: "",
   model_id: "",
   api_key: "",
+  protocol: "openai" as "openai" | "anthropic_messages",
   middle_route: "",
 });
 
@@ -156,6 +157,7 @@ const resetForm = () => {
   form.api_url = "";
   form.model_id = "";
   form.api_key = "";
+  form.protocol = "openai";
   form.middle_route = "";
   middleRouteEnabled.value = false;
   formError.value = "";
@@ -183,6 +185,7 @@ const openEdit = () => {
   form.api_url = group.api_url || "";
   form.model_id = group.model_id || "";
   form.api_key = group.api_key || "";
+  form.protocol = group.protocol || "openai";
   form.middle_route = group.middle_route || "";
   middleRouteEnabled.value = Boolean(group.middle_route);
   formError.value = "";
@@ -200,6 +203,7 @@ const handleSave = async () => {
     api_url: form.api_url.trim(),
     model_id: form.model_id.trim(),
     api_key: form.api_key.trim(),
+    protocol: form.protocol,
   };
 
   if (!payload.api_url || !payload.model_id || !payload.api_key) {
@@ -245,6 +249,7 @@ const handleFetchModels = async () => {
     api_url: apiUrl,
     api_key: form.api_key.trim(),
     model_id: form.model_id.trim(),
+    protocol: form.protocol,
     middle_route: middleRouteEnabled.value ? normalizeMiddleRoute(form.middle_route) : "",
   });
   if (models !== null) {
@@ -383,6 +388,7 @@ const moveDown = async () => {
           <tr style="height: var(--head-h)">
             <th class="w-16 text-center border-b border-slate-200/60">序号</th>
             <th class="min-w-[220px] border-b border-slate-200/60">API URL</th>
+            <th class="min-w-[140px] border-b border-slate-200/60">协议</th>
             <th class="min-w-[180px] border-b border-slate-200/60">实际模型ID</th>
             <th class="min-w-[220px] border-b border-slate-200/60">API Key</th>
           </tr>
@@ -414,6 +420,12 @@ const moveDown = async () => {
               {{ group.api_url || "(未填写)" }}
             </td>
             <td
+              class="truncate max-w-[180px] text-slate-700 transition-all"
+              :class="selectedIndex === index ? 'border-indigo-500' : 'border-transparent'"
+            >
+              {{ group.protocol === "anthropic_messages" ? "Anthropic Messages" : "OpenAI" }}
+            </td>
+            <td
               class="truncate max-w-[240px] text-slate-700 transition-all"
               :class="selectedIndex === index ? 'border-indigo-500' : 'border-transparent'"
             >
@@ -429,7 +441,7 @@ const moveDown = async () => {
         </tbody>
         <tbody v-else>
           <tr>
-            <td colspan="4" class="py-8 text-center text-sm text-slate-400">暂无配置组</td>
+            <td colspan="5" class="py-8 text-center text-sm text-slate-400">暂无配置组</td>
           </tr>
         </tbody>
       </table>
@@ -442,6 +454,7 @@ const moveDown = async () => {
     v-model:api-url="form.api_url"
     v-model:model-id="form.model_id"
     v-model:api-key="form.api_key"
+    v-model:protocol="form.protocol"
     v-model:middle-route="form.middle_route"
     v-model:middle-route-enabled="middleRouteEnabled"
     :mode="editorMode"

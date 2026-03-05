@@ -7,6 +7,7 @@ const props = withDefaults(
     apiUrl?: string;
     modelId?: string;
     apiKey?: string;
+    protocol?: "openai" | "anthropic_messages";
     middleRoute?: string;
     middleRouteEnabled?: boolean;
     formError?: string;
@@ -21,6 +22,7 @@ const props = withDefaults(
     apiUrl: "",
     modelId: "",
     apiKey: "",
+    protocol: "openai",
     middleRoute: "",
     middleRouteEnabled: false,
     formError: "",
@@ -36,6 +38,7 @@ const emit = defineEmits<{
   (event: "update:apiUrl", value: string): void;
   (event: "update:modelId", value: string): void;
   (event: "update:apiKey", value: string): void;
+  (event: "update:protocol", value: "openai" | "anthropic_messages"): void;
   (event: "update:middleRoute", value: string): void;
   (event: "update:middleRouteEnabled", value: boolean): void;
   (event: "save"): void;
@@ -68,6 +71,11 @@ const apiKeyModel = computed({
   set: (value: string) => emit("update:apiKey", value),
 });
 
+const protocolModel = computed({
+  get: () => props.protocol,
+  set: (value: "openai" | "anthropic_messages") => emit("update:protocol", value),
+});
+
 const middleRouteModel = computed({
   get: () => props.middleRoute,
   set: (value: string) => emit("update:middleRoute", value),
@@ -94,6 +102,11 @@ const handleSave = () => {
 const handleFetchModels = () => {
   emit("fetch-models");
 };
+
+const protocolOptions = [
+  { label: "OpenAI Chat Completions", value: "openai" },
+  { label: "Anthropic Messages", value: "anthropic_messages" },
+];
 </script>
 
 <template>
@@ -117,6 +130,8 @@ const handleFetchModels = () => {
         placeholder="例如：我的常用配置"
         icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
       />
+
+      <MtgaSelect v-model="protocolModel" label="上游协议" required :options="protocolOptions" />
 
       <MtgaInput
         v-model="apiUrlModel"

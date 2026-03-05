@@ -70,6 +70,8 @@ export const useMtgaApi = () => {
     api_key?: string;
     middle_route?: string;
     model_id?: string;
+    protocol?: "openai" | "anthropic_messages";
+    anthropic_version?: string;
   }) => safeInvoke<InvokeResult>("config_group_models", payload);
   const userDataOpenDir = () => safeInvoke<InvokeResult>("user_data_open_dir");
   const userDataBackup = () => safeInvoke<InvokeResult>("user_data_backup");
