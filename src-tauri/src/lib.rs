@@ -21,10 +21,16 @@ fn resolve_python_home() -> Option<PathBuf> {
 
     if let Ok(exe) = std::env::current_exe() {
         if let Some(exe_dir) = exe.parent() {
+            let windows_candidate = exe_dir.join("pyembed").join("python");
+            if windows_candidate.exists() {
+                return Some(windows_candidate);
+            }
+
             let candidate = exe_dir.join("resources").join("pyembed").join("python");
             if candidate.exists() {
                 return Some(candidate);
             }
+
             let mac_candidate = exe_dir.join("Resources").join("pyembed").join("python");
             if mac_candidate.exists() {
                 return Some(mac_candidate);

@@ -1,4 +1,7 @@
 !macro NSIS_HOOK_POSTINSTALL
+  IfFileExists "$INSTDIR\pyembed\python\python313.dll" 0 +2
+    CopyFiles /SILENT "$INSTDIR\pyembed\python\python313.dll" "$INSTDIR\python313.dll"
+
   IfFileExists "$INSTDIR\resources\pyembed\python\python313.dll" 0 +2
     CopyFiles /SILENT "$INSTDIR\resources\pyembed\python\python313.dll" "$INSTDIR\python313.dll"
 !macroend
