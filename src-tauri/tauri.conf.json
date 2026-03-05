@@ -41,9 +41,7 @@
   "bundle": {
     "active": true,
     "targets": ["nsis", "dmg"],
-    "resources": {
-      "pyembed/python": "./"
-    },
+    "resources": ["pyembed/python"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
