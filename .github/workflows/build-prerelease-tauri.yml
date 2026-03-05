@@ -129,6 +129,25 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: 📝 同步 Tauri 版本号
+        env:
+          TAURI_APP_VERSION: ${{ needs.prepare-version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("src-tauri/tauri.conf.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          target = os.environ["TAURI_APP_VERSION"].strip()
+          if not target:
+            raise SystemExit("TAURI_APP_VERSION is empty")
+          data["version"] = target
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(f"tauri.conf version -> {target}")
+          PY
+
       - name: 🟢 设置 Node
         uses: actions/setup-node@v6
         with:
@@ -326,6 +345,17 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📝 同步 Tauri 版本号
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = "${{ needs.prepare-version.outputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($version)) { throw "version is empty" }
+          $path = "src-tauri/tauri.conf.json"
+          $json = Get-Content $path -Raw | ConvertFrom-Json
+          $json.version = $version
+          $json | ConvertTo-Json -Depth 100 | Set-Content $path -Encoding utf8
+          Write-Host "tauri.conf version -> $version"
 
       - name: 🟢 设置 Node
         uses: actions/setup-node@v6
