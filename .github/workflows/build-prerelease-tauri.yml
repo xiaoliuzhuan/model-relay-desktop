@@ -526,7 +526,7 @@ jobs:
             throw "❌ 安装包缺少 model-relay-desktop.exe"
           }
 
-          if (-not ($listOutput -match "pyembed/python/python313\.dll")) {
+          if (-not ($listOutput -match "pyembed[\\/]python[\\/]python313\.dll")) {
             throw "❌ 安装包缺少 pyembed/python/python313.dll"
           }
 
