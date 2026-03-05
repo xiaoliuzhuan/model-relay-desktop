@@ -1,26 +1,26 @@
-# MTGA
+# Model Relay Desktop
 
 <picture>
-    <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
+    <img alt="Model Relay Desktop" src="../icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
 [![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## Introduction
 
-MTGA is a local proxy-based IDE fixed model provider solution for Windows and macOS.
+Model Relay Desktop is a local proxy-based IDE fixed model provider solution for Windows and macOS.
 
 **Note: This project currently only supports APIs in OpenAI format. Please confirm. Other formats can be converted to OpenAI format before use.**
 
 <details>
   <summary>You can't see anything~~</summary>
   <br>
-  <p>MTGA stands for Make Trae Great Again!</p>
+  <p>Model Relay Desktop: local model relay desktop tool.</p>
  </details>
 
 ## Table of Contents
 
-- [MTGA](#mtga)
+- [Model Relay Desktop](#model-relay-desktop)
   - [Introduction](#introduction)
   - [Table of Contents](#table-of-contents)
   - [Changelog](#changelog)
@@ -104,7 +104,7 @@ MTGA is a local proxy-based IDE fixed model provider solution for Windows and ma
 
 ### Windows Users (GUI One-Click Startup)
 
-1. Download the latest version of `MTGA_GUI-v{version}-x64.exe` from [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)
+1. Download the latest version of `MTGA_GUI-v{version}-x64.exe` from [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Double-click the downloaded exe file to run (requires administrator privileges)
 3. In the opened graphical interface, fill in the API URL and Model ID
    - **API URL only needs the domain name (port number is optional, do not fill if unsure), no need to include the route, for example: `https://your-api.example.com`**
@@ -128,7 +128,7 @@ MTGA is a local proxy-based IDE fixed model provider solution for Windows and ma
 
 #### Installation Method
 
-1. Download the latest version of `MTGA_GUI-v{version}-aarch64.dmg` from [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)
+1. Download the latest version of `MTGA_GUI-v{version}-aarch64.dmg` from [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Double-click the DMG file, the system will automatically mount the installation package
 3. Drag `MTGA_GUI.app` to the `Applications` folder
 4. Launch the application from Launchpad or the Applications folder
@@ -319,7 +319,7 @@ This solution is more integrated than the direct vproxy + nginx approach, placin
 
 #### macOS
 
--> [Mac OS Script Startup Method](https://github.com/BiFangKNT/mtga/blob/gui/docs/README_macOS_cli.md)
+-> [Mac OS Script Startup Method](README_macOS_cli.md)
 
 ---
 
@@ -327,7 +327,7 @@ This solution is more integrated than the direct vproxy + nginx approach, placin
 
 Click the Star and Watch buttons at the top right of the repository to get the latest updates.
 
-![star to keep latest](https://github.com/BiFangKNT/mtga/blob/gui/images/star-to-keep-latest.gif?raw=true)
+![star to keep latest](https://github.com/xiaoliuzhuan/model-relay-desktop/blob/main/images/star-to-keep-latest.gif?raw=true)
 
 ---
 

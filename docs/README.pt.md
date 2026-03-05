@@ -1,26 +1,26 @@
-# MTGA
+# Model Relay Desktop
 
 <picture>
-    <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
+    <img alt="Model Relay Desktop" src="../icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
 [![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## Introdução
 
-MTGA é uma solução de provedor de serviços de modelo fixo para IDE baseada em proxy local, compatível com Windows e macOS.
+Model Relay Desktop é uma solução de provedor de serviços de modelo fixo para IDE baseada em proxy local, compatível com Windows e macOS.
 
 **Nota: Atualmente, este projeto suporta apenas APIs no formato openai. Por favor, confirme. Outros formatos podem ser convertidos para o formato openai antes do uso.**
 
 <details>
   <summary>Você não vê nada~~</summary>
   <br>
-  <p>MTGA significa Make T Great Again!</p>
+  <p>Model Relay Desktop: local model relay desktop tool.</p>
  </details>
 
 ## Índice
 
-- [MTGA](#mtga)
+- [Model Relay Desktop](#model-relay-desktop)
   - [Introdução](#introdução)
   - [Índice](#índice)
   - [Registo de Alterações](#registo-de-alterações)
@@ -103,7 +103,7 @@ MTGA é uma solução de provedor de serviços de modelo fixo para IDE baseada e
 
 ### Usuários do Windows (Método de inicialização com um clique via GUI)
 
-1. Faça o download da versão mais recente de `MTGA_GUI-v{versão}-x64.exe` em [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)
+1. Faça o download da versão mais recente de `MTGA_GUI-v{versão}-x64.exe` em [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Execute o arquivo exe baixado com um duplo clique (requer permissões de administrador)
 3. Na interface gráfica aberta, preencha a URL da API e o ID do modelo
    - **A URL da API só precisa do domínio (a porta é opcional, se não souber, não preencha), não é necessário incluir a rota posterior, por exemplo: `https://your-api.example.com`**
@@ -126,7 +126,7 @@ MTGA é uma solução de provedor de serviços de modelo fixo para IDE baseada e
 
 #### Método de instalação
 
-1. Faça o download da versão mais recente de `MTGA_GUI-v{versão}-aarch64.dmg` em [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)
+1. Faça o download da versão mais recente de `MTGA_GUI-v{versão}-aarch64.dmg` em [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Clique duas vezes no arquivo DMG, o sistema montará automaticamente o pacote de instalação
 3. Arraste o `MTGA_GUI.app` para a pasta `Applications`
 4. Inicie o aplicativo a partir do Launchpad ou da pasta Applications
@@ -298,7 +298,7 @@ Esta solução é mais integrada do que usar diretamente vproxy + nginx, colocan
 
 #### macOS
 
--> [Método de Inicialização via Script para Mac OS](https://github.com/BiFangKNT/mtga/blob/gui/docs/README_macOS_cli.md)
+-> [Método de Inicialização via Script para Mac OS](README_macOS_cli.md)
 
 ---
 
@@ -306,7 +306,7 @@ Esta solução é mais integrada do que usar diretamente vproxy + nginx, colocan
 
 Clique em Star e Watch no canto superior direito do repositório para obter as atualizações mais recentes.
 
-![star to keep latest](https://github.com/BiFangKNT/mtga/blob/gui/images/star-to-keep-latest.gif?raw=true)
+![star to keep latest](https://github.com/xiaoliuzhuan/model-relay-desktop/blob/main/images/star-to-keep-latest.gif?raw=true)
 
 ---
 

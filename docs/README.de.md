@@ -1,26 +1,26 @@
-# MTGA
+# Model Relay Desktop
 
 <picture>
-    <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
+    <img alt="Model Relay Desktop" src="../icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
 [![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## Einführung
 
-MTGA ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellanbieter, die für Windows und macOS geeignet ist.
+Model Relay Desktop ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellanbieter, die für Windows und macOS geeignet ist.
 
 **Hinweis: Dieses Projekt unterstützt derzeit nur APIs im OpenAI-Format. Bitte stellen Sie sicher, dass Sie dieses verwenden. Andere Formate können vor der Nutzung in das OpenAI-Format konvertiert werden.**
 
 <details>
   <summary>Du siehst nichts~~</summary>
   <br>
-  <p>MTGA steht für Make T Great Again!</p>
+  <p>Model Relay Desktop: local model relay desktop tool.</p>
  </details>
 
 ## Inhaltsverzeichnis
 
-- [MTGA](#mtga)
+- [Model Relay Desktop](#model-relay-desktop)
   - [Einführung](#einführung)
   - [Inhaltsverzeichnis](#inhaltsverzeichnis)
   - [Changelog](#changelog)
@@ -103,7 +103,7 @@ MTGA ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellan
 
 ### Windows-Benutzer (GUI-Ein-Klick-Start)
 
-1. Laden Sie die neueste Version von `MTGA_GUI-v{Versionsnummer}-x64.exe` von [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) herunter
+1. Laden Sie die neueste Version von `MTGA_GUI-v{Versionsnummer}-x64.exe` von [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases) herunter
 2. Führen Sie die heruntergeladene exe-Datei durch Doppelklick aus (Administratorrechte erforderlich)
 3. Füllen Sie in der geöffneten grafischen Oberfläche die API-URL und die Modell-ID aus
    - **API-URL muss nur die Domain enthalten (Portnummer optional, nicht ausfüllen wenn unsicher), keine nachfolgenden Routen, z.B.: `https://your-api.example.com`**
@@ -126,7 +126,7 @@ MTGA ist eine auf einem lokalen Proxy basierende IDE-Lösung für feste Modellan
 
 #### Installationsmethode
 
-1. Laden Sie die neueste Version von `MTGA_GUI-v{Versionsnummer}-aarch64.dmg` von [GitHub Releases](https://github.com/BiFangKNT/mtga/releases) herunter
+1. Laden Sie die neueste Version von `MTGA_GUI-v{Versionsnummer}-aarch64.dmg` von [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases) herunter
 2. Doppelklicken Sie auf die DMG-Datei, das System mountet das Installationspaket automatisch
 3. Ziehen Sie `MTGA_GUI.app` in den `Applications`-Ordner
 4. Starten Sie die Anwendung vom Launchpad oder Applications-Ordner
@@ -298,7 +298,7 @@ Diese Lösung ist etwas integrierter als der direkte Ansatz mit vproxy + nginx, 
 
 #### macOS
 
--> [Startmethode für Mac OS-Skript](https://github.com/BiFangKNT/mtga/blob/gui/docs/README_macOS_cli.md)
+-> [Startmethode für Mac OS-Skript](README_macOS_cli.md)
 
 ---
 
@@ -306,7 +306,7 @@ Diese Lösung ist etwas integrierter als der direkte Ansatz mit vproxy + nginx, 
 
 Klicken Sie auf den Star- und Watch-Button oben rechts im Repository, um über die neuesten Entwicklungen auf dem Laufenden zu bleiben.
 
-![star to keep latest](https://github.com/BiFangKNT/mtga/blob/gui/images/star-to-keep-latest.gif?raw=true)
+![star to keep latest](https://github.com/xiaoliuzhuan/model-relay-desktop/blob/main/images/star-to-keep-latest.gif?raw=true)
 
 ---
 

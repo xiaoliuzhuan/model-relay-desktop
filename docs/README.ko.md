@@ -1,26 +1,26 @@
-# MTGA
+# Model Relay Desktop
 
 <picture>
-    <img alt="MTGA" src="https://github.com/BiFangKNT/mtga/blob/gui/icons/hero-img_f0bb32.png?raw=true">
+    <img alt="Model Relay Desktop" src="../icons/hero-img_f0bb32.png?raw=true">
 </picture>
 
 [![English](https://img.shields.io/badge/docs-English-purple)](README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](../README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](README.ru.md)
 
 ## 소개
 
-MTGA는 Windows와 macOS용 로컬 프록시 기반 IDE 고정 모델 서비스 제공자 솔루션입니다.
+Model Relay Desktop은 Windows와 macOS용 로컬 프록시 기반 IDE 고정 모델 서비스 제공자 솔루션입니다.
 
 **참고: 현재 이 프로젝트는 openai 형식의 api만 지원합니다. 다른 형식은 openai 형식으로 변환 후 사용하십시오.**
 
 <details>
   <summary>당신은 아무것도 볼 수 없습니다~~</summary>
   <br>
-  <p>MTGA는 Make T Great Again의 약자입니다!</p>
+  <p>Model Relay Desktop: local model relay desktop tool.</p>
  </details>
 
 ## 목차
 
-- [MTGA](#mtga)
+- [Model Relay Desktop](#model-relay-desktop)
   - [소개](#소개)
   - [목차](#목차)
   - [변경 로그](#변경-로그)
@@ -103,7 +103,7 @@ MTGA는 Windows와 macOS용 로컬 프록시 기반 IDE 고정 모델 서비스 
 
 ### Windows 사용자 (GUI 원클릭 실행 방식)
 
-1. [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)에서 최신 버전의 `MTGA_GUI-v{버전}-x64.exe` 다운로드
+1. [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)에서 최신 버전의 `MTGA_GUI-v{버전}-x64.exe` 다운로드
 2. 다운로드한 exe 파일 실행 (관리자 권한 필요)
 3. 열린 그래픽 인터페이스에서 API URL과 모델 ID 입력
    - **API URL은 도메인만 입력 (포트 번호는 선택 사항, 모르면 입력하지 않음), 뒤의 경로는 입력하지 않음, 예: `https://your-api.example.com`**
@@ -126,7 +126,7 @@ MTGA는 Windows와 macOS용 로컬 프록시 기반 IDE 고정 모델 서비스 
 
 #### 설치 방법
 
-1. [GitHub Releases](https://github.com/BiFangKNT/mtga/releases)에서 최신 버전의 `MTGA_GUI-v{버전}-aarch64.dmg` 다운로드
+1. [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)에서 최신 버전의 `MTGA_GUI-v{버전}-aarch64.dmg` 다운로드
 2. DMG 파일 더블 클릭, 시스템이 자동으로 설치 패키지 마운트
 3. `MTGA_GUI.app`을 `Applications` 폴더로 드래그
 4. 런치패드 또는 Applications 폴더에서 애플리케이션 시작
@@ -299,7 +299,7 @@ python trae_proxy.py
 
 #### macOS
 
--> [Mac OS 스크립트 시작 방법](https://github.com/BiFangKNT/mtga/blob/gui/docs/README_macOS_cli.md)
+-> [Mac OS 스크립트 시작 방법](README_macOS_cli.md)
 
 ---
 
@@ -307,7 +307,7 @@ python trae_proxy.py
 
 저장소 오른쪽 상단의 Star 및 Watch 버튼을 클릭하여 최신 소식을 받아보세요.
 
-![star to keep latest](https://github.com/BiFangKNT/mtga/blob/gui/images/star-to-keep-latest.gif?raw=true)
+![star to keep latest](https://github.com/xiaoliuzhuan/model-relay-desktop/blob/main/images/star-to-keep-latest.gif?raw=true)
 
 ---
 
