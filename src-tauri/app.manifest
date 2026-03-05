@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity version="1.0.0.0" processorArchitecture="*" name="mtga-tauri" type="win32"/>
-  <description>MTGA Tauri</description>
+  <assemblyIdentity version="1.0.0.0" processorArchitecture="*" name="model-relay-desktop" type="win32"/>
+  <description>Model Relay Desktop</description>
   <dependency>
     <dependentAssembly>
       <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0"
