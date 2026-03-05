@@ -1,7 +1,7 @@
 # Model Relay Desktop
 
 <picture>
-    <img alt="Model Relay Desktop" src="./icons/hero-img_f0bb32.png?raw=true">
+    <img alt="Model Relay Desktop" src="./icons/hero-img_model_relay.png?raw=true">
 </picture>
 
 [![English](https://img.shields.io/badge/docs-English-purple)](docs/README.en.md) [![简体中文](https://img.shields.io/badge/文档-简体中文-yellow)](README.md) [![日本語](https://img.shields.io/badge/ドキュ-日本語-b7003a)](docs/README.ja.md) [![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](docs/README.ko.md) [![Documentación en Español](https://img.shields.io/badge/docs-Español-orange)](docs/README.es.md) [![Documentation en Français](https://img.shields.io/badge/docs-Français-blue)](docs/README.fr.md) [![Documentação em Português (Brasil)](https://img.shields.io/badge/docs-Português-purple)](docs/README.pt.md) [![Dokumentation auf Deutsch](https://img.shields.io/badge/docs-Deutsch-darkgreen)](docs/README.de.md) [![Документация на русском языке](https://img.shields.io/badge/доки-Русский-darkblue)](docs/README.ru.md)
@@ -18,11 +18,8 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 本仓库在上游基础上，重点做了以下增强：
 
-- **仓库与品牌独立化**：统一命名为 `model-relay-desktop`，发布与文档均迁移到当前仓库。
 - **桌面体验优化**：界面主题与交互结构持续迭代，提升配置效率与可读性。
 - **协议兼容增强**：持续完善 OpenAI `chat/completions` 与 `responses` 路径的兼容与回退能力，降低上游差异带来的接入失败率。
-- **打包与交付改进**：优化 Windows/macOS 打包流程、图标资源与发布产物一致性。
-- **文档与合规完善**：补充二开声明、许可证约束、排障指南与使用边界说明。
 
 ### 未来规划
 
@@ -37,12 +34,6 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 - 本仓库遵循并保留上游采用的 `GNU AGPLv3` 协议，详见 [LICENSE](LICENSE)。
 - 若你对外提供网络服务或分发二进制，请按 AGPL 要求提供对应源码与协议声明。
 - 本仓库未与任何第三方品牌形成官方合作或背书关系。
-
- <details>
-  <summary>你什么也看不见~~</summary>
-  <br>
-  <p>Model Relay Desktop：本地模型中转桌面工具。</p>
- </details>
 
 ## 目录
 
@@ -105,7 +96,7 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
    - **API URL 只需要填域名（端口号可选，不懂就不要填），不需要填后面的路由，例如：`https://your-api.example.com`**
    - 如果你的接口不是标准 `/v1` 路由，可以自定义中间路由
    - 图一（添加代理组）：
-     <img width="80%" alt="图一-添加代理组" src="./images/guide-figure-1-proxy-group.png?raw=true" />
+     <img width="80%" alt="图一-添加代理组" src="./images/guide-figure-1-proxy-group-1.png" />
 3. 填写全局配置
    - 全局映射模型 ID 与代理鉴权 Key 需与代理组配置保持一致
    - 图二（全局配置页）：
