@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v2.2.2-rc.1 - 2026-03-05
+
+
+### :sparkles: 新功能
+
+- add anthropic messages protocol support ([f0895e1](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/f0895e11284081e55230828f156a53c2ddf87daf))
+
+
+
 ## v2.2.0 (Latest)
 ### :sparkles: 新功能
 - feat(proxy): 支持运行时热更新代理配置 (3587ada37488acdabc0f56393069b82377fdf5e1)
