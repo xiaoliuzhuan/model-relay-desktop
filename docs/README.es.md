@@ -55,9 +55,9 @@ Model Relay Desktop es una solución de proveedor de servicios de modelos fijos 
 ### v1.2.0 (Última versión)
 
 - 🔄 **Reestructuración de la arquitectura de mapeo de modelos** - Cambio de "mapeo uno a uno" a arquitectura de "modelo de mapeo unificado"
-  - El extremo trae usa un ID de modelo de mapeo unificado, MTGA alterna el modelo backend real a través del grupo de configuración
-  - El servidor proxy soporta el mapeo de ID de modelo y la verificación de autenticación MTGA
-  - La configuración global soporta el ajuste del ID de modelo de mapeo y la clave de autenticación MTGA
+  - El extremo trae usa un ID de modelo de mapeo unificado, Model Relay Desktop alterna el modelo backend real a través del grupo de configuración
+  - El servidor proxy soporta el mapeo de ID de modelo y la verificación de autenticación Model Relay Desktop
+  - La configuración global soporta el ajuste del ID de modelo de mapeo y la clave de autenticación Model Relay Desktop
 - ⚡ **Optimización de la gestión de grupos de configuración** - Reestructuración de campos de grupo de configuración y lógica de validación
   - El nombre del grupo de configuración es opcional, URL de API, ID del modelo real y clave API son obligatorios
   - Se elimina el campo de ID del modelo objetivo, cambiado a configuración de mapeo global
@@ -103,7 +103,7 @@ Model Relay Desktop es una solución de proveedor de servicios de modelos fijos 
 
 ### Usuarios de Windows (método de inicio con un clic en GUI)
 
-1. Descarga la última versión de `MTGA_GUI-v{versión}-x64.exe` desde [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
+1. Descarga la última versión de `Model-Relay-Desktop-v{versión}-x64.exe` desde [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Ejecuta el archivo exe descargado haciendo doble clic (se requieren permisos de administrador)
 3. En la interfaz gráfica abierta, completa la URL de la API y el ID del modelo
    - **La URL de la API solo necesita el dominio (el número de puerto es opcional, si no lo entiendes no lo completes), no es necesario incluir la ruta posterior, por ejemplo: `https://your-api.example.com`**
@@ -126,14 +126,14 @@ Model Relay Desktop es una solución de proveedor de servicios de modelos fijos 
 
 #### Método de instalación
 
-1. Descarga la última versión de `MTGA_GUI-v{versión}-aarch64.dmg` desde [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
+1. Descarga la última versión de `Model-Relay-Desktop-v{versión}-aarch64.dmg` desde [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Haz doble clic en el archivo DMG, el sistema montará automáticamente el paquete de instalación
-3. Arrastra `MTGA_GUI.app` a la carpeta `Applications`
+3. Arrastra `Model Relay Desktop.app` a la carpeta `Applications`
 4. Inicia la aplicación desde Launchpad o la carpeta Applications
 
 #### Modo de uso
 
-1. Inicia `MTGA_GUI.app` (la primera ejecución puede requerir permitir la ejecución en Preferencias del Sistema)
+1. Inicia `Model Relay Desktop.app` (la primera ejecución puede requerir permitir la ejecución en Preferencias del Sistema)
 2. En la interfaz gráfica, completa:
    - **URL de la API**: tu dirección de servicio API (por ejemplo: `https://your-api.example.com`)
    - **Si deseas habilitar capacidades multimodales, puedes mapear el nombre del modelo al nombre del modelo multimodal incorporado:**
@@ -154,7 +154,7 @@ Model Relay Desktop es una solución de proveedor de servicios de modelos fijos 
 
 ## macOS Resolución del problema de "Paquete dañado"
 
-Si al iniciar `MTGA_GUI.app` aparece este mensaje:
+Si al iniciar `Model Relay Desktop.app` aparece este mensaje:
 
 <img width="244" height="223" alt="app corrupted" src="../images/app-corrupted.png?raw=true" />
 
@@ -165,21 +165,21 @@ Si al iniciar `MTGA_GUI.app` aparece este mensaje:
 1. Vaya a [Sentinel Releases](https://github.com/alienator88/Sentinel/releases/latest) y descargue `Sentinel.dmg`.
 2. Haga doble clic en el archivo `Sentinel.dmg` y arrastre `Sentinel.app` a la carpeta `Applications`.
 3. Abra `Sentinel.app` desde el Launchpad o desde la carpeta Applications.
-4. Arrastre el `MTGA_GUI.app` de este proyecto a la ventana izquierda de `Sentinel.app`.
+4. Arrastre el `Model Relay Desktop.app` de este proyecto a la ventana izquierda de `Sentinel.app`.
    - <img width="355.33" height="373.33" alt="sentinel add app" src="../images/sentinel-add-app.png?raw=true" />
 
-`MTGA_GUI.app` será procesado automáticamente y se iniciará.
+`Model Relay Desktop.app` será procesado automáticamente y se iniciará.
 
 ### Solución por línea de comandos (cli)
 
-1. Localice la ruta completa de `MTGA_GUI.app`, por ejemplo, `/Applications/MTGA_GUI.app`.
+1. Localice la ruta completa de `Model Relay Desktop.app`, por ejemplo, `/Applications/Model Relay Desktop.app`.
 2. Abra la aplicación Terminal.
-3. Ejecute el siguiente comando para firmar `MTGA_GUI.app`:
+3. Ejecute el siguiente comando para firmar `Model Relay Desktop.app`:
    ```zsh
    xattr -d com.apple.quarantine <ruta completa de la aplicación>
    ```
-   Esto eliminará el atributo extendido `com.apple.quarantine` de `MTGA_GUI.app`.
-4. Inicie `MTGA_GUI.app`.
+   Esto eliminará el atributo extendido `com.apple.quarantine` de `Model Relay Desktop.app`.
+4. Inicie `Model Relay Desktop.app`.
 
 ---
 

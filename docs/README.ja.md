@@ -103,7 +103,7 @@ Model Relay Desktop は、Windows と macOS 向けのローカルプロキシベ
 
 ### Windows ユーザー（GUIワンクリック起動方式）
 
-1. [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases) から最新バージョンの `MTGA_GUI-v{バージョン番号}-x64.exe` をダウンロード
+1. [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases) から最新バージョンの `Model-Relay-Desktop-v{バージョン番号}-x64.exe` をダウンロード
 2. ダウンロードした exe ファイルをダブルクリックで実行（管理者権限が必要）
 3. 開いたグラフィカルインターフェースで、API URL とモデル ID を入力
    - **API URL はドメインのみ入力（ポート番号は任意、分からない場合は入力不要）、後続のルーティングは不要です。例：`https://your-api.example.com`**
@@ -126,14 +126,14 @@ Model Relay Desktop は、Windows と macOS 向けのローカルプロキシベ
 
 #### インストール方法
 
-1. [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases) から最新バージョンの `MTGA_GUI-v{バージョン番号}-aarch64.dmg` をダウンロード
+1. [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases) から最新バージョンの `Model-Relay-Desktop-v{バージョン番号}-aarch64.dmg` をダウンロード
 2. DMG ファイルをダブルクリックし、システムが自動的にインストールパッケージをマウント
-3. `MTGA_GUI.app` を `Applications` フォルダにドラッグ＆ドロップ
+3. `Model Relay Desktop.app` を `Applications` フォルダにドラッグ＆ドロップ
 4. ランチャーまたは Applications フォルダからアプリケーションを起動
 
 #### 使用方法
 
-1. `MTGA_GUI.app`を起動（初回実行時はシステム環境設定で実行を許可する必要がある場合があります）
+1. `Model Relay Desktop.app`を起動（初回実行時はシステム環境設定で実行を許可する必要がある場合があります）
 2. グラフィカルインターフェースで以下を入力：
    - **API URL**：あなたのAPIサービスアドレス（例：`https://your-api.example.com`）
    - **マルチモーダル機能を有効にしたい場合、モデル名を内蔵マルチモーダルモデル名にマッピングできます：**
@@ -154,7 +154,7 @@ Model Relay Desktop は、Windows と macOS 向けのローカルプロキシベ
 
 ## macOSで「パッケージが壊れています」問題を解決する方法
 
-`MTGA_GUI.app` を起動した際に以下のような警告が表示された場合：
+`Model Relay Desktop.app` を起動した際に以下のような警告が表示された場合：
 
 <img width="244" height="223" alt="app corrupted" src="../images/app-corrupted.png?raw=true" />
 
@@ -165,21 +165,21 @@ Model Relay Desktop は、Windows と macOS 向けのローカルプロキシベ
 1. [Sentinel Releases](https://github.com/alienator88/Sentinel/releases/latest) から `Sentinel.dmg` をダウンロードします。
 2. `Sentinel.dmg` ファイルをダブルクリックし、`Sentinel.app` を `Applications` フォルダにドラッグ＆ドロップします。
 3. Launchpad または Applications フォルダから `Sentinel.app` を起動します。
-4. 本プロジェクトの `MTGA_GUI.app` を `Sentinel.app` の左側のウィンドウにドラッグ＆ドロップします。
+4. 本プロジェクトの `Model Relay Desktop.app` を `Sentinel.app` の左側のウィンドウにドラッグ＆ドロップします。
    - <img width="355.33" height="373.33" alt="sentinel add app" src="../images/sentinel-add-app.png?raw=true" />
 
-これにより `MTGA_GUI.app` は自動的に処理され、起動します。
+これにより `Model Relay Desktop.app` は自動的に処理され、起動します。
 
 ### コマンドラインでの解決方法
 
-1. `MTGA_GUI.app` のフルパスを確認します（例：`/Applications/MTGA_GUI.app`）。
+1. `Model Relay Desktop.app` のフルパスを確認します（例：`/Applications/Model Relay Desktop.app`）。
 2. ターミナル（Terminal）を開きます。
-3. 以下のコマンドを実行して `MTGA_GUI.app` の署名を解除します：
+3. 以下のコマンドを実行して `Model Relay Desktop.app` の署名を解除します：
    ```zsh
    xattr -d com.apple.quarantine <アプリのフルパス>
    ```
-   これにより `MTGA_GUI.app` の `com.apple.quarantine` 拡張属性が削除されます。
-4. `MTGA_GUI.app` を起動します。
+   これにより `Model Relay Desktop.app` の `com.apple.quarantine` 拡張属性が削除されます。
+4. `Model Relay Desktop.app` を起動します。
 
 ---
 

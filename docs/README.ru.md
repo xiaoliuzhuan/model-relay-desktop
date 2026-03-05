@@ -55,9 +55,9 @@ Model Relay Desktop — это решение для провайдера фик
 ### v1.2.0 (Последняя версия)
 
 - 🔄 **Рефакторинг архитектуры отображения моделей** - изменена с "один к одному" на "единая модель отображения"
-  - клиент trae использует единый ID модели отображения, MTGA переключает фактическую бэкенд-модель через группы конфигураций
-  - прокси-сервер поддерживает отображение ID модели и аутентификацию MTGA
-  - глобальная конфигурация поддерживает настройку ID модели отображения и ключей аутентификации MTGA
+  - клиент trae использует единый ID модели отображения, Model Relay Desktop переключает фактическую бэкенд-модель через группы конфигураций
+  - прокси-сервер поддерживает отображение ID модели и аутентификацию Model Relay Desktop
+  - глобальная конфигурация поддерживает настройку ID модели отображения и ключей аутентификации Model Relay Desktop
 - ⚡ **Оптимизация управления группами конфигураций** - рефакторинг полей и логики валидации групп конфигураций
   - название группы стало необязательным, API URL, фактический ID модели, API Key обязательны
   - поле целевого ID модели удалено, вместо этого используется глобальная настройка отображения модели
@@ -103,7 +103,7 @@ Model Relay Desktop — это решение для провайдера фик
 
 ### Пользователи Windows (GUI с запуском в один клик)
 
-1. Скачайте последнюю версию `MTGA_GUI-v{версия}-x64.exe` с [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
+1. Скачайте последнюю версию `Model-Relay-Desktop-v{версия}-x64.exe` с [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Запустите скачанный exe-файл двойным щелчком (требуются права администратора)
 3. В открывшемся графическом интерфейсе заполните API URL и ID модели
    - **Для API URL достаточно указать домен (порт опционален, если не уверены — не указывайте), не нужно указывать последующий путь, например: `https://your-api.example.com`**
@@ -126,14 +126,14 @@ Model Relay Desktop — это решение для провайдера фик
 
 #### Способ установки
 
-1. Скачайте последнюю версию `MTGA_GUI-v{версия}-aarch64.dmg` с [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
+1. Скачайте последнюю версию `Model-Relay-Desktop-v{версия}-aarch64.dmg` с [GitHub Releases](https://github.com/xiaoliuzhuan/model-relay-desktop/releases)
 2. Дважды щелкните файл DMG, система автоматически смонтирует установочный пакет
-3. Перетащите `MTGA_GUI.app` в папку `Applications`
+3. Перетащите `Model Relay Desktop.app` в папку `Applications`
 4. Запустите приложение из Launchpad или папки Applications
 
 #### Способ использования
 
-1. Запустите `MTGA_GUI.app` (при первом запуске может потребоваться разрешить выполнение в системных настройках)
+1. Запустите `Model Relay Desktop.app` (при первом запуске может потребоваться разрешить выполнение в системных настройках)
 2. В графическом интерфейсе заполните:
    - **API URL**: адрес вашего API-сервиса (например: `https://your-api.example.com`)
    - **Если хотите включить мультимодальные возможности, можно сопоставить имя модели со встроенным мультимодальным именем модели:**
@@ -154,7 +154,7 @@ Model Relay Desktop — это решение для провайдера фик
 
 ## macOS решение проблемы «Пакет поврежден»
 
-Если при запуске `MTGA_GUI.app` появляется такое сообщение:
+Если при запуске `Model Relay Desktop.app` появляется такое сообщение:
 
 <img width="244" height="223" alt="app corrupted" src="../images/app-corrupted.png?raw=true" />
 
@@ -165,21 +165,21 @@ Model Relay Desktop — это решение для провайдера фик
 1. Перейдите на страницу [Sentinel Releases](https://github.com/alienator88/Sentinel/releases/latest) и скачайте `Sentinel.dmg`
 2. Дважды кликните по файлу `Sentinel.dmg`, затем перетащите `Sentinel.app` в папку `Applications`
 3. Запустите `Sentinel.app` через Launchpad или папку `Applications`
-4. Перетащите `MTGA_GUI.app` из этого проекта в левое окно приложения `Sentinel.app`
+4. Перетащите `Model Relay Desktop.app` из этого проекта в левое окно приложения `Sentinel.app`
    - <img width="355.33" height="373.33" alt="sentinel add app" src="../images/sentinel-add-app.png?raw=true" />
 
-`MTGA_GUI.app` будет автоматически обработано и запущено
+`Model Relay Desktop.app` будет автоматически обработано и запущено
 
 ### Решение через командную строку (CLI)
 
-1. Найдите полный путь к `MTGA_GUI.app`, например `/Applications/MTGA_GUI.app`
+1. Найдите полный путь к `Model Relay Desktop.app`, например `/Applications/Model Relay Desktop.app`
 2. Откройте приложение Терминал (Terminal)
-3. Выполните следующую команду, чтобы снять карантин с `MTGA_GUI.app`:
+3. Выполните следующую команду, чтобы снять карантин с `Model Relay Desktop.app`:
    ```zsh
    xattr -d com.apple.quarantine <полный_путь_к_приложению>
    ```
-   Эта команда удалит расширенный атрибут `com.apple.quarantine` у `MTGA_GUI.app`
-4. Запустите `MTGA_GUI.app` снова.
+   Эта команда удалит расширенный атрибут `com.apple.quarantine` у `Model Relay Desktop.app`
+4. Запустите `Model Relay Desktop.app` снова.
 
 ---
 
