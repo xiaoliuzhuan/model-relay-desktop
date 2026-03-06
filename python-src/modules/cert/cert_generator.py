@@ -173,6 +173,52 @@ DNS.1 = api.openai.com
     return True
 
 
+def ensure_domain_config_files(
+    resource_manager: ResourceManager,
+    domain: str,
+    log_func: LogFunc = print,
+) -> bool:
+    domain = (domain or "").strip().lower()
+    if not domain:
+        log_func("域名为空，无法生成域名配置文件")
+        return False
+
+    cnf_path = resource_manager.get_config_file(f"{domain}.cnf")
+    subj_path = resource_manager.get_config_file(f"{domain}.subj")
+
+    if not os.path.exists(cnf_path):
+        cnf_content = (
+            "\n"
+            "[ v3_req ]\n"
+            "basicConstraints = CA:FALSE\n"
+            "keyUsage = nonRepudiation, digitalSignature, keyEncipherment\n"
+            "subjectAltName = @alt_names\n"
+            "\n"
+            "[alt_names]\n"
+            f"DNS.1 = {domain}\n"
+        )
+        try:
+            with open(cnf_path, "w", encoding="utf-8") as f:
+                f.write(cnf_content)
+            log_func(f"创建域名配置文件: {cnf_path}")
+        except Exception as e:
+            log_func(f"无法创建域名配置文件 {cnf_path}: {e}")
+            return False
+
+    if not os.path.exists(subj_path):
+        org = "Anthropic" if "anthropic" in domain else "Organization"
+        subj_content = f"/C=CN/ST=State/L=City/O={org}/OU=Unit/CN={domain}"
+        try:
+            with open(subj_path, "w", encoding="utf-8") as f:
+                f.write(subj_content)
+            log_func(f"创建域名主题文件: {subj_path}")
+        except Exception as e:
+            log_func(f"无法创建域名主题文件 {subj_path}: {e}")
+            return False
+
+    return True
+
+
 def generate_ca_cert(
     resource_manager: ResourceManager, log_func: LogFunc = print, *, ca_common_name: str = "MTGA_CA"
 ) -> bool:
@@ -259,7 +305,7 @@ def generate_ca_cert(
     return True
 
 
-def generate_server_cert(  # noqa: PLR0911, PLR0915
+def generate_server_cert(  # noqa: PLR0911, PLR0912, PLR0915
     resource_manager: ResourceManager, domain: str = "api.openai.com", log_func: LogFunc = print
 ) -> bool:
     """生成服务器证书"""
@@ -267,6 +313,9 @@ def generate_server_cert(  # noqa: PLR0911, PLR0915
 
     ca_key_path = resource_manager.get_ca_key_file()
     ca_crt_path = resource_manager.get_ca_cert_file()
+
+    if not ensure_domain_config_files(resource_manager, domain, log_func):
+        return False
 
     # 检查必要文件是否存在
     required_files = [
@@ -498,7 +547,7 @@ def generate_certificates(
     log_func("")
     log_func("后续步骤:")
     log_func("1. 将CA证书 (ca.crt) 导入到Windows的受信任的根证书颁发机构存储中")
-    log_func("2. 修改hosts文件，将api.openai.com指向127.0.0.1")
+    log_func(f"2. 修改hosts文件，将{domain}指向127.0.0.1")
     log_func("3. 配置并运行代理服务器")
     log_func("=" * 60)
 

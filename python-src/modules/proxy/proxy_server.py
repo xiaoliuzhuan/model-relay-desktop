@@ -48,6 +48,10 @@ class ProxyServer:
         if not self.app_layer.valid:
             return False
 
+        entry_domain = str(self.config.get("entry_domain") or "api.openai.com").strip()
+        if not entry_domain:
+            entry_domain = "api.openai.com"
+
         result = self.runtime.start(
             host=host,
             port=port,
@@ -55,6 +59,7 @@ class ProxyServer:
             custom_model_id=self.app_layer.custom_model_id,
             target_model_id=self.app_layer.target_model_id,
             stream_mode=self.app_layer.stream_mode,
+            entry_domain=entry_domain,
         )
         return result.ok
 
