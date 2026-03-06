@@ -2,17 +2,48 @@
 
 ## v3.0.0 - 2026-03-06
 
-### :sparkles: 重点更新
 
-- feat(protocol): 同时支持 OpenAI 协议与 Claude（Anthropic Messages）协议接入 Trae。
-- feat(ui): 全局配置升级为“全局入口配置”语义，并增强多协议提示与冲突防护。
-- feat(proxy): 增强入口鉴权兼容（`Authorization` / `Proxy-Authorization` / `x-api-key` / `api-key` 等）。
-- feat(proxy): 增强 SSE 流式稳定性（分隔符补齐、CRLF 归一化），减少回复中断。
-- feat(ui): 运行日志支持自动滚动到最新日志。
+### :bug: 修复
 
-### :art: 文档更新
+- refresh domain cert and load entry-domain TLS cert ([1f50569](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/1f505694b411d7e3b9027ddfe8ed15c1b12e39e9))
 
-- docs(readme): 补充 Trae 双协议配置说明与 SEO 关键词优化。
+- return anthropic-native /v1/models payload ([f8496b0](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/f8496b04319be638c558e26cd31e22ea126c72a9))
+
+- preserve SSE event separators for /v1/messages stream ([629a2e0](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/629a2e0dc6503e909edbc1e852c824278fc4e2e5))
+
+- normalize bearer auth token parsing ([6d38fdc](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/6d38fdccbba187a8e1e8dc7b19c2f1f825a97b3d))
+
+- accept api-key header for MTGA auth ([c853844](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/c85384415e0f5b4e521c3fc32ac72d660f4019f7))
+
+- broaden MTGA auth compatibility and diagnostics ([7d9c74e](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/7d9c74e724223420a798734ac23c4401b5f5e2e8))
+
+- ensure runtime log panel auto-scrolls reliably ([ac8db6a](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/ac8db6a4dd8b5d6dd34c8d9e06c3533d75be99f7))
+
+
+
+### :sparkles: 新功能
+
+- clarify global config semantics for mixed protocols ([79a6078](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/79a60787da8be16beafd4e8ebd576faa75e530dc))
+
+- clarify upstream api key in config group editor ([bec75f8](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/bec75f8e7bba19d75e5c65ddae05e9a6c6ae3f38))
+
+- warn on mapped model id collisions ([01622d2](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/01622d261e29f23d8d130a467b40a100f55b7d4f))
+
+- auto-suffix colliding mapped model ids ([ad0e746](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/ad0e746830bf0e8d12139020580e011ee32e324b))
+
+- improve text readability and clarify global config role ([bfc7513](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/bfc7513794edb3687383243f9e46a2259d9a5bf1))
+
+
+## v2.2.2-rc.1 - 2026-03-05
+
+
+### :sparkles: 新功能
+
+- add anthropic messages protocol support ([f0895e1](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/f0895e11284081e55230828f156a53c2ddf87daf))
+
+
+## v2.2.1-rc.5 - 2026-03-05
+
 
 ## v2.2.2-rc.1 - 2026-03-05
 
