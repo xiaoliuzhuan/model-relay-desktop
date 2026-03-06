@@ -18,16 +18,37 @@ const formattedLogs = computed(() =>
   props.logs && props.logs.length ? props.logs.join("\n") : props.emptyText,
 );
 
+const scrollToLatestLog = () => {
+  if (!logBox.value) {
+    return;
+  }
+  logBox.value.scrollTop = logBox.value.scrollHeight;
+};
+
+const scheduleScrollToLatestLog = async () => {
+  await nextTick();
+  requestAnimationFrame(scrollToLatestLog);
+};
+
 watch(
-  () => props.logs,
-  async () => {
-    await nextTick();
-    if (logBox.value) {
-      logBox.value.scrollTop = logBox.value.scrollHeight;
-    }
+  logCount,
+  () => {
+    void scheduleScrollToLatestLog();
   },
-  { deep: true },
+  { flush: "post" },
 );
+
+watch(
+  formattedLogs,
+  () => {
+    void scheduleScrollToLatestLog();
+  },
+  { flush: "post" },
+);
+
+onMounted(() => {
+  void scheduleScrollToLatestLog();
+});
 </script>
 
 <template>

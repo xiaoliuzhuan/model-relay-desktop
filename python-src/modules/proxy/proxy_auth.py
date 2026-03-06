@@ -16,6 +16,7 @@ BEARER_PARTS_COUNT = 2
 @dataclass(frozen=True)
 class ProxyAuth:
     mtga_auth_key: str = ""
+    fallback_auth_keys: tuple[str, ...] = ()
 
     @staticmethod
     def _normalize_token(value: str) -> str:
@@ -46,9 +47,25 @@ class ProxyAuth:
         provided_key = self._extract_token(auth_header, x_api_key)
         if not provided_key:
             return False
-        if not self.mtga_auth_key:
+
+        accepted_keys = {
+            self._normalize_token(self.mtga_auth_key),
+            *(self._normalize_token(key) for key in self.fallback_auth_keys),
+        }
+        accepted_keys.discard("")
+
+        if not accepted_keys:
             return True
-        return provided_key == self.mtga_auth_key
+        return provided_key in accepted_keys
+
+    def get_debug_lengths(
+        self,
+        auth_header: str | None,
+        x_api_key: str | None = None,
+    ) -> tuple[int, int]:
+        provided_len = len(self._extract_token(auth_header, x_api_key))
+        expected_len = len(self._normalize_token(self.mtga_auth_key))
+        return provided_len, expected_len
 
     def build_forward_headers(  # noqa: PLR0913
         self,

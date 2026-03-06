@@ -6,7 +6,7 @@ import logging
 import threading
 import time
 import uuid
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -27,6 +27,13 @@ from modules.runtime.operation_result import OperationResult
 from modules.runtime.resource_manager import ResourceManager
 
 HTTP_BAD_REQUEST = 400
+
+REQUEST_API_KEY_HEADERS = (
+    "x-api-key",
+    "api-key",
+    "x-tt-api-key",
+    "x-ark-api-key",
+)
 
 
 class ProxyApp:
@@ -83,7 +90,10 @@ class ProxyApp:
         self.stream_mode = proxy_config.stream_mode  # None, 'true', 'false'
         self.debug_mode = proxy_config.debug_mode
         self.disable_ssl_strict_mode = proxy_config.disable_ssl_strict_mode
-        self.auth = ProxyAuth(proxy_config.mtga_auth_key)
+        self.auth = ProxyAuth(
+            mtga_auth_key=proxy_config.mtga_auth_key,
+            fallback_auth_keys=((proxy_config.api_key or "").strip(),),
+        )
         self.transport = ProxyTransport(
             resource_manager=self.resource_manager,
             disable_ssl_strict_mode=self.disable_ssl_strict_mode,
@@ -205,7 +215,10 @@ class ProxyApp:
                 code=ErrorCode.CONFIG_INVALID,
             )
 
-        new_auth = ProxyAuth(new_proxy_config.mtga_auth_key)
+        new_auth = ProxyAuth(
+            mtga_auth_key=new_proxy_config.mtga_auth_key,
+            fallback_auth_keys=((new_proxy_config.api_key or "").strip(),),
+        )
         new_transport = ProxyTransport(
             resource_manager=self.resource_manager,
             disable_ssl_strict_mode=new_proxy_config.disable_ssl_strict_mode,
@@ -246,6 +259,55 @@ class ProxyApp:
 
     def _log_request(self, request_id: str, message: str) -> None:
         self.log_func(f"{self._timestamp_ms()} [{request_id}] {message}")
+
+    @staticmethod
+    def _extract_request_auth_header() -> str | None:
+        return request.headers.get("Authorization") or request.headers.get(
+            "Proxy-Authorization"
+        )
+
+    @staticmethod
+    def _extract_request_api_key(
+        payload: Mapping[str, Any] | None = None,
+    ) -> str | None:
+        for header in REQUEST_API_KEY_HEADERS:
+            value = request.headers.get(header)
+            if value:
+                return value
+
+        query_api_key = request.args.get("api_key")
+        if query_api_key:
+            return query_api_key
+
+        if payload is not None:
+            payload_api_key = payload.get("api_key")
+            if isinstance(payload_api_key, str):
+                return payload_api_key
+
+        return None
+
+    @staticmethod
+    def _build_auth_failure_debug(
+        *,
+        auth: ProxyAuth,
+        auth_header: str | None,
+        x_api_key: str | None,
+    ) -> str:
+        provided_len, expected_len = auth.get_debug_lengths(auth_header, x_api_key)
+
+        auth_scheme = ""
+        auth_value = (auth_header or "").strip()
+        if auth_value:
+            auth_scheme = auth_value.split(None, 1)[0].lower()
+
+        return (
+            "鉴权详情: "
+            f"has_authorization={bool(auth_value)} "
+            f"auth_scheme={auth_scheme or 'none'} "
+            f"has_api_key_header={bool((x_api_key or '').strip())} "
+            f"provided_len={provided_len} "
+            f"expected_len={expected_len}"
+        )
 
     def _get_mapped_model_id(self) -> str:
         return self.custom_model_id
@@ -801,10 +863,17 @@ class ProxyApp:
                 {"error": {"message": "Proxy not ready", "type": "server_error"}}
             ), 500
 
-        auth_header = request.headers.get("Authorization")
-        x_api_key = request.headers.get("x-api-key") or request.headers.get("api-key")
+        auth_header = self._extract_request_auth_header()
+        x_api_key = self._extract_request_api_key()
         if not auth.verify(auth_header, x_api_key):
             self.log_func("模型列表请求鉴权失败")
+            self.log_func(
+                self._build_auth_failure_debug(
+                    auth=auth,
+                    auth_header=auth_header,
+                    x_api_key=x_api_key,
+                )
+            )
             return jsonify(
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
             ), 401
@@ -899,9 +968,17 @@ class ProxyApp:
             return jsonify({"error": "Invalid JSON or Content-Type"}), 400
         request_data = cast(dict[str, Any], request_data_obj)
 
-        auth_header = request.headers.get("Authorization")
-        x_api_key = request.headers.get("x-api-key") or request.headers.get("api-key")
+        auth_header = self._extract_request_auth_header()
+        x_api_key = self._extract_request_api_key(request_data)
         if not auth.verify(auth_header, x_api_key):
+            self.log_func("Messages 请求鉴权失败")
+            self.log_func(
+                self._build_auth_failure_debug(
+                    auth=auth,
+                    auth_header=auth_header,
+                    x_api_key=x_api_key,
+                )
+            )
             release_transport()
             return jsonify(
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
@@ -1080,10 +1157,17 @@ class ProxyApp:
                 log(f"请求中没有 stream 参数，设置为 {stream_value}")
                 request_data["stream"] = stream_value
 
-        auth_header = request.headers.get("Authorization")
-        x_api_key = request.headers.get("x-api-key") or request.headers.get("api-key")
+        auth_header = self._extract_request_auth_header()
+        x_api_key = self._extract_request_api_key(request_data)
         if not auth.verify(auth_header, x_api_key):
             log("聊天补全请求MTGA鉴权失败")
+            log(
+                self._build_auth_failure_debug(
+                    auth=auth,
+                    auth_header=auth_header,
+                    x_api_key=x_api_key,
+                )
+            )
             release_transport()
             return jsonify(
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
