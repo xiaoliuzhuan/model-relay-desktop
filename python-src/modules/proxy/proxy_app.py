@@ -31,6 +31,7 @@ HTTP_BAD_REQUEST = 400
 REQUEST_API_KEY_HEADERS = (
     "x-api-key",
     "api-key",
+    "x-cursor-api-key",
     "x-tt-api-key",
     "x-ark-api-key",
 )

@@ -35,15 +35,35 @@ const officialModelNameCandidates = new Set([
 ]);
 
 const relaySuffix = "-relay";
+const cursorNamespacePrefix = "mr-cursor-";
+const clientProfileStorageKey = "mtga-client-profile";
+
+type ClientProfile = "trae" | "cursor" | "generic";
 
 const normalizeModelId = (value: string) => value.trim().toLowerCase();
 
-const ensureSafeMappedModelId = (value: string) => {
+const clientProfile = ref<ClientProfile>("trae");
+
+const clientProfileLabelMap: Record<ClientProfile, string> = {
+  trae: "Trae（推荐）",
+  cursor: "Cursor（推荐命名空间）",
+  generic: "通用客户端",
+};
+
+const ensureSafeMappedModelId = (value: string, profile: ClientProfile) => {
   const trimmed = value.trim();
   if (!trimmed) {
     return trimmed;
   }
+
   const normalized = normalizeModelId(trimmed);
+  if (profile === "cursor") {
+    if (normalized.startsWith(cursorNamespacePrefix)) {
+      return trimmed;
+    }
+    return `${cursorNamespacePrefix}${trimmed}`;
+  }
+
   if (!officialModelNameCandidates.has(normalized)) {
     return trimmed;
   }
@@ -59,20 +79,33 @@ const modelNameCollisionNotice = computed(() => {
     return {
       show: false,
       matchedModelId: "",
+      suggestion: "",
     };
   }
 
   const normalizedModelId = normalizeModelId(currentModelId);
-  if (!officialModelNameCandidates.has(normalizedModelId)) {
+  const collidesWithOfficial = officialModelNameCandidates.has(normalizedModelId);
+  if (!collidesWithOfficial && clientProfile.value !== "cursor") {
     return {
       show: false,
       matchedModelId: "",
+      suggestion: "",
+    };
+  }
+
+  const suggestion = ensureSafeMappedModelId(currentModelId, clientProfile.value);
+  if (suggestion === currentModelId && !collidesWithOfficial) {
+    return {
+      show: false,
+      matchedModelId: "",
+      suggestion: "",
     };
   }
 
   return {
     show: true,
     matchedModelId: currentModelId,
+    suggestion,
   };
 });
 
@@ -153,12 +186,25 @@ const mtgaAuthTooltip = [
   "示例：client-access-key",
 ].join("\n");
 
+onMounted(() => {
+  const storedProfile = localStorage.getItem(clientProfileStorageKey);
+  if (storedProfile === "trae" || storedProfile === "cursor" || storedProfile === "generic") {
+    clientProfile.value = storedProfile;
+  }
+});
+
+watch(clientProfile, (profile) => {
+  localStorage.setItem(clientProfileStorageKey, profile);
+});
+
 const handleSave = async () => {
   const currentMappedModelId = store.mappedModelId.value.trim();
-  const safeMappedModelId = ensureSafeMappedModelId(currentMappedModelId);
+  const safeMappedModelId = ensureSafeMappedModelId(currentMappedModelId, clientProfile.value);
   if (safeMappedModelId && safeMappedModelId !== currentMappedModelId) {
     store.mappedModelId.value = safeMappedModelId;
-    store.appendLog(`检测到模型名与官方模型重合，已自动调整为: ${safeMappedModelId}`);
+    store.appendLog(
+      `已按${clientProfileLabelMap[clientProfile.value]}规则自动调整模型入口名: ${safeMappedModelId}`,
+    );
   }
 
   if (!store.mappedModelId.value || !store.mtgaAuthKey.value) {
@@ -190,6 +236,21 @@ const handleSave = async () => {
         说明：这里配置的是客户端访问本地代理的统一入口参数，不是上游厂商 API 参数。上游 API
         URL、模型ID、API Key 请在“代理配置组”中设置。
       </span>
+    </div>
+
+    <div class="mtga-soft-panel bg-white/70 space-y-3">
+      <label class="form-control w-full max-w-xs">
+        <span class="label-text text-xs text-slate-600">客户端场景</span>
+        <select v-model="clientProfile" class="select select-sm select-bordered rounded-lg mt-1">
+          <option value="trae">Trae（推荐）</option>
+          <option value="cursor">Cursor（推荐命名空间）</option>
+          <option value="generic">通用客户端</option>
+        </select>
+      </label>
+      <p class="text-xs text-slate-600">
+        Cursor 场景会自动把入口模型名改为 `mr-cursor-...`
+        命名空间，最大程度规避与官方内置模型重名冲突。
+      </p>
     </div>
 
     <div class="mtga-soft-panel bg-white/70">
@@ -239,10 +300,11 @@ const handleSave = async () => {
         class="alert alert-warning rounded-xl py-2 px-3 text-xs"
       >
         <span>
-          当前映射模型ID（{{ modelNameCollisionNotice.matchedModelId }}）与常见官方模型名重合，Trae
-          可能误判为内置模型导致不走自定义通道。点击“保存全局配置”时会自动改为：{{
-            modelNameCollisionNotice.matchedModelId
-          }}-relay。
+          当前入口模型名（{{ modelNameCollisionNotice.matchedModelId }}）在
+          {{ clientProfileLabelMap[clientProfile] }}
+          场景下可能与内置模型冲突。点击“保存全局配置”时会自动改为：{{
+            modelNameCollisionNotice.suggestion
+          }}。
         </span>
       </div>
 

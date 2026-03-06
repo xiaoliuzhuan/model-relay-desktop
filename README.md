@@ -60,7 +60,7 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
     - [图形化解决方案](#图形化解决方案)
     - [cli 解决方案](#cli-解决方案)
   - [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
-  - [配置 Trae IDE（OpenAI + Claude）](#配置-trae-ideopenai--claude)
+  - [配置 Trae / Cursor IDE（OpenAI + Claude）](#配置-trae--cursor-ideopenai--claude)
   - [GitHub 搜索优化（SEO）](#github-搜索优化seo)
   - [😎 保持更新](#-保持更新)
   - [贡献](#贡献)
@@ -118,7 +118,7 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
    - 生成并安装证书
    - 修改 hosts 文件
    - 启动代理服务器
-6. 完成后，按照[配置 Trae IDE（OpenAI + Claude）](#配置-trae-ideopenai--claude)进行 IDE 配置。
+6. 完成后，按照[配置 Trae / Cursor IDE（OpenAI + Claude）](#配置-trae--cursor-ideopenai--claude)进行 IDE 配置。
 
 > [!NOTE]
 >
@@ -224,30 +224,37 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 ---
 
-## 配置 Trae IDE（OpenAI + Claude）
+## 配置 Trae / Cursor IDE（OpenAI + Claude）
+
+### 1) Trae 配置
 
 1. 打开并登录 Trae IDE。
 2. 在 AI 对话框中，点击右下角模型图标，选择“添加模型”。
 
-### A. 添加 OpenAI 协议模型
+- **OpenAI 协议**
+  - 服务商：`OpenAI`
+  - 模型：全局配置中的 `客户端映射模型ID`
+  - API 密钥：全局配置中的 `客户端访问Key`
+- **Claude 协议**
+  - 服务商：`Anthropic`
+  - 模型：全局配置中的 `客户端映射模型ID`
+  - API 密钥：全局配置中的 `客户端访问Key`
 
-- **服务商**：选择 `OpenAI`
-- **模型**：填写全局配置中的 `客户端映射模型ID`
-- **API 密钥**：填写全局配置中的 `客户端访问Key`
+### 2) Cursor 配置
 
-### B. 添加 Claude 协议模型
-
-- **服务商**：选择 `Anthropic`
-- **模型**：填写全局配置中的 `客户端映射模型ID`
-- **API 密钥**：填写全局配置中的 `客户端访问Key`
+1. 打开 Cursor 设置中的模型/提供商配置页面。
+2. 新增自定义 OpenAI 兼容模型入口（Base URL 指向本地代理）。
+3. 模型名填写全局配置中的 `客户端映射模型ID`。
+4. API 密钥填写全局配置中的 `客户端访问Key`。
 
 > [!IMPORTANT]
 >
-> - Trae 侧可以同时存在 OpenAI 与 Anthropic 两条模型配置。
+> - Trae / Cursor 都可以同时配置 OpenAI 与 Claude 路径。
 > - 本地代理实际转发协议由 MTGA 当前选中的配置组决定。
-> - 当你在 MTGA 切换配置组（OpenAI / Claude）后，请执行一次“一键启动全部服务”。
+> - 切换配置组（OpenAI / Claude）后，请执行一次“一键启动全部服务”。
+> - Cursor 建议在“客户端场景”选择 `Cursor`，入口模型名会自动加 `mr-cursor-` 命名空间，避免与官方内置模型冲突。
 
-配置完成后，你在 Trae 的请求会先进入本地代理，再由当前生效配置组转发到对应上游服务商。
+配置完成后，请求会先进入本地代理，再由当前生效配置组转发到对应上游服务商。
 
 ---
 
@@ -256,13 +263,18 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 如果你希望在 GitHub 搜索中更容易被以下词命中，本仓库已经在 README 中覆盖核心关键词：
 
 - `Trae 代理`
+- `Cursor 代理`
 - `Trae OpenAI 协议`
 - `Trae Claude 协议`
+- `Cursor OpenAI 代理`
+- `Cursor Claude 代理`
 - `Trae Anthropic Messages`
 - `OpenAI 协议 代理`
 - `Claude 协议 代理`
 - `local model relay for Trae`
+- `local model relay for Cursor`
 - `Trae proxy OpenAI Claude`
+- `Cursor proxy OpenAI Claude`
 
 建议同时在 GitHub 仓库设置中维护 Topics（仓库标签），例如：
 
