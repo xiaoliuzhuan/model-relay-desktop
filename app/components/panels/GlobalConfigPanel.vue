@@ -16,6 +16,49 @@ const mtgaAuthKey = computed({
   },
 });
 
+const officialModelNameCandidates = new Set([
+  "claude-4.5-sonnet",
+  "gemini-3-pro-preview",
+  "gemini-3-flash-preview",
+  "gemini-2.5-pro",
+  "gemini-2.5-flash",
+  "kimi-k2-0905",
+  "kimi-k2.5",
+  "gpt-5.3-codex",
+  "gpt-5.2-codex",
+  "gpt-5.2",
+  "gpt-5.1",
+  "gpt-5-medium",
+  "gpt-5-high",
+  "deepseek-v3.1",
+  "glm-4.6",
+]);
+
+const normalizeModelId = (value: string) => value.trim().toLowerCase();
+
+const modelNameCollisionNotice = computed(() => {
+  const currentModelId = mappedModelId.value.trim();
+  if (!currentModelId) {
+    return {
+      show: false,
+      matchedModelId: "",
+    };
+  }
+
+  const normalizedModelId = normalizeModelId(currentModelId);
+  if (!officialModelNameCandidates.has(normalizedModelId)) {
+    return {
+      show: false,
+      matchedModelId: "",
+    };
+  }
+
+  return {
+    show: true,
+    matchedModelId: currentModelId,
+  };
+});
+
 const protocolLabelMap: Record<ProviderProtocol, string> = {
   openai: "OpenAI Chat Completions",
   anthropic_messages: "Anthropic Messages",
@@ -128,6 +171,18 @@ const handleSave = async () => {
           placeholder="例如：assistant-router"
           required
         />
+      </div>
+
+      <div
+        v-if="modelNameCollisionNotice.show"
+        class="alert alert-warning rounded-xl py-2 px-3 text-xs"
+      >
+        <span>
+          当前映射模型ID（{{ modelNameCollisionNotice.matchedModelId }}）与常见官方模型名重合，Trae
+          可能误判为内置模型导致不走自定义通道。建议改为不重名，例如：{{
+            modelNameCollisionNotice.matchedModelId
+          }}-relay。
+        </span>
       </div>
 
       <div
