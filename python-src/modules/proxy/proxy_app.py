@@ -7,6 +7,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable, Generator
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import requests
@@ -792,6 +793,7 @@ class ProxyApp:
         inbound_route = str(snapshot["inbound_route"])
         auth = snapshot["auth"]
         mapped_model_id = str(snapshot["custom_model_id"])
+        protocol = str(snapshot.get("protocol") or DEFAULT_PROTOCOL)
         self.log_func(f"收到模型列表请求 {self._build_route(inbound_route, 'models')}")
         if not auth:
             self.log_func("代理鉴权未就绪")
@@ -807,33 +809,49 @@ class ProxyApp:
                 {"error": {"message": "Invalid authentication", "type": "authentication_error"}}
             ), 401
 
-        model_data = {
-            "object": "list",
-            "data": [
-                {
-                    "id": mapped_model_id,
-                    "object": "model",
-                    "owned_by": "openai",
-                    "created": int(time.time()),
-                    "permission": [
-                        {
-                            "id": f"modelperm-{mapped_model_id}",
-                            "object": "model_permission",
-                            "created": int(time.time()),
-                            "allow_create_engine": False,
-                            "allow_sampling": True,
-                            "allow_logprobs": True,
-                            "allow_search_indices": False,
-                            "allow_view": True,
-                            "allow_fine_tuning": False,
-                            "organization": "*",
-                            "group": None,
-                            "is_blocking": False,
-                        }
-                    ],
-                }
-            ],
-        }
+        if protocol == ANTHROPIC_MESSAGES_PROTOCOL:
+            created_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            model_data = {
+                "data": [
+                    {
+                        "type": "model",
+                        "id": mapped_model_id,
+                        "display_name": mapped_model_id,
+                        "created_at": created_at,
+                    }
+                ],
+                "first_id": mapped_model_id,
+                "has_more": False,
+                "last_id": mapped_model_id,
+            }
+        else:
+            model_data = {
+                "object": "list",
+                "data": [
+                    {
+                        "id": mapped_model_id,
+                        "object": "model",
+                        "owned_by": "openai",
+                        "created": int(time.time()),
+                        "permission": [
+                            {
+                                "id": f"modelperm-{mapped_model_id}",
+                                "object": "model_permission",
+                                "created": int(time.time()),
+                                "allow_create_engine": False,
+                                "allow_sampling": True,
+                                "allow_logprobs": True,
+                                "allow_search_indices": False,
+                                "allow_view": True,
+                                "allow_fine_tuning": False,
+                                "organization": "*",
+                                "group": None,
+                                "is_blocking": False,
+                            }
+                        ],
+                    }
+                ],
+            }
 
         self.log_func(f"返回映射模型: {mapped_model_id}")
         return jsonify(model_data)
