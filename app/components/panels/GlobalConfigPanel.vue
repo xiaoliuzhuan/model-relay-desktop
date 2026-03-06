@@ -218,12 +218,68 @@ const selectedClientGuide = computed(() => {
   );
 });
 
+const copiedGuideId = ref<ClientProfile | null>(null);
+
 const mappedModelDescription = computed(() => {
   return `当前按 ${selectedClientGuide.value.title} 场景建议使用：${selectedClientGuide.value.modelPreview}`;
 });
 
 const mtgaAuthDescription =
   "客户端访问本地代理入口时使用的统一密钥，不等于上游 OpenAI / Anthropic API Key。";
+
+const buildClientGuideCopyText = (profile: ClientProfile) => {
+  const previewModelId = buildPreviewMappedModelId(profile);
+  const keyPreview = mtgaAuthKey.value.trim() || "<客户端访问Key>";
+
+  if (profile === "cursor") {
+    return [
+      "【Cursor 配置】",
+      "- 客户端类型：Cursor",
+      "- Base URL：本地代理地址（OpenAI 兼容入口）",
+      `- Model：${previewModelId}`,
+      `- API Key：${keyPreview}`,
+      "- 说明：建议保持当前配置组与目标上游协议一致后再使用。",
+    ].join("\n");
+  }
+
+  if (profile === "trae") {
+    return [
+      "【Trae 配置】",
+      "- OpenAI 服务商：Model 填入口模型名，API Key 填客户端访问Key",
+      "- Anthropic 服务商：Model 填入口模型名，API Key 填客户端访问Key",
+      `- Model：${previewModelId}`,
+      `- API Key：${keyPreview}`,
+      "- 说明：Trae 中可同时存在 OpenAI / Anthropic 两条配置。",
+    ].join("\n");
+  }
+
+  return [
+    "【通用客户端配置】",
+    "- 使用 OpenAI 兼容模式接入本地代理",
+    `- Model：${previewModelId}`,
+    `- API Key：${keyPreview}`,
+  ].join("\n");
+};
+
+const copyClientGuide = async (profile: ClientProfile) => {
+  try {
+    await navigator.clipboard.writeText(buildClientGuideCopyText(profile));
+    copiedGuideId.value = profile;
+    store.appendLog(`已复制 ${clientProfileLabelMap[profile]} 配置说明`);
+    window.setTimeout(() => {
+      if (copiedGuideId.value === profile) {
+        copiedGuideId.value = null;
+      }
+    }, 1800);
+  } catch {
+    store.appendLog(`复制 ${clientProfileLabelMap[profile]} 配置说明失败`);
+  }
+};
+
+const jumpToConfigGroup = () => {
+  store.panelNavTarget.value = "config-group";
+  store.panelNavSignal.value += 1;
+};
 
 const selectClientProfile = (profile: ClientProfile) => {
   clientProfile.value = profile;
@@ -298,10 +354,9 @@ const handleSave = async () => {
       </div>
 
       <div class="mt-4 grid gap-3 lg:grid-cols-2">
-        <button
+        <div
           v-for="guide in clientGuides"
           :key="guide.id"
-          type="button"
           class="rounded-2xl border p-4 text-left transition-all duration-150"
           :class="
             clientProfile === guide.id
@@ -339,11 +394,47 @@ const handleSave = async () => {
               <p class="mt-1 text-sm text-slate-700">{{ guide.namingHint }}</p>
             </div>
           </div>
-        </button>
+
+          <div class="mt-4 flex items-center justify-between gap-3">
+            <span class="text-xs text-slate-500">一键复制这套客户端填写说明</span>
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-flex items-center rounded-full px-2 py-1 text-[11px]"
+                :class="
+                  copiedGuideId === guide.id
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-100 text-slate-500'
+                "
+              >
+                {{ copiedGuideId === guide.id ? "已复制" : "可复制" }}
+              </span>
+              <button
+                class="btn btn-xs rounded-lg border-0 bg-slate-900 text-white hover:bg-slate-800"
+                @click.stop="copyClientGuide(guide.id)"
+              >
+                复制配置
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <div>
+          <p class="text-sm font-medium text-slate-900">当前运行摘要</p>
+          <p class="mt-1 text-xs text-slate-600">
+            这里显示当前真正生效的上游配置，便于避免多协议误读
+          </p>
+        </div>
+        <button
+          class="btn btn-xs btn-outline rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
+          @click="jumpToConfigGroup"
+        >
+          去配置组查看
+        </button>
+      </div>
       <div class="grid gap-3 sm:grid-cols-3">
         <div class="rounded-xl bg-slate-50 px-4 py-3">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">当前生效配置组</p>
