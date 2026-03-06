@@ -105,17 +105,26 @@ class ProxyTransport:
                     with contextlib.suppress(Exception):
                         log_file.close()
                     log_file = None
-            buffer += chunk
+
+            if not chunk:
+                continue
+
+            normalized_chunk = chunk.replace(b"\r\n", b"\n")
+            buffer += normalized_chunk
             while True:
                 sep = buffer.find(b"\n\n")
                 if sep == -1:
                     break
                 event = buffer[:sep]
                 buffer = buffer[sep + 2 :]
+                if not event:
+                    continue
                 yield chunk_index, event
-        if buffer.strip():
+
+        tail = buffer.strip()
+        if tail:
             log("警告: 上游 SSE 结束时存在未完整分隔的残留数据")
-            yield chunk_index, buffer
+            yield chunk_index, tail
 
     @staticmethod
     def _new_request_id() -> str:

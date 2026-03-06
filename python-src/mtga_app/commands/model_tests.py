@@ -45,6 +45,8 @@ class ConfigGroupModelListPayload(BaseModel):
     model_id: str = ""
     api_key: str = ""
     middle_route: str = ""
+    protocol: str = "openai"
+    anthropic_version: str = ""
 
 
 @lru_cache(maxsize=1)
@@ -100,6 +102,8 @@ def register_model_test_commands(commands: Commands) -> None:
             "model_id": body.model_id,
             "api_key": body.api_key,
             "middle_route": body.middle_route,
+            "protocol": body.protocol,
+            "anthropic_version": body.anthropic_version,
         }
         model_ids, ok = model_tests.fetch_model_list(group, log_func=log_func)
         if not ok:

@@ -12,20 +12,25 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 你可以把它理解为：**本地可控、可视化配置、可快速排障的模型中转控制台**。
 
-**注意：当前版本主要支持 OpenAI 兼容 API。其他协议请先通过兼容层转换后接入。**
+**v3.0 开始，支持在 Trae 中配置并使用 OpenAI 协议与 Claude（Anthropic Messages）协议。**
+
+> 关键词：Trae 代理、OpenAI 协议、Claude 协议、Anthropic Messages、本地模型中转。
 
 ## 二次开发变更概览（相对上游）
 
 本仓库在上游基础上，重点做了以下增强：
 
-- **桌面体验优化**：界面主题与交互结构持续迭代，提升配置效率与可读性。
-- **协议兼容增强**：持续完善 OpenAI `chat/completions` 与 `responses` 路径的兼容与回退能力，降低上游差异带来的接入失败率。
+- **双协议接入**：支持 OpenAI `chat/completions` 与 Claude `messages` 协议。
+- **Trae 配置可视化**：在同一桌面端管理多配置组，并切换当前生效组。
+- **鉴权兼容增强**：兼容 `Authorization`、`Proxy-Authorization`、`x-api-key`、`api-key` 等常见入口头。
+- **流式稳定性增强**：补齐 SSE 分隔并做换行归一化，降低流式中断概率。
+- **排障能力增强**：运行日志增加可读性优化与自动滚动，支持快速定位问题。
 
-### 未来规划
+### v3.0 重点更新
 
-- 继续增强多协议兼容能力。
-- 计划支持 **Claude 相关协议**（如 Anthropic Messages 兼容接入链路）。
-- 对接过程中将优先保证：稳定性、可审计性、合规性与用户显式配置。
+- 支持 Trae 中添加 `OpenAI` 服务商模型与 `Anthropic` 服务商模型。
+- 支持本地代理以配置组方式切换 OpenAI / Claude 上游协议。
+- 强化“全局入口配置”语义，降低多协议并存时的误解成本。
 
 ## 开源与来源说明
 
@@ -40,7 +45,7 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 - [Model Relay Desktop](#model-relay-desktop)
   - [简介](#简介)
   - [二次开发变更概览（相对上游）](#二次开发变更概览相对上游)
-    - [未来规划](#未来规划)
+    - [v3.0 重点更新](#v30-重点更新)
   - [开源与来源说明](#开源与来源说明)
   - [目录](#目录)
   - [更新日志](#更新日志)
@@ -49,12 +54,14 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
       - [Windows](#windows)
       - [macOS](#macos)
     - [使用](#使用)
+  - [全局入口配置说明（多协议）](#全局入口配置说明多协议)
   - [合规与使用边界](#合规与使用边界)
   - [macOS 解决 “包已损坏” 问题](#macos-解决-包已损坏-问题)
     - [图形化解决方案](#图形化解决方案)
     - [cli 解决方案](#cli-解决方案)
   - [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
-  - [配置 Trae IDE](#配置-trae-ide)
+  - [配置 Trae IDE（OpenAI + Claude）](#配置-trae-ideopenai--claude)
+  - [GitHub 搜索优化（SEO）](#github-搜索优化seo)
   - [😎 保持更新](#-保持更新)
   - [贡献](#贡献)
   - [架构与依赖约束](#架构与依赖约束)
@@ -91,24 +98,27 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 ### 使用
 
-1. 启动 Model Relay Desktop 应用程序
-2. 添加代理配置组
+1. 启动 Model Relay Desktop 应用程序。
+2. 添加代理配置组（可创建多个配置组，例如 OpenAI 一组、Claude 一组）。
    - **API URL 只需要填域名（端口号可选，不懂就不要填），不需要填后面的路由，例如：`https://your-api.example.com`**
-   - 如果你的接口不是标准 `/v1` 路由，可以自定义中间路由
+   - 如果接口不是标准 `/v1` 路由，可在配置组中设置“中间路由”。
+   - 配置组内的 `上游协议 / API URL / 上游模型ID / 上游 API Key` 只对该组生效。
    - 图一（添加代理组）：
      <img width="80%" alt="图一-添加代理组" src="./images/guide-figure-1-proxy-group-1.png" />
-3. 填写全局配置
-   - 全局映射模型 ID 与代理鉴权 Key 需与代理组配置保持一致
+3. 填写全局入口配置。
+   - `客户端映射模型ID`：Trae 里填写的模型名（统一入口名）。
+   - `客户端访问Key`：Trae 访问本地代理时使用的入口密钥。
+   - 这两项是全局入口参数，**不是**上游厂商 API 参数。
    - 图二（全局配置页）：
      <img width="80%" alt="图二-填写全局配置" src="./images/guide-figure-2-global-config.png?raw=true" />
    - 图三（Trae 添加模型示意）：
      <img width="55%" alt="图三-添加模型" src="./images/guide-figure-3-add-model.png?raw=true" />
-4. 点击"一键启动全部服务"按钮（macOS 需要管理员权限）
+4. 选择当前要生效的配置组，点击“一键启动全部服务”（macOS 需要管理员权限）。
 5. 等待程序自动完成以下操作：
    - 生成并安装证书
-   - 修改hosts文件
+   - 修改 hosts 文件
    - 启动代理服务器
-6. 完成后，按照[配置 Trae IDE](#配置-trae-ide)进行IDE配置
+6. 完成后，按照[配置 Trae IDE（OpenAI + Claude）](#配置-trae-ideopenai--claude)进行 IDE 配置。
 
 > [!NOTE]
 >
@@ -119,6 +129,20 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 > - 需要管理员权限
 > - macOS 端如提示“包已损坏”，请参考 [macOS 解决 “包已损坏” 问题](#macos-解决-包已损坏-问题)
 > - 如 trae 端添加模型失败，请参考 [trae 端提示 “添加模型失败” 的排查方案](#trae-端提示-添加模型失败-的排查方案)
+
+## 全局入口配置说明（多协议）
+
+为了减少“全局配置会覆盖上游协议参数”的误解，v3.0 采用如下原则：
+
+- 全局页只负责两件事：`客户端映射模型ID` 和 `客户端访问Key`。
+- 上游协议参数（OpenAI / Claude）只在“代理配置组”中配置。
+- 多协议并存时，**仅当前选中的配置组生效**。
+- 你可以在 Trae 同时添加 OpenAI / Anthropic 两个模型入口，但实际请求始终按当前生效配置组转发。
+
+推荐做法：
+
+- 映射模型 ID 使用不与官方模型重名的值，例如：`assistant-relay`。
+- 每次切换 OpenAI / Claude 配置组后，执行一次“一键启动全部服务”。
 
 ## 合规与使用边界
 
@@ -164,7 +188,10 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 如无日志，请检查：
 
-- **hosts**：确保包含 `127.0.0.1 api.openai.com` 这一行，且未被注释掉（# 开头）。
+- **hosts**：根据当前协议检查域名映射：
+  - OpenAI 协议：确保存在 `127.0.0.1 api.openai.com`
+  - Claude（Anthropic Messages）协议：确保存在 `127.0.0.1 api.anthropic.com`
+  - 且这些行未被注释掉（# 开头）。
 - **端口监听**：确保没有其他程序正在使用端口 443（如浏览器、VPN 等）。
   - 可以使用以下命令检查：
 
@@ -197,19 +224,54 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 ---
 
-## 配置 Trae IDE
+## 配置 Trae IDE（OpenAI + Claude）
 
-1.  打开并登录 Trae IDE。
-2.  在 AI 对话框中，点击右下角的模型图标，选择末尾的"添加模型"。
-3.  **服务商**：选择 `OpenAI`。
-4.  **模型**：按你在全局配置中填写的模型 ID，如果是 `gpt-5`，则选择 `GPT-5`。
-5.  **API 密钥**：全局配置中填写的 Key。
-6.  点击"添加模型"。
-7.  回到 AI 聊天框，右下角选择你刚刚添加的自定义模型。
+1. 打开并登录 Trae IDE。
+2. 在 AI 对话框中，点击右下角模型图标，选择“添加模型”。
 
-现在，当你通过 Trae 与这个自定义模型交互时，请求会经过你的本地代理，并被转发到你配置的 `API URL`。
+### A. 添加 OpenAI 协议模型
+
+- **服务商**：选择 `OpenAI`
+- **模型**：填写全局配置中的 `客户端映射模型ID`
+- **API 密钥**：填写全局配置中的 `客户端访问Key`
+
+### B. 添加 Claude 协议模型
+
+- **服务商**：选择 `Anthropic`
+- **模型**：填写全局配置中的 `客户端映射模型ID`
+- **API 密钥**：填写全局配置中的 `客户端访问Key`
+
+> [!IMPORTANT]
+>
+> - Trae 侧可以同时存在 OpenAI 与 Anthropic 两条模型配置。
+> - 本地代理实际转发协议由 MTGA 当前选中的配置组决定。
+> - 当你在 MTGA 切换配置组（OpenAI / Claude）后，请执行一次“一键启动全部服务”。
+
+配置完成后，你在 Trae 的请求会先进入本地代理，再由当前生效配置组转发到对应上游服务商。
 
 ---
+
+## GitHub 搜索优化（SEO）
+
+如果你希望在 GitHub 搜索中更容易被以下词命中，本仓库已经在 README 中覆盖核心关键词：
+
+- `Trae 代理`
+- `Trae OpenAI 协议`
+- `Trae Claude 协议`
+- `Trae Anthropic Messages`
+- `OpenAI 协议 代理`
+- `Claude 协议 代理`
+- `local model relay for Trae`
+- `Trae proxy OpenAI Claude`
+
+建议同时在 GitHub 仓库设置中维护 Topics（仓库标签），例如：
+
+- `trae`
+- `openai`
+- `claude`
+- `anthropic`
+- `proxy`
+- `model-relay`
 
 ## 😎 保持更新
 

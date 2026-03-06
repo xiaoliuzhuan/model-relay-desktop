@@ -189,8 +189,11 @@ def start_proxy_instance_result(
         return OperationResult.failure("端口已被占用", code=ErrorCode.PORT_IN_USE)
 
     if not hosts_modified:
-        deps.log("正在修改hosts文件...")
-        modify_result = deps.modify_hosts_file(log_func=deps.log)
+        entry_domain = str(config.get("entry_domain") or "api.openai.com").strip()
+        if not entry_domain:
+            entry_domain = "api.openai.com"
+        deps.log(f"正在修改hosts文件 ({entry_domain})...")
+        modify_result = deps.modify_hosts_file(log_func=deps.log, domain=entry_domain)
         if not modify_result.ok:
             deps.log("❌ 修改hosts文件失败，代理服务器未启动")
             return OperationResult.failure(

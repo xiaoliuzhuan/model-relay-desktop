@@ -11,6 +11,10 @@ from modules.runtime.resource_manager import ResourceManager
 
 PLACEHOLDER_API_URL = "YOUR_REVERSE_ENGINEERED_API_ENDPOINT_BASE_URL"
 DEFAULT_MIDDLE_ROUTE = "/v1"
+DEFAULT_PROTOCOL = "openai"
+ANTHROPIC_MESSAGES_PROTOCOL = "anthropic_messages"
+DEFAULT_ANTHROPIC_VERSION = "2023-06-01"
+SUPPORTED_PROTOCOLS = {DEFAULT_PROTOCOL, ANTHROPIC_MESSAGES_PROTOCOL}
 type LogFunc = Callable[[str], None]
 
 
@@ -20,6 +24,8 @@ class ProxyConfig:
     middle_route: str
     custom_model_id: str
     target_model_id: str
+    protocol: str
+    anthropic_version: str
     stream_mode: str | None
     debug_mode: bool
     disable_ssl_strict_mode: bool
@@ -66,6 +72,18 @@ def normalize_middle_route(value: str | None) -> str:
     return raw_value
 
 
+def normalize_protocol(value: str | None) -> str:
+    protocol = (value or "").strip().lower()
+    if protocol in SUPPORTED_PROTOCOLS:
+        return protocol
+    return DEFAULT_PROTOCOL
+
+
+def normalize_anthropic_version(value: str | None) -> str:
+    version = (value or "").strip()
+    return version or DEFAULT_ANTHROPIC_VERSION
+
+
 def build_proxy_config(
     raw_config: dict[str, Any] | None,
     *,
@@ -89,12 +107,16 @@ def build_proxy_config(
         custom_model_id=custom_model_id,
     )
     middle_route = normalize_middle_route(raw_config.get("middle_route"))
+    protocol = normalize_protocol(raw_config.get("protocol"))
+    anthropic_version = normalize_anthropic_version(raw_config.get("anthropic_version"))
 
     return ProxyConfig(
         target_api_base_url=target_api_base_url,
         middle_route=middle_route,
         custom_model_id=custom_model_id,
         target_model_id=target_model_id,
+        protocol=protocol,
+        anthropic_version=anthropic_version,
         stream_mode=raw_config.get("stream_mode"),
         debug_mode=bool(raw_config.get("debug_mode", False)),
         disable_ssl_strict_mode=bool(raw_config.get("disable_ssl_strict_mode", False)),
@@ -105,9 +127,14 @@ def build_proxy_config(
 
 __all__ = [
     "DEFAULT_MIDDLE_ROUTE",
+    "DEFAULT_PROTOCOL",
+    "ANTHROPIC_MESSAGES_PROTOCOL",
+    "DEFAULT_ANTHROPIC_VERSION",
     "ProxyConfig",
     "PLACEHOLDER_API_URL",
     "build_proxy_config",
     "load_global_config",
+    "normalize_protocol",
+    "normalize_anthropic_version",
     "normalize_middle_route",
 ]

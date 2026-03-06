@@ -75,7 +75,7 @@
     --mtga-accent-strong: #4338ca;
     --mtga-warn: #f59e0b;
     --mtga-text: #0f172a;
-    --mtga-text-muted: #5b6475;
+    --mtga-text-muted: #475569;
   }
   /* 自定义全局滚动条样式 */
   ::-webkit-scrollbar {
@@ -115,6 +115,10 @@
       radial-gradient(circle at 82% 86%, rgba(168, 85, 247, 0.12), transparent 42%),
       linear-gradient(135deg, #f8faff 0%, #eef2ff 45%, #eef6ff 100%);
     color: var(--mtga-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-synthesis: none;
   }
 }
 
@@ -157,12 +161,12 @@
 
 /* 品牌色弹窗按钮 */
 @utility mtga-btn-dialog-primary {
-  @apply mtga-btn-dialog btn-primary font-bold shadow-lg shadow-primary/20;
+  @apply mtga-btn-dialog btn-primary font-semibold shadow-lg shadow-primary/20;
 }
 
 /* 危险态弹窗按钮 */
 @utility mtga-btn-dialog-error {
-  @apply mtga-btn-dialog btn-error text-white font-bold shadow-lg shadow-error/20;
+  @apply mtga-btn-dialog btn-error text-white font-semibold shadow-lg shadow-error/20;
 }
 
 /* 幽灵态弹窗按钮 (通常用于取消) */
@@ -171,6 +175,10 @@
 }
 
 @layer components {
+  .btn {
+    @apply font-medium;
+  }
+
   /**
    * MTGA 标准输入框组件
    * 默认自带右侧清空按钮的空间，并支持悬停显示清空按钮
@@ -228,15 +236,15 @@
   }
 
   .mtga-card-title {
-    @apply text-base font-semibold tracking-tight text-slate-900;
+    @apply text-base font-medium tracking-tight text-slate-900;
   }
 
   .mtga-card-subtitle {
-    @apply text-xs text-slate-500;
+    @apply text-xs text-slate-600;
   }
 
   .mtga-chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/30 px-3 py-1 text-xs text-slate-600 shadow-sm;
+    @apply inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/30 px-3 py-1 text-xs text-slate-700 shadow-sm;
   }
 
   .mtga-soft-panel {
@@ -284,14 +292,15 @@
     border: 1px solid var(--mtga-accent);
     padding: 0.5rem 0.75rem;
     border-radius: 0.75rem; /* 匹配按钮的 rounded-xl */
-    font-size: 0.75rem;
-    font-weight: 500;
-    line-height: 1.25rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.35rem;
     box-shadow: 0 10px 20px -6px rgba(99, 102, 241, 0.28);
     white-space: pre-line;
     text-align: left;
-    word-break: break-all;
-    max-width: var(--mtga-tooltip-max, 280px);
+    word-break: normal;
+    overflow-wrap: anywhere;
+    max-width: var(--mtga-tooltip-max, 320px);
 
     /* 动画效果 */
     animation: mtga-tooltip-in 0.15s ease-out forwards;
@@ -326,11 +335,11 @@
   @keyframes mtga-tooltip-in {
     from {
       opacity: 0;
-      transform: scale(0.95) translateY(4px);
+      transform: translateY(4px);
     }
     to {
       opacity: 1;
-      transform: scale(1) translateY(0);
+      transform: translateY(0);
     }
   }
 

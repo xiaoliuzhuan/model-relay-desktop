@@ -1,6 +1,29 @@
 # CHANGELOG
 
-## v2.2.0 (Latest)
+## v3.0.0 - 2026-03-06
+
+### :sparkles: 重点更新
+
+- feat(protocol): 同时支持 OpenAI 协议与 Claude（Anthropic Messages）协议接入 Trae。
+- feat(ui): 全局配置升级为“全局入口配置”语义，并增强多协议提示与冲突防护。
+- feat(proxy): 增强入口鉴权兼容（`Authorization` / `Proxy-Authorization` / `x-api-key` / `api-key` 等）。
+- feat(proxy): 增强 SSE 流式稳定性（分隔符补齐、CRLF 归一化），减少回复中断。
+- feat(ui): 运行日志支持自动滚动到最新日志。
+
+### :art: 文档更新
+
+- docs(readme): 补充 Trae 双协议配置说明与 SEO 关键词优化。
+
+## v2.2.2-rc.1 - 2026-03-05
+
+
+### :sparkles: 新功能
+
+- add anthropic messages protocol support ([f0895e1](https://github.com/xiaoliuzhuan/model-relay-desktop/commit/f0895e11284081e55230828f156a53c2ddf87daf))
+
+
+
+## v2.2.0
 ### :sparkles: 新功能
 - feat(proxy): 支持运行时热更新代理配置 (3587ada37488acdabc0f56393069b82377fdf5e1)
 ### :bug: 修复

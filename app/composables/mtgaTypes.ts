@@ -1,8 +1,12 @@
+export type ProviderProtocol = "openai" | "anthropic_messages";
+
 export type ConfigGroup = {
   name?: string;
   api_url: string;
   model_id: string;
   api_key: string;
+  protocol?: ProviderProtocol;
+  anthropic_version?: string;
   middle_route?: string;
   target_model_id?: string;
   mapped_model_id?: string;

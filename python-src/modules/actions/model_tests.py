@@ -5,7 +5,13 @@ from typing import Any, Protocol, cast
 
 import requests
 
-from modules.proxy.proxy_config import normalize_middle_route
+from modules.proxy.proxy_config import (
+    ANTHROPIC_MESSAGES_PROTOCOL,
+    DEFAULT_ANTHROPIC_VERSION,
+    DEFAULT_PROTOCOL,
+    normalize_middle_route,
+    normalize_protocol,
+)
 
 HTTP_OK = 200
 CONTENT_PREVIEW_LEN = 50
@@ -77,6 +83,40 @@ def _build_middle_route_path(middle_route: str, suffix: str) -> str:
     if normalized == "/":
         return f"/{suffix.lstrip('/')}"
     return f"{normalized.rstrip('/')}/{suffix.lstrip('/')}"
+
+
+def _resolve_protocol(config_group: dict[str, Any]) -> str:
+    protocol_obj = config_group.get("protocol")
+    protocol = protocol_obj if isinstance(protocol_obj, str) else DEFAULT_PROTOCOL
+    return normalize_protocol(protocol)
+
+
+def _resolve_anthropic_version(config_group: dict[str, Any]) -> str:
+    version_obj = config_group.get("anthropic_version")
+    if isinstance(version_obj, str) and version_obj.strip():
+        return version_obj.strip()
+    return DEFAULT_ANTHROPIC_VERSION
+
+
+def _build_upstream_headers(
+    config_group: dict[str, Any],
+    *,
+    protocol: str,
+) -> dict[str, str]:
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    api_key_obj = config_group.get("api_key")
+    api_key = api_key_obj if isinstance(api_key_obj, str) else ""
+    api_key = api_key.strip()
+
+    if protocol == ANTHROPIC_MESSAGES_PROTOCOL:
+        if api_key:
+            headers["x-api-key"] = api_key
+        headers["anthropic-version"] = _resolve_anthropic_version(config_group)
+        return headers
+
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    return headers
 
 
 def _log_model_list(
@@ -151,10 +191,8 @@ def _fetch_model_payload(
         "models",
     )
     test_url = f"{api_url}{route_path}"
-    headers: dict[str, str] = {}
-    api_key = config_group.get("api_key", "")
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+    protocol = _resolve_protocol(config_group)
+    headers = _build_upstream_headers(config_group, protocol=protocol)
 
     log_func(f"正在获取模型列表: {test_url}")
 
@@ -183,7 +221,6 @@ def _run_model_connection_test(
     config_group: dict[str, Any],
     log_func: Callable[[str], None],
 ) -> None:
-    model_id = "未知模型"
     model_id = config_group.get("model_id", "")
     if not config_group.get("api_url") or not model_id:
         log_func("检查失败: API URL或模型ID为空")
@@ -193,6 +230,45 @@ def _run_model_connection_test(
     if payload is None:
         return
     _log_model_list(payload, model_id, log_func)
+
+
+def _extract_chat_preview(response_json: dict[str, Any], *, protocol: str) -> tuple[str, int | str]:
+    if protocol == ANTHROPIC_MESSAGES_PROTOCOL:
+        content_obj = response_json.get("content")
+        content = ""
+        if isinstance(content_obj, list):
+            for raw_item in cast(list[object], content_obj):
+                if not isinstance(raw_item, dict):
+                    continue
+                item = cast(dict[str, Any], raw_item)
+                if item.get("type") == "text":
+                    text_obj = item.get("text")
+                    if isinstance(text_obj, str):
+                        content += text_obj
+        usage_obj = response_json.get("usage")
+        total_tokens: int | str = "未知"
+        if isinstance(usage_obj, dict):
+            usage = cast(dict[str, Any], usage_obj)
+            in_tokens = usage.get("input_tokens")
+            out_tokens = usage.get("output_tokens")
+            if isinstance(in_tokens, int) and isinstance(out_tokens, int):
+                total_tokens = in_tokens + out_tokens
+        return content, total_tokens
+
+    content = (
+        response_json.get("choices", [{}])[0]
+        .get("message", {})
+        .get("content", "")
+        .strip()
+    )
+    usage_obj = response_json.get("usage")
+    total_tokens: int | str = "未知"
+    if isinstance(usage_obj, dict):
+        usage = cast(dict[str, Any], usage_obj)
+        tokens_obj = usage.get("total_tokens")
+        if isinstance(tokens_obj, int):
+            total_tokens = tokens_obj
+    return content, total_tokens
 
 
 def fetch_model_list(
@@ -228,35 +304,44 @@ def test_chat_completion(
     log_func: Callable[[str], None] = print,
     thread_manager: ThreadRunner,
 ) -> None:
-    """测试聊天补全连接（POST /v1/chat/completions）。"""
+    """测试模型连接。OpenAI 使用 chat/completions，Claude 使用 messages。"""
 
     def run_test():
         model_id = "未知模型"
         try:
             api_url = config_group.get("api_url", "").rstrip("/")
             model_id = config_group.get("model_id", "")
-            api_key = config_group.get("api_key", "")
+            protocol = _resolve_protocol(config_group)
 
             if not api_url or not model_id:
                 log_func("测活失败: API URL或模型ID为空")
                 return
 
-            route_path = _build_middle_route_path(
-                config_group.get("middle_route", ""),
-                "chat/completions",
-            )
+            if protocol == ANTHROPIC_MESSAGES_PROTOCOL:
+                route_path = _build_middle_route_path(
+                    config_group.get("middle_route", ""),
+                    "messages",
+                )
+                test_data = {
+                    "model": model_id,
+                    "messages": [{"role": "user", "content": [{"type": "text", "text": "1"}]}],
+                    "max_tokens": 1,
+                    "temperature": 0,
+                }
+            else:
+                route_path = _build_middle_route_path(
+                    config_group.get("middle_route", ""),
+                    "chat/completions",
+                )
+                test_data = {
+                    "model": model_id,
+                    "messages": [{"role": "user", "content": "1"}],
+                    "max_tokens": 1,
+                    "temperature": 0,
+                }
+
             test_url = f"{api_url}{route_path}"
-
-            headers = {"Content-Type": "application/json"}
-            if api_key:
-                headers["Authorization"] = f"Bearer {api_key}"
-
-            test_data = {
-                "model": model_id,
-                "messages": [{"role": "user", "content": "1"}],
-                "max_tokens": 1,
-                "temperature": 0,
-            }
+            headers = _build_upstream_headers(config_group, protocol=protocol)
 
             log_func(f"正在测活模型: {model_id} (会消耗少量tokens)")
 
@@ -265,20 +350,18 @@ def test_chat_completion(
             if response.status_code == HTTP_OK:
                 log_func(f"✅ 模型测活成功: {model_id}")
                 try:
-                    completion_info = response.json()
-                    if "choices" in completion_info and completion_info["choices"]:
-                        content = (
-                            completion_info["choices"][0]
-                            .get("message", {})
-                            .get("content", "")
-                            .strip()
+                    completion_info_obj = response.json()
+                    if isinstance(completion_info_obj, dict):
+                        completion_info = cast(dict[str, Any], completion_info_obj)
+                        content, total_tokens = _extract_chat_preview(
+                            completion_info,
+                            protocol=protocol,
                         )
                         preview = content[:CONTENT_PREVIEW_LEN]
                         suffix = "..." if len(content) > CONTENT_PREVIEW_LEN else ""
-                        log_func(f"   响应内容: {preview}{suffix}")
-                    if "usage" in completion_info:
-                        usage = completion_info["usage"]
-                        log_func(f"   消耗tokens: {usage.get('total_tokens', '未知')}")
+                        if preview:
+                            log_func(f"   响应内容: {preview}{suffix}")
+                        log_func(f"   消耗tokens: {total_tokens}")
                 except Exception:
                     log_func("   (响应成功，但无法解析详细信息)")
             else:

@@ -7,6 +7,7 @@ const props = withDefaults(
     apiUrl?: string;
     modelId?: string;
     apiKey?: string;
+    protocol?: "openai" | "anthropic_messages";
     middleRoute?: string;
     middleRouteEnabled?: boolean;
     formError?: string;
@@ -21,6 +22,7 @@ const props = withDefaults(
     apiUrl: "",
     modelId: "",
     apiKey: "",
+    protocol: "openai",
     middleRoute: "",
     middleRouteEnabled: false,
     formError: "",
@@ -36,6 +38,7 @@ const emit = defineEmits<{
   (event: "update:apiUrl", value: string): void;
   (event: "update:modelId", value: string): void;
   (event: "update:apiKey", value: string): void;
+  (event: "update:protocol", value: "openai" | "anthropic_messages"): void;
   (event: "update:middleRoute", value: string): void;
   (event: "update:middleRouteEnabled", value: boolean): void;
   (event: "save"): void;
@@ -68,6 +71,11 @@ const apiKeyModel = computed({
   set: (value: string) => emit("update:apiKey", value),
 });
 
+const protocolModel = computed({
+  get: () => props.protocol,
+  set: (value: "openai" | "anthropic_messages") => emit("update:protocol", value),
+});
+
 const middleRouteModel = computed({
   get: () => props.middleRoute,
   set: (value: string) => emit("update:middleRoute", value),
@@ -94,6 +102,11 @@ const handleSave = () => {
 const handleFetchModels = () => {
   emit("fetch-models");
 };
+
+const protocolOptions = [
+  { label: "OpenAI Chat Completions", value: "openai" },
+  { label: "Anthropic Messages", value: "anthropic_messages" },
+];
 </script>
 
 <template>
@@ -118,6 +131,8 @@ const handleFetchModels = () => {
         icon="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
       />
 
+      <MtgaSelect v-model="protocolModel" label="上游协议" required :options="protocolOptions" />
+
       <MtgaInput
         v-model="apiUrlModel"
         label="API URL"
@@ -125,6 +140,9 @@ const handleFetchModels = () => {
         placeholder="https://api.openai.com"
         icon="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
       />
+      <p v-if="protocolModel === 'anthropic_messages'" class="text-xs text-slate-500 -mt-2">
+        支持三方中转 API 地址，不必固定为 api.anthropic.com。
+      </p>
 
       <div class="space-y-2">
         <div class="flex items-center justify-between">
@@ -160,12 +178,18 @@ const handleFetchModels = () => {
 
       <MtgaInput
         v-model="apiKeyModel"
-        label="API Key"
+        label="上游 API Key"
         required
         type="password"
         placeholder="sk-..."
         icon="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
       />
+      <p class="text-xs text-slate-500 -mt-2">
+        这里填写的是上游服务商（OpenAI/Anthropic/中转）的 API Key，仅当前配置组生效。
+      </p>
+      <p class="text-xs text-slate-500 -mt-1">
+        全局配置中的“客户端访问Key”用于客户端访问本地代理入口，不会覆盖这里。
+      </p>
 
       <div v-if="props.formError" class="alert alert-error py-2 px-3 rounded-xl">
         <svg

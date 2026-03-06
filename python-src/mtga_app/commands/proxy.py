@@ -23,12 +23,16 @@ from modules.services.cert_service import (
     check_existing_ca_cert,
     clear_ca_cert_result,
     generate_certificates_result,
+    generate_server_cert_result,
     install_ca_cert_result,
 )
 from modules.services.config_service import ConfigStore
 from modules.services.hosts_service import modify_hosts_file_result
 
 from .common import build_result_payload, collect_logs
+
+OPENAI_ENTRY_DOMAIN = "api.openai.com"
+ANTHROPIC_ENTRY_DOMAIN = "api.anthropic.com"
 
 type LogFunc = Callable[[str], None]
 
@@ -100,9 +104,7 @@ def stop_proxy_for_shutdown(*, log_func: LogFunc | None = None) -> OperationResu
         reason="shutdown",
         show_idle_message=True,
     )
-    hosts_result = modify_hosts_file_result(action="remove", log_func=_log)
-    if not hosts_result.ok:
-        _log(f"⚠️ {hosts_result.message or 'hosts 条目清理失败'}")
+    _cleanup_hosts_entries(log_func=_log)
     return result
 
 
@@ -195,6 +197,7 @@ def _build_proxy_config(
     if not config:
         log_func("❌ 错误: 没有可用的配置组")
         return None
+    config["entry_domain"] = _resolve_entry_domain(config)
     return config
 
 
@@ -214,12 +217,38 @@ def _ensure_global_config_ready_silent() -> OperationResult:
 def _build_proxy_config_silent(payload: ProxyStartPayload) -> dict[str, Any] | None:
     config_store = _get_config_store()
     stream_mode = payload.stream_mode if payload.force_stream else None
-    return proxy_orchestration.build_proxy_config(
+    config = proxy_orchestration.build_proxy_config(
         get_current_config=config_store.get_current_config,
         debug_mode=payload.debug_mode,
         disable_ssl_strict_mode=payload.disable_ssl_strict_mode,
         stream_mode=stream_mode,
     )
+    if not config:
+        return None
+    config["entry_domain"] = _resolve_entry_domain(config)
+    return config
+
+
+def _resolve_entry_domain(config: dict[str, Any]) -> str:
+    raw_entry_domain = str(config.get("entry_domain") or "").strip().lower()
+    if raw_entry_domain:
+        return raw_entry_domain
+
+    raw_protocol = str(config.get("protocol") or "").strip().lower()
+    if raw_protocol == "anthropic_messages":
+        return ANTHROPIC_ENTRY_DOMAIN
+    return OPENAI_ENTRY_DOMAIN
+
+
+def _hosts_remove_for_domain(*, domain: str, log_func: LogFunc) -> OperationResult:
+    return modify_hosts_file_result(action="remove", domain=domain, log_func=log_func)
+
+
+def _cleanup_hosts_entries(*, log_func: LogFunc) -> None:
+    for domain in (OPENAI_ENTRY_DOMAIN, ANTHROPIC_ENTRY_DOMAIN):
+        hosts_result = _hosts_remove_for_domain(domain=domain, log_func=log_func)
+        if not hosts_result.ok:
+            log_func(f"⚠️ {domain} hosts 条目清理失败: {hosts_result.message or '未知错误'}")
 
 
 def _modify_hosts_file(*, log_func: LogFunc, **kwargs: Any) -> OperationResult:
@@ -341,16 +370,28 @@ def _proxy_start_all_precheck(
         )
         return OperationResult.failure("没有可用的配置组"), None
 
+    entry_domain = _resolve_entry_domain(config)
+    config["entry_domain"] = entry_domain
+
+    if str(config.get("protocol") or "") == "anthropic_messages":
+        target_api = str(config.get("api_url") or "").strip()
+        if target_api and "api.anthropic.com" not in target_api:
+            log_func(
+                "ℹ️ 已启用 Anthropic 直连入口域名(api.anthropic.com)，"
+                "上游 API URL 仍使用你配置的三方中转地址"
+            )
+
     return None, config
 
 
-def _proxy_start_all_cert(log_func: LogFunc) -> OperationResult | None:
+def _proxy_start_all_cert(entry_domain: str, log_func: LogFunc) -> OperationResult | None:
     _push_proxy_step(log_func, step="cert", status="started")
     def _generate_and_install() -> OperationResult | None:
-        log_func("步骤 1/4: 生成证书")
+        log_func(f"步骤 1/4: 生成证书 ({entry_domain})")
         gen_result = generate_certificates_result(
             log_func=log_func,
             ca_common_name=DEFAULT_METADATA.ca_common_name,
+            domain=entry_domain,
         )
         if not gen_result.ok:
             _push_proxy_step(
@@ -384,8 +425,18 @@ def _proxy_start_all_cert(log_func: LogFunc) -> OperationResult | None:
     if action == "skip":
         log_func(
             f"检测到系统已存在且有效的 CA 证书 ({DEFAULT_METADATA.ca_common_name})，"
-            "跳过证书生成和安装"
+            "跳过 CA 生成和安装"
         )
+        log_func(f"步骤 1/4: 生成服务器证书 ({entry_domain})")
+        server_result = generate_server_cert_result(log_func=log_func, domain=entry_domain)
+        if not server_result.ok:
+            _push_proxy_step(
+                log_func,
+                step="cert",
+                status="failed",
+                message=server_result.message,
+            )
+            return server_result
         _push_proxy_step(log_func, step="cert", status="skipped")
         return None
 
@@ -407,10 +458,10 @@ def _proxy_start_all_cert(log_func: LogFunc) -> OperationResult | None:
     return _generate_and_install()
 
 
-def _proxy_start_all_hosts(log_func: LogFunc) -> OperationResult | None:
+def _proxy_start_all_hosts(entry_domain: str, log_func: LogFunc) -> OperationResult | None:
     _push_proxy_step(log_func, step="hosts", status="started")
-    log_func("步骤 3/4: 修改hosts文件")
-    hosts_result = modify_hosts_file_result(log_func=log_func)
+    log_func(f"步骤 3/4: 修改hosts文件 ({entry_domain})")
+    hosts_result = modify_hosts_file_result(domain=entry_domain, log_func=log_func)
     if not hosts_result.ok:
         _push_proxy_step(
             log_func,
@@ -441,6 +492,20 @@ def _proxy_start_all_proxy(config: dict[str, Any], log_func: LogFunc) -> Operati
     return start_result
 
 
+def _refresh_server_cert_for_entry_domain(
+    *, entry_domain: str, log_func: LogFunc
+) -> OperationResult:
+    log_func(f"正在刷新服务器证书 ({entry_domain})...")
+    server_result = generate_server_cert_result(
+        log_func=log_func,
+        domain=entry_domain,
+    )
+    if server_result.ok:
+        return OperationResult.success()
+    log_func("⚠️ 服务器证书刷新失败，请执行“一键启动全部服务”以重建证书链")
+    return OperationResult.failure("服务器证书刷新失败，请先执行“一键启动全部服务”")
+
+
 async def proxy_start(body: ProxyStartPayload) -> dict[str, Any]:
     logs, log_func = collect_logs()
     ready = _ensure_global_config_ready(log_func=log_func)
@@ -466,6 +531,22 @@ async def proxy_start(body: ProxyStartPayload) -> dict[str, Any]:
             logs,
             "代理服务器启动失败",
         )
+
+    entry_domain = (
+        str(config.get("entry_domain") or OPENAI_ENTRY_DOMAIN).strip() or OPENAI_ENTRY_DOMAIN
+    )
+    cert_result = _refresh_server_cert_for_entry_domain(
+        entry_domain=entry_domain,
+        log_func=log_func,
+    )
+    if not cert_result.ok:
+        _push_proxy_step(
+            log_func,
+            step="proxy",
+            status="failed",
+            message=cert_result.message,
+        )
+        return build_result_payload(cert_result, logs, "代理服务器启动失败")
 
     result = _restart_proxy_result(
         config=config,
@@ -512,9 +593,7 @@ async def proxy_stop() -> dict[str, Any]:
         log=log_func,
         show_idle_message=True,
     )
-    hosts_result = modify_hosts_file_result(action="remove", log_func=log_func)
-    if not hosts_result.ok:
-        log_func(f"⚠️ {hosts_result.message or 'hosts 条目清理失败'}")
+    _cleanup_hosts_entries(log_func=log_func)
     return build_result_payload(result, logs, "代理服务器停止完成")
 
 
@@ -538,10 +617,11 @@ async def proxy_start_all(body: ProxyStartPayload) -> dict[str, Any]:
     try:
         result, config = _proxy_start_all_precheck(body, log_func)
         if result is None and config is not None:
-            log_func("=== 开始一键启动全部服务 ===")
-            result = _proxy_start_all_cert(log_func)
-        if result is None:
-            result = _proxy_start_all_hosts(log_func)
+            entry_domain = str(config["entry_domain"])
+            log_func(f"=== 开始一键启动全部服务（入口域名: {entry_domain}）===")
+            result = _proxy_start_all_cert(entry_domain, log_func)
+        if result is None and config is not None:
+            result = _proxy_start_all_hosts(config["entry_domain"], log_func)
         if result is None and config is not None:
             result = _proxy_start_all_proxy(config, log_func)
             summary = "一键启动完成"

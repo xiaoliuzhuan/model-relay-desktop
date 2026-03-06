@@ -88,6 +88,7 @@ class ProxyRuntime:
         custom_model_id: str,
         target_model_id: str,
         stream_mode: str | None,
+        entry_domain: str,
     ) -> OperationResult:
         if self._state.running:
             self._log("代理服务器已在运行")
@@ -97,8 +98,8 @@ class ProxyRuntime:
             self._log("Flask 应用未初始化")
             return OperationResult.failure("Flask 应用未初始化")
 
-        cert_file = self._resource_manager.get_cert_file()
-        key_file = self._resource_manager.get_key_file()
+        cert_file = self._resource_manager.get_cert_file(entry_domain)
+        key_file = self._resource_manager.get_key_file(entry_domain)
 
         if not cert_file or not key_file:
             self._log("证书路径为空")
@@ -113,6 +114,7 @@ class ProxyRuntime:
             ssl_context.load_cert_chain(cert_file, key_file)
 
             self._log(f"启动代理服务器，监听 https://{host}:{port}")
+            self._log(f"入口域名: {entry_domain}")
             self._log(f"目标 API 地址: {target_api_base_url}")
             self._log(f"自定义模型 ID: {custom_model_id}")
             self._log(f"实际模型 ID: {target_model_id}")
