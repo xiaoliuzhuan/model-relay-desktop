@@ -946,13 +946,16 @@ class ProxyApp:
             response_from_target.raise_for_status()
 
             if is_stream:
+
                 def generate_stream() -> Generator[bytes]:
                     try:
                         for _, raw_event in transport.extract_sse_events(
                             response_from_target,
                             log=log,
                         ):
-                            yield raw_event
+                            if raw_event:
+                                yield raw_event
+                            yield b"\n\n"
                     finally:
                         release_transport()
                         with contextlib.suppress(Exception):
