@@ -3,12 +3,14 @@ import type { ConfigGroup, ProviderProtocol } from "~/composables/mtgaTypes";
 
 const store = useMtgaStore();
 const saving = ref(false);
+
 const mappedModelId = computed({
   get: () => store.mappedModelId.value,
   set: (value) => {
     store.mappedModelId.value = value;
   },
 });
+
 const mtgaAuthKey = computed({
   get: () => store.mtgaAuthKey.value,
   set: (value) => {
@@ -40,15 +42,26 @@ const clientProfileStorageKey = "mtga-client-profile";
 
 type ClientProfile = "trae" | "cursor" | "generic";
 
-const normalizeModelId = (value: string) => value.trim().toLowerCase();
-
 const clientProfile = ref<ClientProfile>("trae");
 
 const clientProfileLabelMap: Record<ClientProfile, string> = {
-  trae: "Trae（推荐）",
-  cursor: "Cursor（推荐命名空间）",
+  trae: "Trae",
+  cursor: "Cursor",
   generic: "通用客户端",
 };
+
+const protocolLabelMap: Record<ProviderProtocol, string> = {
+  openai: "OpenAI Chat Completions",
+  anthropic_messages: "Anthropic Messages",
+};
+
+const normalizeModelId = (value: string) => value.trim().toLowerCase();
+
+const normalizeProtocol = (value: string | undefined): ProviderProtocol =>
+  value === "anthropic_messages" ? "anthropic_messages" : "openai";
+
+const getGroupDisplayName = (group: ConfigGroup | undefined, index: number) =>
+  group?.name?.trim() || `配置组 ${index + 1}`;
 
 const ensureSafeMappedModelId = (value: string, profile: ClientProfile) => {
   const trimmed = value.trim();
@@ -73,9 +86,21 @@ const ensureSafeMappedModelId = (value: string, profile: ClientProfile) => {
   return `${trimmed}${relaySuffix}`;
 };
 
+const currentMappedModelId = computed(() => mappedModelId.value.trim());
+
+const buildPreviewMappedModelId = (profile: ClientProfile) => {
+  const fallbackByProfile: Record<ClientProfile, string> = {
+    trae: "assistant-router",
+    cursor: "claude-4.5-sonnet",
+    generic: "assistant-router",
+  };
+  const sourceModelId = currentMappedModelId.value || fallbackByProfile[profile];
+  return ensureSafeMappedModelId(sourceModelId, profile);
+};
+
 const modelNameCollisionNotice = computed(() => {
-  const currentModelId = mappedModelId.value.trim();
-  if (!currentModelId) {
+  const currentModel = currentMappedModelId.value;
+  if (!currentModel) {
     return {
       show: false,
       matchedModelId: "",
@@ -83,7 +108,7 @@ const modelNameCollisionNotice = computed(() => {
     };
   }
 
-  const normalizedModelId = normalizeModelId(currentModelId);
+  const normalizedModelId = normalizeModelId(currentModel);
   const collidesWithOfficial = officialModelNameCandidates.has(normalizedModelId);
   if (!collidesWithOfficial && clientProfile.value !== "cursor") {
     return {
@@ -93,8 +118,8 @@ const modelNameCollisionNotice = computed(() => {
     };
   }
 
-  const suggestion = ensureSafeMappedModelId(currentModelId, clientProfile.value);
-  if (suggestion === currentModelId && !collidesWithOfficial) {
+  const suggestion = ensureSafeMappedModelId(currentModel, clientProfile.value);
+  if (suggestion === currentModel && !collidesWithOfficial) {
     return {
       show: false,
       matchedModelId: "",
@@ -104,21 +129,10 @@ const modelNameCollisionNotice = computed(() => {
 
   return {
     show: true,
-    matchedModelId: currentModelId,
+    matchedModelId: currentModel,
     suggestion,
   };
 });
-
-const protocolLabelMap: Record<ProviderProtocol, string> = {
-  openai: "OpenAI Chat Completions",
-  anthropic_messages: "Anthropic Messages",
-};
-
-const normalizeProtocol = (value: string | undefined): ProviderProtocol =>
-  value === "anthropic_messages" ? "anthropic_messages" : "openai";
-
-const getGroupDisplayName = (group: ConfigGroup | undefined, index: number) =>
-  group?.name?.trim() || `配置组 ${index + 1}`;
 
 const activeGroupSummary = computed(() => {
   const groups = store.configGroups.value;
@@ -171,20 +185,49 @@ const protocolMixNotice = computed(() => {
   };
 });
 
-const mappedModelTooltip = [
-  "必填：客户端映射模型ID",
-  "给 Trae/客户端填写的统一入口模型名。",
-  "与各配置组中的“实际模型ID”互相独立。",
-  "示例：assistant-router",
-].join("\n");
+const clientGuides = computed(() => [
+  {
+    id: "trae" as const,
+    title: "Trae",
+    badge: "推荐",
+    description: "适合在 Trae 中直接添加 OpenAI / Anthropic 模型入口。",
+    modelPreview: buildPreviewMappedModelId("trae"),
+    namingHint: "若命中官方模型名，将自动追加 -relay，避免与内置模型重名。",
+  },
+  {
+    id: "cursor" as const,
+    title: "Cursor",
+    badge: "重点标记",
+    description: "适合在 Cursor 中配置自定义模型，优先使用命名空间策略。",
+    modelPreview: buildPreviewMappedModelId("cursor"),
+    namingHint: "保存时会自动改成 mr-cursor-*，最大程度规避与官方内置模型冲突。",
+  },
+]);
 
-const mtgaAuthTooltip = [
-  "必填：客户端访问Key（本地代理）",
-  "这是客户端访问本地代理入口的统一密钥。",
-  "不等于 OpenAI/Anthropic 的上游 API Key。",
-  "上游 API Key 请在各配置组中单独填写。",
-  "示例：client-access-key",
-].join("\n");
+const selectedClientGuide = computed(() => {
+  const guide = clientGuides.value.find((item) => item.id === clientProfile.value);
+  return (
+    guide || {
+      id: "generic" as const,
+      title: clientProfileLabelMap.generic,
+      badge: "通用",
+      description: "适用于通用 OpenAI 兼容客户端。",
+      modelPreview: buildPreviewMappedModelId("generic"),
+      namingHint: "建议使用不与官方模型重名的入口模型名。",
+    }
+  );
+});
+
+const mappedModelDescription = computed(() => {
+  return `当前按 ${selectedClientGuide.value.title} 场景建议使用：${selectedClientGuide.value.modelPreview}`;
+});
+
+const mtgaAuthDescription =
+  "客户端访问本地代理入口时使用的统一密钥，不等于上游 OpenAI / Anthropic API Key。";
+
+const selectClientProfile = (profile: ClientProfile) => {
+  clientProfile.value = profile;
+};
 
 onMounted(() => {
   const storedProfile = localStorage.getItem(clientProfileStorageKey);
@@ -198,12 +241,14 @@ watch(clientProfile, (profile) => {
 });
 
 const handleSave = async () => {
-  const currentMappedModelId = store.mappedModelId.value.trim();
-  const safeMappedModelId = ensureSafeMappedModelId(currentMappedModelId, clientProfile.value);
-  if (safeMappedModelId && safeMappedModelId !== currentMappedModelId) {
+  const safeMappedModelId = ensureSafeMappedModelId(
+    currentMappedModelId.value,
+    clientProfile.value,
+  );
+  if (safeMappedModelId && safeMappedModelId !== currentMappedModelId.value) {
     store.mappedModelId.value = safeMappedModelId;
     store.appendLog(
-      `已按${clientProfileLabelMap[clientProfile.value]}规则自动调整模型入口名: ${safeMappedModelId}`,
+      `已按 ${selectedClientGuide.value.title} 规则自动调整模型入口名: ${safeMappedModelId}`,
     );
   }
 
@@ -211,9 +256,11 @@ const handleSave = async () => {
     store.appendLog("错误: 客户端映射模型ID和客户端访问Key都是必填项");
     return;
   }
+
   saving.value = true;
   const ok = await store.saveConfig();
   saving.value = false;
+
   if (ok) {
     store.appendLog("全局配置已保存");
   } else {
@@ -223,111 +270,160 @@ const handleSave = async () => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex items-start justify-between gap-4">
     <div>
       <h2 class="mtga-card-title">全局入口配置</h2>
-      <p class="mtga-card-subtitle">只负责客户端入口，不承载上游协议参数</p>
+      <p class="mtga-card-subtitle">统一客户端入口，协议与上游参数仍由配置组控制</p>
     </div>
-    <span class="mtga-chip">客户端入口参数</span>
+    <span class="mtga-chip shrink-0">客户端入口参数</span>
   </div>
-  <div class="mt-4 space-y-4">
-    <div class="alert alert-info rounded-xl py-2 px-3 text-sm">
-      <span>
-        说明：这里配置的是客户端访问本地代理的统一入口参数，不是上游厂商 API 参数。上游 API
-        URL、模型ID、API Key 请在“代理配置组”中设置。
-      </span>
-    </div>
 
-    <div class="mtga-soft-panel bg-white/70 space-y-3">
-      <label class="form-control w-full max-w-xs">
-        <span class="label-text text-xs text-slate-600">客户端场景</span>
-        <select v-model="clientProfile" class="select select-sm select-bordered rounded-lg mt-1">
-          <option value="trae">Trae（推荐）</option>
-          <option value="cursor">Cursor（推荐命名空间）</option>
-          <option value="generic">通用客户端</option>
-        </select>
-      </label>
-      <p class="text-xs text-slate-600">
-        Cursor 场景会自动把入口模型名改为 `mr-cursor-...`
-        命名空间，最大程度规避与官方内置模型重名冲突。
+  <div class="mt-5 space-y-4">
+    <div
+      class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
+    >
+      <p class="font-medium text-slate-900">这一页只做两件事</p>
+      <p class="mt-1 text-slate-600">
+        维护客户端统一入口模型名与访问密钥，不承载上游 API URL、上游模型ID、上游 API Key。
       </p>
     </div>
 
-    <div class="mtga-soft-panel bg-white/70">
-      <div class="grid gap-2 text-sm sm:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="flex items-center justify-between gap-3">
         <div>
-          <p class="text-slate-500">当前生效配置组</p>
-          <p class="text-slate-800">{{ activeGroupSummary.groupName }}</p>
+          <p class="text-sm font-medium text-slate-900">Trae / Cursor 双端接入</p>
+          <p class="mt-1 text-xs text-slate-600">页面引导分开，底层入口参数仍保持统一存储</p>
         </div>
-        <div>
-          <p class="text-slate-500">当前上游协议</p>
-          <p class="text-slate-800">{{ activeGroupSummary.protocolLabel }}</p>
+        <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">重点区域</span>
+      </div>
+
+      <div class="mt-4 grid gap-3 lg:grid-cols-2">
+        <button
+          v-for="guide in clientGuides"
+          :key="guide.id"
+          type="button"
+          class="rounded-2xl border p-4 text-left transition-all duration-150"
+          :class="
+            clientProfile === guide.id
+              ? 'border-indigo-300 bg-indigo-50/80 shadow-[0_10px_30px_-20px_rgba(79,70,229,0.45)]'
+              : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+          "
+          @click="selectClientProfile(guide.id)"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-base font-medium text-slate-900">{{ guide.title }}</p>
+              <p class="mt-1 text-sm text-slate-600">{{ guide.description }}</p>
+            </div>
+            <span
+              class="rounded-full px-2.5 py-1 text-[11px]"
+              :class="
+                clientProfile === guide.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 text-slate-600'
+              "
+            >
+              {{ clientProfile === guide.id ? "当前选择" : guide.badge }}
+            </span>
+          </div>
+
+          <div
+            class="mt-4 grid gap-3 rounded-xl border border-slate-200/80 bg-white/80 p-3 sm:grid-cols-2"
+          >
+            <div>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">推荐入口模型名</p>
+              <p class="mt-1 break-all text-sm text-slate-800">{{ guide.modelPreview }}</p>
+            </div>
+            <div>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">命名策略</p>
+              <p class="mt-1 text-sm text-slate-700">{{ guide.namingHint }}</p>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="grid gap-3 sm:grid-cols-3">
+        <div class="rounded-xl bg-slate-50 px-4 py-3">
+          <p class="text-[11px] uppercase tracking-wide text-slate-400">当前生效配置组</p>
+          <p class="mt-1 text-sm text-slate-900">{{ activeGroupSummary.groupName }}</p>
         </div>
-        <div>
-          <p class="text-slate-500">当前上游模型ID</p>
-          <p class="text-slate-800 break-all">{{ activeGroupSummary.targetModelId }}</p>
+        <div class="rounded-xl bg-slate-50 px-4 py-3">
+          <p class="text-[11px] uppercase tracking-wide text-slate-400">当前上游协议</p>
+          <p class="mt-1 text-sm text-slate-900">{{ activeGroupSummary.protocolLabel }}</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 px-4 py-3">
+          <p class="text-[11px] uppercase tracking-wide text-slate-400">当前上游模型ID</p>
+          <p class="mt-1 break-all text-sm text-slate-900">
+            {{ activeGroupSummary.targetModelId }}
+          </p>
         </div>
       </div>
-      <p class="mt-2 text-xs text-slate-600">
-        多协议共存时，请在“代理配置组”切换协议和上游参数；本页两项参数始终作为统一客户端入口。
+      <p class="mt-3 text-xs text-slate-600">
+        多协议共存时，请在“代理配置组”切换当前生效协议；本页两项始终只作为统一客户端入口。
       </p>
     </div>
 
-    <div v-if="protocolMixNotice.show" class="alert alert-warning rounded-xl py-2 px-3 text-sm">
-      <span>
-        检测到同时存在 OpenAI 与 Anthropic Messages 配置组。当前仅选中配置组生效：{{
-          protocolMixNotice.activeGroupName
-        }}（{{ protocolMixNotice.activeProtocolLabel }}）。
-      </span>
+    <div
+      v-if="protocolMixNotice.show"
+      class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm"
+    >
+      检测到同时存在 OpenAI 与 Anthropic Messages 配置组。当前仅配置组
+      <span class="font-medium">{{ protocolMixNotice.activeGroupName }}</span>
+      生效（{{ protocolMixNotice.activeProtocolLabel }}）。
     </div>
 
-    <div class="mtga-soft-panel space-y-4">
-      <div
-        class="tooltip mtga-tooltip w-full"
-        :data-tip="mappedModelTooltip"
-        style="--mtga-tooltip-max: 360px"
-      >
+    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-medium text-slate-900">统一入口参数</p>
+          <p class="mt-1 text-xs text-slate-600">
+            保存后会同步到所有配置组，但不会覆盖上游 API 参数
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-4">
         <MtgaInput
           v-model="mappedModelId"
           label="客户端映射模型ID"
-          placeholder="例如：assistant-router"
+          :placeholder="selectedClientGuide.modelPreview"
+          :description="mappedModelDescription"
           required
         />
-      </div>
 
-      <div
-        v-if="modelNameCollisionNotice.show"
-        class="alert alert-warning rounded-xl py-2 px-3 text-xs"
-      >
-        <span>
-          当前入口模型名（{{ modelNameCollisionNotice.matchedModelId }}）在
-          {{ clientProfileLabelMap[clientProfile] }}
-          场景下可能与内置模型冲突。点击“保存全局配置”时会自动改为：{{
-            modelNameCollisionNotice.suggestion
-          }}。
-        </span>
-      </div>
+        <div
+          v-if="modelNameCollisionNotice.show"
+          class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+        >
+          当前入口模型名
+          <span class="font-medium">{{ modelNameCollisionNotice.matchedModelId }}</span>
+          在 {{ selectedClientGuide.title }} 场景下容易与内置模型冲突。点击保存后将自动调整为
+          <span class="font-medium">{{ modelNameCollisionNotice.suggestion }}</span
+          >。
+        </div>
 
-      <div
-        class="tooltip mtga-tooltip w-full"
-        :data-tip="mtgaAuthTooltip"
-        style="--mtga-tooltip-max: 360px"
-      >
         <MtgaInput
           v-model="mtgaAuthKey"
           label="客户端访问Key"
           placeholder="例如：client-access-key"
+          :description="mtgaAuthDescription"
           type="password"
           required
         />
       </div>
-    </div>
 
-    <div class="flex items-center justify-between gap-3">
-      <span class="text-xs text-slate-500">保存后会应用到所有配置组（仅入口参数）</span>
-      <button class="btn btn-primary btn-sm px-4 rounded-xl" :disabled="saving" @click="handleSave">
-        保存全局配置
-      </button>
+      <div class="mt-5 flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-500">建议先确认当前配置组，再保存入口参数。</span>
+        <button
+          class="btn btn-primary btn-sm rounded-xl px-4"
+          :disabled="saving"
+          @click="handleSave"
+        >
+          保存全局配置
+        </button>
+      </div>
     </div>
   </div>
 </template>
