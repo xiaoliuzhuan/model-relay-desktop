@@ -802,7 +802,7 @@ class ProxyApp:
             ), 500
 
         auth_header = request.headers.get("Authorization")
-        x_api_key = request.headers.get("x-api-key")
+        x_api_key = request.headers.get("x-api-key") or request.headers.get("api-key")
         if not auth.verify(auth_header, x_api_key):
             self.log_func("模型列表请求鉴权失败")
             return jsonify(
@@ -900,7 +900,7 @@ class ProxyApp:
         request_data = cast(dict[str, Any], request_data_obj)
 
         auth_header = request.headers.get("Authorization")
-        x_api_key = request.headers.get("x-api-key")
+        x_api_key = request.headers.get("x-api-key") or request.headers.get("api-key")
         if not auth.verify(auth_header, x_api_key):
             release_transport()
             return jsonify(
@@ -1081,7 +1081,7 @@ class ProxyApp:
                 request_data["stream"] = stream_value
 
         auth_header = request.headers.get("Authorization")
-        x_api_key = request.headers.get("x-api-key")
+        x_api_key = request.headers.get("x-api-key") or request.headers.get("api-key")
         if not auth.verify(auth_header, x_api_key):
             log("聊天补全请求MTGA鉴权失败")
             release_transport()

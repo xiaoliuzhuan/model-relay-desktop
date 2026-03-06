@@ -22,6 +22,14 @@ class ProxyAuth:
         token = value.strip()
         if len(token) >= BEARER_PARTS_COUNT and token[0] == token[-1] and token[0] in {'"', "'"}:
             token = token[1:-1].strip()
+
+        parts = token.split(None, 1)
+        if len(parts) == BEARER_PARTS_COUNT and parts[0].lower() == "bearer":
+            token = parts[1].strip()
+
+        if "," in token:
+            token = token.split(",", 1)[0].strip()
+
         return token
 
     @classmethod
