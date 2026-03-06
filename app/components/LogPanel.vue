@@ -22,7 +22,13 @@ const scrollToLatestLog = () => {
   if (!logBox.value) {
     return;
   }
+
   logBox.value.scrollTop = logBox.value.scrollHeight;
+
+  const outerScroller = logBox.value.closest(".custom-scrollbar");
+  if (outerScroller instanceof HTMLElement) {
+    outerScroller.scrollTop = outerScroller.scrollHeight;
+  }
 };
 
 const scheduleScrollToLatestLog = async () => {
@@ -52,20 +58,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between gap-3 shrink-0">
-    <div>
-      <h2 class="mtga-card-title">运行日志</h2>
-      <p class="mtga-card-subtitle">实时记录后端与操作状态</p>
+  <div class="h-full min-h-0 flex flex-col">
+    <div class="flex items-center justify-between gap-3 shrink-0">
+      <div>
+        <h2 class="mtga-card-title">运行日志</h2>
+        <p class="mtga-card-subtitle">实时记录后端与操作状态</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="mtga-chip">实时输出</span>
+        <span class="text-xs text-slate-500">共 {{ logCount }} 条</span>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="mtga-chip">实时输出</span>
-      <span class="text-xs text-slate-500">共 {{ logCount }} 条</span>
+    <div
+      ref="logBox"
+      class="mt-4 flex-1 min-h-0 overflow-auto rounded-xl border border-indigo-200/70 bg-slate-900/[0.94] p-4 text-sm font-mono text-slate-100 shadow-inner shadow-indigo-900/20"
+    >
+      <pre class="whitespace-pre-wrap leading-relaxed">{{ formattedLogs }}</pre>
     </div>
-  </div>
-  <div
-    ref="logBox"
-    class="mt-4 flex-1 overflow-auto rounded-xl border border-indigo-200/70 bg-slate-900/[0.94] p-4 text-sm font-mono text-slate-100 shadow-inner shadow-indigo-900/20"
-  >
-    <pre class="whitespace-pre-wrap leading-relaxed">{{ formattedLogs }}</pre>
   </div>
 </template>
