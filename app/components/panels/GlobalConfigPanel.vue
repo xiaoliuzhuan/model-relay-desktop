@@ -219,6 +219,16 @@ const selectedClientGuide = computed(() => {
 });
 
 const copiedGuideId = ref<ClientProfile | null>(null);
+const copyToastMessage = ref("");
+
+const showCopyToast = (message: string) => {
+  copyToastMessage.value = message;
+  window.setTimeout(() => {
+    if (copyToastMessage.value === message) {
+      copyToastMessage.value = "";
+    }
+  }, 1800);
+};
 
 const mappedModelDescription = computed(() => {
   return `当前按 ${selectedClientGuide.value.title} 场景建议使用：${selectedClientGuide.value.modelPreview}`;
@@ -266,6 +276,7 @@ const copyClientGuide = async (profile: ClientProfile) => {
     await navigator.clipboard.writeText(buildClientGuideCopyText(profile));
     copiedGuideId.value = profile;
     store.appendLog(`已复制 ${clientProfileLabelMap[profile]} 配置说明`);
+    showCopyToast(`已复制 ${clientProfileLabelMap[profile]} 配置说明`);
     window.setTimeout(() => {
       if (copiedGuideId.value === profile) {
         copiedGuideId.value = null;
@@ -273,6 +284,23 @@ const copyClientGuide = async (profile: ClientProfile) => {
     }, 1800);
   } catch {
     store.appendLog(`复制 ${clientProfileLabelMap[profile]} 配置说明失败`);
+  }
+};
+
+const copyFieldValue = async (kind: "model" | "key") => {
+  const value = kind === "model" ? mappedModelId.value.trim() : mtgaAuthKey.value.trim();
+  if (!value) {
+    store.appendLog(kind === "model" ? "暂无可复制的模型名" : "暂无可复制的访问Key");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    const successMessage = kind === "model" ? "已复制客户端映射模型ID" : "已复制客户端访问Key";
+    store.appendLog(successMessage);
+    showCopyToast(successMessage);
+  } catch {
+    store.appendLog(kind === "model" ? "复制客户端映射模型ID失败" : "复制客户端访问Key失败");
   }
 };
 
@@ -335,6 +363,21 @@ const handleSave = async () => {
   </div>
 
   <div class="mt-5 space-y-4">
+    <Transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="translate-y-1 opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-1 opacity-0"
+    >
+      <div
+        v-if="copyToastMessage"
+        class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 shadow-sm"
+      >
+        {{ copyToastMessage }}
+      </div>
+    </Transition>
     <div
       class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
     >
@@ -472,6 +515,20 @@ const handleSave = async () => {
           <p class="mt-1 text-xs text-slate-600">
             保存后会同步到所有配置组，但不会覆盖上游 API 参数
           </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-xs btn-outline rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
+            @click="copyFieldValue('model')"
+          >
+            复制模型名
+          </button>
+          <button
+            class="btn btn-xs btn-outline rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
+            @click="copyFieldValue('key')"
+          >
+            复制访问Key
+          </button>
         </div>
       </div>
 
