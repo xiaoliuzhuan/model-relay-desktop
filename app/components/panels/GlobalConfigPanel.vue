@@ -34,7 +34,24 @@ const officialModelNameCandidates = new Set([
   "glm-4.6",
 ]);
 
+const relaySuffix = "-relay";
+
 const normalizeModelId = (value: string) => value.trim().toLowerCase();
+
+const ensureSafeMappedModelId = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+  const normalized = normalizeModelId(trimmed);
+  if (!officialModelNameCandidates.has(normalized)) {
+    return trimmed;
+  }
+  if (normalized.endsWith(relaySuffix)) {
+    return trimmed;
+  }
+  return `${trimmed}${relaySuffix}`;
+};
 
 const modelNameCollisionNotice = computed(() => {
   const currentModelId = mappedModelId.value.trim();
@@ -120,6 +137,13 @@ const mtgaAuthTooltip = [
 ].join("\n");
 
 const handleSave = async () => {
+  const currentMappedModelId = store.mappedModelId.value.trim();
+  const safeMappedModelId = ensureSafeMappedModelId(currentMappedModelId);
+  if (safeMappedModelId && safeMappedModelId !== currentMappedModelId) {
+    store.mappedModelId.value = safeMappedModelId;
+    store.appendLog(`检测到模型名与官方模型重合，已自动调整为: ${safeMappedModelId}`);
+  }
+
   if (!store.mappedModelId.value || !store.mtgaAuthKey.value) {
     store.appendLog("错误: 客户端映射模型ID和客户端访问Key都是必填项");
     return;
@@ -179,7 +203,7 @@ const handleSave = async () => {
       >
         <span>
           当前映射模型ID（{{ modelNameCollisionNotice.matchedModelId }}）与常见官方模型名重合，Trae
-          可能误判为内置模型导致不走自定义通道。建议改为不重名，例如：{{
+          可能误判为内置模型导致不走自定义通道。点击“保存全局配置”时会自动改为：{{
             modelNameCollisionNotice.matchedModelId
           }}-relay。
         </span>
