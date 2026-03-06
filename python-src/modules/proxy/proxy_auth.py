@@ -10,16 +10,29 @@ from modules.proxy.proxy_config import (
 
 type LogFunc = Callable[[str], None]
 
+BEARER_PARTS_COUNT = 2
+
 
 @dataclass(frozen=True)
 class ProxyAuth:
     mtga_auth_key: str = ""
 
     @staticmethod
-    def _extract_token(auth_header: str | None, x_api_key: str | None = None) -> str:
-        if auth_header:
-            return auth_header[7:] if auth_header.startswith("Bearer ") else auth_header
-        return (x_api_key or "").strip()
+    def _normalize_token(value: str) -> str:
+        token = value.strip()
+        if len(token) >= BEARER_PARTS_COUNT and token[0] == token[-1] and token[0] in {'"', "'"}:
+            token = token[1:-1].strip()
+        return token
+
+    @classmethod
+    def _extract_token(cls, auth_header: str | None, x_api_key: str | None = None) -> str:
+        auth_value = (auth_header or "").strip()
+        if auth_value:
+            parts = auth_value.split(None, 1)
+            if len(parts) == BEARER_PARTS_COUNT and parts[0].lower() == "bearer":
+                return cls._normalize_token(parts[1])
+            return cls._normalize_token(auth_value)
+        return cls._normalize_token(x_api_key or "")
 
     def verify(self, auth_header: str | None, x_api_key: str | None = None) -> bool:
         provided_key = self._extract_token(auth_header, x_api_key)
