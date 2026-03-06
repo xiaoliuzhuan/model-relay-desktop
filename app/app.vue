@@ -186,7 +186,7 @@ onBeforeUnmount(() => {
                       :d="item.icon"
                     />
                   </svg>
-                  <span class="truncate text-sm font-semibold tracking-[0.01em]">{{
+                  <span class="truncate text-sm font-medium tracking-[0.01em]">{{
                     item.name
                   }}</span>
                 </a>
@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
               </div>
 
               <button
-                class="btn btn-xs btn-outline rounded-lg border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 font-bold w-full"
+                class="btn btn-xs btn-outline rounded-lg border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 font-medium w-full"
                 @click="runCheckUpdates"
               >
                 检查更新

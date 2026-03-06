@@ -87,6 +87,27 @@ const normalizeProtocol = (value: string | undefined): ProviderProtocol =>
 const getGroupDisplayName = (group: ConfigGroup | undefined, index: number) =>
   group?.name?.trim() || `配置组 ${index + 1}`;
 
+const activeGroupSummary = computed(() => {
+  const groups = store.configGroups.value;
+  if (!groups.length) {
+    return {
+      groupName: "未配置",
+      protocolLabel: "未配置",
+      targetModelId: "未配置",
+    };
+  }
+
+  const activeIndex = Math.min(Math.max(store.currentConfigIndex.value, 0), groups.length - 1);
+  const activeGroup = groups[activeIndex];
+  const activeProtocol = normalizeProtocol(activeGroup?.protocol);
+
+  return {
+    groupName: getGroupDisplayName(activeGroup, activeIndex),
+    protocolLabel: protocolLabelMap[activeProtocol],
+    targetModelId: activeGroup?.model_id?.trim() || "未配置",
+  };
+});
+
 const protocolMixNotice = computed(() => {
   const groups = store.configGroups.value;
   if (!groups.length) {
@@ -110,14 +131,10 @@ const protocolMixNotice = computed(() => {
     };
   }
 
-  const activeIndex = Math.min(Math.max(store.currentConfigIndex.value, 0), groups.length - 1);
-  const activeGroup = groups[activeIndex];
-  const activeProtocol = normalizeProtocol(activeGroup?.protocol);
-
   return {
     show: true,
-    activeGroupName: getGroupDisplayName(activeGroup, activeIndex),
-    activeProtocolLabel: protocolLabelMap[activeProtocol],
+    activeGroupName: activeGroupSummary.value.groupName,
+    activeProtocolLabel: activeGroupSummary.value.protocolLabel,
   };
 });
 
@@ -162,20 +179,40 @@ const handleSave = async () => {
 <template>
   <div class="flex items-center justify-between gap-3">
     <div>
-      <h2 class="mtga-card-title">全局配置</h2>
-      <p class="mtga-card-subtitle">管理客户端入口模型与本地代理鉴权</p>
+      <h2 class="mtga-card-title">全局入口配置</h2>
+      <p class="mtga-card-subtitle">只负责客户端入口，不承载上游协议参数</p>
     </div>
-    <span class="mtga-chip">全局入口参数</span>
+    <span class="mtga-chip">客户端入口参数</span>
   </div>
   <div class="mt-4 space-y-4">
-    <div class="alert alert-info rounded-xl py-2 px-3 text-xs">
+    <div class="alert alert-info rounded-xl py-2 px-3 text-sm">
       <span>
         说明：这里配置的是客户端访问本地代理的统一入口参数，不是上游厂商 API 参数。上游 API
         URL、模型ID、API Key 请在“代理配置组”中设置。
       </span>
     </div>
 
-    <div v-if="protocolMixNotice.show" class="alert alert-warning rounded-xl py-2 px-3 text-xs">
+    <div class="mtga-soft-panel bg-white/70">
+      <div class="grid gap-2 text-sm sm:grid-cols-3">
+        <div>
+          <p class="text-slate-500">当前生效配置组</p>
+          <p class="text-slate-800">{{ activeGroupSummary.groupName }}</p>
+        </div>
+        <div>
+          <p class="text-slate-500">当前上游协议</p>
+          <p class="text-slate-800">{{ activeGroupSummary.protocolLabel }}</p>
+        </div>
+        <div>
+          <p class="text-slate-500">当前上游模型ID</p>
+          <p class="text-slate-800 break-all">{{ activeGroupSummary.targetModelId }}</p>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-slate-600">
+        多协议共存时，请在“代理配置组”切换协议和上游参数；本页两项参数始终作为统一客户端入口。
+      </p>
+    </div>
+
+    <div v-if="protocolMixNotice.show" class="alert alert-warning rounded-xl py-2 px-3 text-sm">
       <span>
         检测到同时存在 OpenAI 与 Anthropic Messages 配置组。当前仅选中配置组生效：{{
           protocolMixNotice.activeGroupName
