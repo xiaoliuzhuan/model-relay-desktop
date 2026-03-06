@@ -259,6 +259,8 @@ onBeforeUnmount(() => {
       @open-release="openUpdateRelease"
     />
 
+    <MtgaToastStack />
+
     <!-- 全局 Tooltip 代理，用于逃逸容器剪裁 -->
     <div
       v-show="tooltipProxy.show"

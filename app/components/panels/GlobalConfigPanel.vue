@@ -2,6 +2,7 @@
 import type { ConfigGroup, ProviderProtocol } from "~/composables/mtgaTypes";
 
 const store = useMtgaStore();
+const { pushToast } = useMtgaToast();
 const saving = ref(false);
 
 const mappedModelId = computed({
@@ -190,17 +191,27 @@ const clientGuides = computed(() => [
     id: "trae" as const,
     title: "Trae",
     badge: "推荐",
-    description: "适合在 Trae 中直接添加 OpenAI / Anthropic 模型入口。",
+    description: "适合在 Trae 中分别添加 OpenAI / Anthropic 自定义模型入口。",
     modelPreview: buildPreviewMappedModelId("trae"),
     namingHint: "若命中官方模型名，将自动追加 -relay，避免与内置模型重名。",
+    checklist: [
+      { label: "服务商", value: "OpenAI 或 Anthropic" },
+      { label: "模型", value: buildPreviewMappedModelId("trae") },
+      { label: "API Key", value: mtgaAuthKey.value.trim() || "客户端访问Key" },
+    ],
   },
   {
     id: "cursor" as const,
     title: "Cursor",
     badge: "重点标记",
-    description: "适合在 Cursor 中配置自定义模型，优先使用命名空间策略。",
+    description: "适合在 Cursor 中配置自定义模型，推荐使用命名空间入口名。",
     modelPreview: buildPreviewMappedModelId("cursor"),
     namingHint: "保存时会自动改成 mr-cursor-*，最大程度规避与官方内置模型冲突。",
+    checklist: [
+      { label: "接入方式", value: "OpenAI 兼容 Base URL" },
+      { label: "模型", value: buildPreviewMappedModelId("cursor") },
+      { label: "API Key", value: mtgaAuthKey.value.trim() || "客户端访问Key" },
+    ],
   },
 ]);
 
@@ -219,16 +230,6 @@ const selectedClientGuide = computed(() => {
 });
 
 const copiedGuideId = ref<ClientProfile | null>(null);
-const copyToastMessage = ref("");
-
-const showCopyToast = (message: string) => {
-  copyToastMessage.value = message;
-  window.setTimeout(() => {
-    if (copyToastMessage.value === message) {
-      copyToastMessage.value = "";
-    }
-  }, 1800);
-};
 
 const mappedModelDescription = computed(() => {
   return `当前按 ${selectedClientGuide.value.title} 场景建议使用：${selectedClientGuide.value.modelPreview}`;
@@ -276,7 +277,7 @@ const copyClientGuide = async (profile: ClientProfile) => {
     await navigator.clipboard.writeText(buildClientGuideCopyText(profile));
     copiedGuideId.value = profile;
     store.appendLog(`已复制 ${clientProfileLabelMap[profile]} 配置说明`);
-    showCopyToast(`已复制 ${clientProfileLabelMap[profile]} 配置说明`);
+    pushToast(`已复制 ${clientProfileLabelMap[profile]} 配置说明`);
     window.setTimeout(() => {
       if (copiedGuideId.value === profile) {
         copiedGuideId.value = null;
@@ -298,7 +299,7 @@ const copyFieldValue = async (kind: "model" | "key") => {
     await navigator.clipboard.writeText(value);
     const successMessage = kind === "model" ? "已复制客户端映射模型ID" : "已复制客户端访问Key";
     store.appendLog(successMessage);
-    showCopyToast(successMessage);
+    pushToast(successMessage);
   } catch {
     store.appendLog(kind === "model" ? "复制客户端映射模型ID失败" : "复制客户端访问Key失败");
   }
@@ -363,21 +364,6 @@ const handleSave = async () => {
   </div>
 
   <div class="mt-5 space-y-4">
-    <Transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="translate-y-1 opacity-0"
-      enter-to-class="translate-y-0 opacity-100"
-      leave-active-class="transition duration-100 ease-in"
-      leave-from-class="translate-y-0 opacity-100"
-      leave-to-class="translate-y-1 opacity-0"
-    >
-      <div
-        v-if="copyToastMessage"
-        class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 shadow-sm"
-      >
-        {{ copyToastMessage }}
-      </div>
-    </Transition>
     <div
       class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
     >
@@ -425,15 +411,20 @@ const handleSave = async () => {
             </span>
           </div>
 
-          <div
-            class="mt-4 grid gap-3 rounded-xl border border-slate-200/80 bg-white/80 p-3 sm:grid-cols-2"
-          >
-            <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">推荐入口模型名</p>
-              <p class="mt-1 break-all text-sm text-slate-800">{{ guide.modelPreview }}</p>
+          <div class="mt-4 rounded-xl border border-slate-200/80 bg-white/80 p-3">
+            <p class="text-[11px] uppercase tracking-wide text-slate-400">填写清单</p>
+            <div class="mt-3 space-y-2">
+              <div
+                v-for="item in guide.checklist"
+                :key="`${guide.id}-${item.label}`"
+                class="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+              >
+                <span class="text-xs text-slate-500">{{ item.label }}</span>
+                <span class="text-sm text-right text-slate-800 break-all">{{ item.value }}</span>
+              </div>
             </div>
-            <div>
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">命名策略</p>
+            <div class="mt-3 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2">
+              <p class="text-[11px] uppercase tracking-wide text-indigo-500">命名策略</p>
               <p class="mt-1 text-sm text-slate-700">{{ guide.namingHint }}</p>
             </div>
           </div>
