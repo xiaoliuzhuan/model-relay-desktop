@@ -70,7 +70,6 @@ const processConfigSwitch = async () => {
         continue;
       }
 
-      // 若有新的切换请求，跳过当前热应用，直接处理最新选择。
       if (pendingSwitchIndex.value !== null) {
         continue;
       }
@@ -146,13 +145,6 @@ const normalizeMiddleRoute = (value: string) => {
 const getDisplayName = (group: ConfigGroup, index: number) =>
   group.name?.trim() || `配置组 ${index + 1}`;
 
-/**
- * 获取 API Key 的显示文本
- * 规则：
- * 1. 长度 <= 12 位时，全部显示为星号
- * 2. 长度 > 12 位时，每超出一位显示一位明文，上限为 4 位明文
- * 3. 显示的总长度（星号+明文）与实际长度一致
- */
 const getApiKeyDisplay = (group: ConfigGroup) => {
   if ("target_model_id" in group) {
     return group.target_model_id || "(无)";
@@ -165,14 +157,52 @@ const getApiKeyDisplay = (group: ConfigGroup) => {
   const len = apiKey.length;
   const threshold = 12;
   const maxVisible = 4;
-
-  // 计算可见字符数：超出阈值的部分，且不超过上限
   const visibleCount = Math.min(Math.max(0, len - threshold), maxVisible);
 
   if (visibleCount > 0) {
     return `${"*".repeat(len - visibleCount)}${apiKey.slice(-visibleCount)}`;
   }
   return "*".repeat(len);
+};
+
+const configGroupItems = computed(() =>
+  configGroups.value.map((group, index) => {
+    const isSelected = selectedIndex.value === index;
+    const isAnthropic = group.protocol === "anthropic_messages";
+
+    return {
+      index,
+      title: group.name || "",
+      displayName: getDisplayName(group, index),
+      selectionBadgeLabel: isSelected ? "当前生效" : `#${index + 1}`,
+      selectionBadgeClass: isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600",
+      protocolText: getProtocolLabel(group),
+      protocolBadgeLabel: isAnthropic ? "Anthropic" : "OpenAI",
+      protocolBadgeClass: isAnthropic
+        ? "bg-amber-100 text-amber-700"
+        : "bg-emerald-100 text-emerald-700",
+      middleRoute: group.middle_route || "",
+      apiUrl: group.api_url || "未填写",
+      modelId: group.model_id || "未填写",
+      apiKeyDisplay: getApiKeyDisplay(group),
+      selectionHintLabel: isSelected ? "已选中" : "点击设为当前",
+      selectionHintClass: isSelected
+        ? "bg-emerald-100 text-emerald-700"
+        : "bg-slate-100 text-slate-500",
+    };
+  }),
+);
+
+const selectedApiKeyDisplay = computed(() =>
+  selectedGroup.value ? getApiKeyDisplay(selectedGroup.value) : "未配置",
+);
+
+const selectedMiddleRouteLabel = computed(
+  () => selectedGroup.value?.middle_route || `默认 ${DEFAULT_MIDDLE_ROUTE}`,
+);
+
+const selectConfigGroup = (value: number) => {
+  selectedIndex.value = value;
 };
 
 const refreshList = async () => {
@@ -397,244 +427,33 @@ const moveDown = async () => {
     </p>
   </div>
 
-  <div class="mt-4 mtga-panel-card">
-    <div class="grid gap-3 sm:grid-cols-4">
-      <div class="rounded-xl bg-slate-50 px-4 py-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">配置组总数</p>
-        <p class="mt-1 text-sm text-slate-900">{{ configStats.total }}</p>
-      </div>
-      <div class="rounded-xl bg-slate-50 px-4 py-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">OpenAI 组</p>
-        <p class="mt-1 text-sm text-slate-900">{{ configStats.openai }}</p>
-      </div>
-      <div class="rounded-xl bg-slate-50 px-4 py-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">Anthropic 组</p>
-        <p class="mt-1 text-sm text-slate-900">{{ configStats.anthropic }}</p>
-      </div>
-      <div class="rounded-xl bg-slate-50 px-4 py-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">当前选中</p>
-        <p class="mt-1 break-all text-sm text-slate-900">{{ selectedGroupSummary.name }}</p>
-      </div>
-    </div>
-
-    <div class="mt-3 grid gap-3 sm:grid-cols-3">
-      <div class="rounded-xl border border-slate-200/80 bg-white px-4 py-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">当前协议</p>
-        <p class="mt-1 text-sm text-slate-900">{{ selectedGroupSummary.protocol }}</p>
-      </div>
-      <div class="rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:col-span-2">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">当前 API URL / 模型</p>
-        <p class="mt-1 break-all text-sm text-slate-900">
-          {{ selectedGroupSummary.apiUrl }} · {{ selectedGroupSummary.modelId }}
-        </p>
-      </div>
-    </div>
-  </div>
+  <ConfigGroupOverviewSection :stats="configStats" :summary="selectedGroupSummary" />
 
   <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.95fr)]">
-    <div class="mtga-panel-card">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-sm font-medium text-slate-900">配置组列表</p>
-          <p class="mt-1 text-xs text-slate-600">
-            点击卡片即可切换当前生效的上游协议、模型路由与鉴权组合
-          </p>
-        </div>
-        <button
-          class="btn btn-xs btn-outline rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 tooltip mtga-tooltip"
-          :data-tip="refreshTooltip"
-          style="--mtga-tooltip-max: 250px"
-          @click="refreshList"
-        >
-          刷新列表
-        </button>
-      </div>
-
-      <div v-if="configGroups.length" class="mt-4 grid gap-3 lg:grid-cols-2">
-        <button
-          v-for="(group, index) in configGroups"
-          :key="index"
-          type="button"
-          class="rounded-2xl border p-4 text-left transition-all duration-150"
-          :class="
-            selectedIndex === index
-              ? 'border-indigo-300 bg-indigo-50/80 shadow-[0_10px_30px_-20px_rgba(79,70,229,0.45)]'
-              : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
-          "
-          :title="group.name || ''"
-          @click="selectedIndex = index"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="break-all text-base font-medium text-slate-900">
-                  {{ getDisplayName(group, index) }}
-                </p>
-                <span
-                  class="shrink-0 rounded-full px-2.5 py-1 text-[11px]"
-                  :class="
-                    selectedIndex === index
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-100 text-slate-600'
-                  "
-                >
-                  {{ selectedIndex === index ? "当前生效" : `#${index + 1}` }}
-                </span>
-              </div>
-              <p class="mt-1 break-all text-sm text-slate-600">
-                {{ getProtocolLabel(group) }}
-                <span v-if="group.middle_route"> · {{ group.middle_route }}</span>
-              </p>
-            </div>
-            <span
-              class="shrink-0 rounded-full px-2.5 py-1 text-[11px]"
-              :class="
-                group.protocol === 'anthropic_messages'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-emerald-100 text-emerald-700'
-              "
-            >
-              {{ group.protocol === "anthropic_messages" ? "Anthropic" : "OpenAI" }}
-            </span>
-          </div>
-
-          <div class="mt-4 rounded-xl border border-slate-200/80 bg-white/80 p-3">
-            <p class="text-[11px] uppercase tracking-wide text-slate-400">上游参数</p>
-            <div class="mt-3 space-y-2">
-              <div class="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                <span class="text-xs text-slate-500">API URL</span>
-                <span class="break-all text-right text-sm text-slate-800">
-                  {{ group.api_url || "未填写" }}
-                </span>
-              </div>
-              <div class="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                <span class="text-xs text-slate-500">模型 ID</span>
-                <span class="break-all text-right text-sm text-slate-800">
-                  {{ group.model_id || "未填写" }}
-                </span>
-              </div>
-              <div class="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                <span class="text-xs text-slate-500">API Key</span>
-                <span class="break-all text-right text-sm text-slate-800">
-                  {{ getApiKeyDisplay(group) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <span class="text-xs text-slate-500">切换后会保存并热应用当前配置组</span>
-            <span
-              class="inline-flex items-center rounded-full px-2 py-1 text-[11px]"
-              :class="
-                selectedIndex === index
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-slate-100 text-slate-500'
-              "
-            >
-              {{ selectedIndex === index ? "已选中" : "点击设为当前" }}
-            </span>
-          </div>
-        </button>
-      </div>
-
-      <div
-        v-else
-        class="mt-4 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-400"
-      >
-        暂无配置组
-      </div>
-    </div>
+    <ConfigGroupListSection
+      :items="configGroupItems"
+      :refresh-tooltip="refreshTooltip"
+      @refresh="refreshList"
+      @select="selectConfigGroup"
+    />
 
     <div class="space-y-4">
-      <div class="mtga-panel-card">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-sm font-medium text-slate-900">当前选中配置组</p>
-            <p class="mt-1 text-xs text-slate-600">这里汇总当前真正生效的上游参数，方便快速确认</p>
-          </div>
-          <span
-            class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs"
-            :class="hasSelection ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'"
-          >
-            {{ hasSelection ? "已选择" : "等待选择" }}
-          </span>
-        </div>
+      <ConfigGroupSelectedDetailSection
+        :has-selection="hasSelection"
+        :summary="selectedGroupSummary"
+        :api-key-display="selectedApiKeyDisplay"
+        :middle-route-label="selectedMiddleRouteLabel"
+      />
 
-        <div class="mt-4 space-y-2">
-          <div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span class="text-xs text-slate-500">配置组</span>
-            <span class="break-all text-right text-sm text-slate-900">
-              {{ selectedGroupSummary.name }}
-            </span>
-          </div>
-          <div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span class="text-xs text-slate-500">上游协议</span>
-            <span class="break-all text-right text-sm text-slate-900">
-              {{ selectedGroupSummary.protocol }}
-            </span>
-          </div>
-          <div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span class="text-xs text-slate-500">API URL</span>
-            <span class="break-all text-right text-sm text-slate-900">
-              {{ selectedGroupSummary.apiUrl }}
-            </span>
-          </div>
-          <div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span class="text-xs text-slate-500">模型 ID</span>
-            <span class="break-all text-right text-sm text-slate-900">
-              {{ selectedGroupSummary.modelId }}
-            </span>
-          </div>
-          <div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span class="text-xs text-slate-500">API Key</span>
-            <span class="break-all text-right text-sm text-slate-900">
-              {{ selectedGroup ? getApiKeyDisplay(selectedGroup) : "未配置" }}
-            </span>
-          </div>
-          <div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3">
-            <span class="text-xs text-slate-500">中转路径</span>
-            <span class="break-all text-right text-sm text-slate-900">
-              {{ selectedGroup?.middle_route || `默认 ${DEFAULT_MIDDLE_ROUTE}` }}
-            </span>
-          </div>
-        </div>
-
-        <div
-          class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-slate-700"
-        >
-          切换配置组时会先保存当前索引，再热应用选中的协议与路由，减少多协议共存时的误读。
-        </div>
-      </div>
-
-      <div class="mtga-panel-card">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-sm font-medium text-slate-900">快捷操作</p>
-            <p class="mt-1 text-xs text-slate-600">新增、维护顺序或对当前组做编辑与测活</p>
-          </div>
-          <button
-            class="btn btn-xs btn-outline shrink-0 rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 tooltip mtga-tooltip"
-            :data-tip="testTooltip"
-            style="--mtga-tooltip-max: 250px"
-            @click="requestTest"
-          >
-            测活
-          </button>
-        </div>
-
-        <div class="mt-4 grid gap-2 sm:grid-cols-2">
-          <button class="mtga-btn-primary" @click="openAdd">新增配置组</button>
-          <button class="mtga-btn-outline" @click="openEdit">修改当前组</button>
-          <button class="mtga-btn-error" @click="requestDelete">删除当前组</button>
-          <button class="mtga-btn-outline" @click="moveUp">上移当前组</button>
-          <button class="mtga-btn-outline sm:col-span-2" @click="moveDown">下移当前组</button>
-        </div>
-
-        <p class="mt-3 text-xs text-slate-500">
-          删除、修改、排序都会基于当前选中的配置组执行；删除时仍会至少保留一个配置组。
-        </p>
-      </div>
+      <ConfigGroupActionsSection
+        :test-tooltip="testTooltip"
+        @test="requestTest"
+        @add="openAdd"
+        @edit="openEdit"
+        @delete="requestDelete"
+        @move-up="moveUp"
+        @move-down="moveDown"
+      />
     </div>
   </div>
 
