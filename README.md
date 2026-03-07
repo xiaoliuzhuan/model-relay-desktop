@@ -303,9 +303,9 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 > [!IMPORTANT]
 >
-> - Trae / Cursor 都可以同时配置 OpenAI 与 Claude 路径。
-> - 本地代理实际转发协议由 MTGA 当前选中的配置组决定。
-> - 切换配置组（OpenAI / Claude）后，请执行一次“一键启动全部服务”。
+> - Trae / Cursor 都可以同时配置 OpenAI 与 Anthropic 两条模型路径。
+> - 本地代理实际转发协议由 Model Relay Desktop 当前选中的配置组决定。
+> - 当你在 Model Relay Desktop 中切换配置组（OpenAI / Claude）后，请执行一次“一键启动全部服务”。
 > - Cursor 建议在“客户端场景”选择 `Cursor`，入口模型名会自动加 `mr-cursor-` 命名空间，避免与官方内置模型冲突。
 
 配置完成后，请求会先进入本地代理，再由当前生效配置组转发到对应上游服务商。
