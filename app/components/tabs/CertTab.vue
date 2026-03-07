@@ -62,17 +62,19 @@ watch(inputCommonName, (val) => {
             为本地代理建立 CA 信任链，并在需要时做安全清理
           </div>
         </div>
-        <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+        <span
+          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
+        >
           Common Name：{{ caCommonName }}
         </span>
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-2">
-        <div class="rounded-xl bg-slate-50 px-4 py-3">
+        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">推荐流程</p>
           <p class="mt-1 text-sm text-slate-900">先生成证书，再安装 CA 到系统信任存储</p>
         </div>
-        <div class="rounded-xl bg-slate-50 px-4 py-3">
+        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">适用场景</p>
           <p class="mt-1 text-sm text-slate-900">首次配置、证书重置或切换到新环境时使用</p>
         </div>
@@ -86,8 +88,8 @@ watch(inputCommonName, (val) => {
           <div class="mt-1 text-xs text-slate-600">主流程集中在这里，适合按顺序完成初始化</div>
         </div>
         <div class="mt-4 grid gap-2 sm:grid-cols-2">
-          <button class="mtga-btn-primary" @click="handleGenerate">生成CA和服务器证书</button>
-          <button class="mtga-btn-outline" @click="handleInstall">安装CA证书</button>
+          <button class="mtga-btn-primary" @click="handleGenerate">生成 CA 与服务器证书</button>
+          <button class="mtga-btn-outline" @click="handleInstall">安装 CA 证书</button>
         </div>
         <p class="mt-3 text-xs text-slate-500">
           若已经生成过证书，可直接重新安装 CA；首次配置建议按按钮从左到右执行。
@@ -95,12 +97,15 @@ watch(inputCommonName, (val) => {
       </div>
 
       <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex items-start justify-between gap-3">
           <div>
             <div class="text-sm font-medium text-amber-900">清理系统 CA</div>
             <div class="mt-1 text-xs text-amber-700">仅在需要重置、卸载或排查信任链异常时使用</div>
           </div>
-          <span class="rounded-full bg-white/80 px-3 py-1 text-xs text-amber-700">谨慎操作</span>
+          <span
+            class="inline-flex shrink-0 items-center rounded-full bg-white/80 px-3 py-1 text-xs text-amber-700 shadow-sm"
+            >谨慎操作</span
+          >
         </div>
         <p class="mt-4 text-sm text-amber-900">
           将按 Common Name 匹配并删除系统信任存储中的 CA 证书。
@@ -111,7 +116,7 @@ watch(inputCommonName, (val) => {
           style="--mtga-tooltip-max: 280px"
           @click="handleClear"
         >
-          清除系统CA证书
+          清除系统 CA 证书
         </button>
       </div>
     </div>

@@ -59,12 +59,12 @@ onMounted(() => {
 
 <template>
   <div class="flex h-full min-h-0 flex-col">
-    <div class="flex shrink-0 items-center justify-between gap-3">
+    <div class="flex shrink-0 items-start justify-between gap-3">
       <div>
         <h2 class="mtga-card-title">运行日志</h2>
         <p class="mtga-card-subtitle">实时记录后端与操作状态</p>
       </div>
-      <span class="mtga-chip">实时输出</span>
+      <span class="mtga-chip shrink-0">实时输出</span>
     </div>
 
     <div
@@ -79,7 +79,7 @@ onMounted(() => {
     <div
       class="mt-4 flex flex-1 min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm"
     >
-      <div class="flex shrink-0 items-center justify-between gap-3">
+      <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">日志控制台</p>
           <p class="mt-1 text-xs text-slate-600">
@@ -87,15 +87,19 @@ onMounted(() => {
           </p>
         </div>
         <span
-          class="rounded-full px-3 py-1 text-xs"
-          :class="logCount > 0 ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600'"
+          class="inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs shadow-sm"
+          :class="
+            logCount > 0
+              ? 'border-indigo-100 bg-indigo-50 text-indigo-700'
+              : 'border-slate-200 bg-slate-100 text-slate-600'
+          "
         >
           {{ logCount > 0 ? `共 ${logCount} 条` : "等待输出" }}
         </span>
       </div>
 
       <div
-        class="mt-4 flex flex-1 min-h-0 flex-col overflow-hidden rounded-xl border border-slate-800/90 bg-slate-950/95 shadow-inner shadow-slate-950/35"
+        class="mt-4 flex flex-1 min-h-0 flex-col overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950/95 shadow-inner shadow-slate-950/25"
       >
         <div
           class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800/90 px-4 py-2 text-[11px] text-slate-400"

@@ -179,12 +179,12 @@ const handleThemeSave = (value: ThemeConfig) => {
 </script>
 
 <template>
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex items-start justify-between gap-3">
     <div>
       <h2 class="mtga-card-title">应用设置</h2>
       <p class="mtga-card-subtitle">管理数据与系统配置</p>
     </div>
-    <span class="mtga-chip">系统</span>
+    <span class="mtga-chip shrink-0">系统</span>
   </div>
 
   <div class="mt-5 space-y-4">
@@ -198,12 +198,14 @@ const handleThemeSave = (value: ThemeConfig) => {
     </div>
 
     <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">用户数据</p>
           <p class="mt-1 text-xs text-slate-600">目录位置、备份范围与恢复入口都在这里集中处理</p>
         </div>
-        <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+        <span
+          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
+        >
           {{ userDataModeLabel }}
         </span>
       </div>
@@ -226,7 +228,7 @@ const handleThemeSave = (value: ThemeConfig) => {
             </div>
             <div class="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
               <span class="text-xs text-slate-500">备份策略</span>
-              <span class="text-right text-sm text-slate-900"
+              <span class="break-words text-right text-sm text-slate-900"
                 >完整备份至 backups/ 目录，清除时保留历史备份</span
               >
             </div>
@@ -240,7 +242,7 @@ const handleThemeSave = (value: ThemeConfig) => {
         </div>
 
         <div
-          class="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4"
+          class="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4 shadow-sm"
         >
           <div class="flex items-start justify-between gap-3">
             <div>
@@ -294,7 +296,7 @@ const handleThemeSave = (value: ThemeConfig) => {
     </div>
 
     <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">主题配置</p>
           <p class="mt-1 text-xs text-slate-600">
@@ -302,7 +304,7 @@ const handleThemeSave = (value: ThemeConfig) => {
           </p>
         </div>
         <span
-          class="rounded-full px-3 py-1 text-xs"
+          class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs"
           :class="
             themeSummaryReady && themeOverrideCount > 0
               ? 'bg-indigo-50 text-indigo-700'
@@ -414,7 +416,7 @@ const handleThemeSave = (value: ThemeConfig) => {
         </div>
 
         <div
-          class="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4"
+          class="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4 shadow-sm"
         >
           <div class="flex items-start justify-between gap-3">
             <div>

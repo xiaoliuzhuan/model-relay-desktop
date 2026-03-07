@@ -37,21 +37,24 @@ const handleCheck = () => {
           <div class="text-sm font-medium text-slate-900">代理运行摘要</div>
           <div class="mt-1 text-xs text-slate-600">先确认运行时选项，再启动服务并检查网络环境</div>
         </div>
-        <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">步骤 3</span>
+        <span
+          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
+          >步骤 3</span
+        >
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-3">
-        <div class="rounded-xl bg-slate-50 px-4 py-3">
+        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">调试模式</p>
           <p class="mt-1 text-sm text-slate-900">{{ options.debugMode ? "开启" : "关闭" }}</p>
         </div>
-        <div class="rounded-xl bg-slate-50 px-4 py-3">
+        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">SSL 严格模式</p>
           <p class="mt-1 text-sm text-slate-900">
             {{ options.disableSslStrict ? "已关闭" : "保持开启" }}
           </p>
         </div>
-        <div class="rounded-xl bg-slate-50 px-4 py-3">
+        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">流式输出</p>
           <p class="mt-1 text-sm text-slate-900">{{ streamModeSummary }}</p>
         </div>
@@ -139,15 +142,15 @@ const handleCheck = () => {
           <div class="text-sm font-medium text-slate-900">代理服务</div>
           <div class="mt-1 text-xs text-slate-600">启动、停止与网络检查入口集中在同一张卡片里</div>
         </div>
-        <div class="mt-4 space-y-2">
-          <button class="mtga-btn-primary" @click="handleStart">启动代理服务器</button>
-          <button class="mtga-btn-error" @click="handleStop">停止代理服务器</button>
-          <button class="mtga-btn-outline" @click="handleCheck">检查网络环境</button>
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+          <button class="mtga-btn-primary" @click="handleStart">启动代理服务</button>
+          <button class="mtga-btn-error" @click="handleStop">停止代理服务</button>
+          <button class="mtga-btn-outline sm:col-span-2" @click="handleCheck">检查网络环境</button>
         </div>
         <div
           class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-slate-700"
         >
-          启动前建议先完成证书与 hosts 两步，便于系统信任与域名导流一次到位。
+          启动前建议先完成证书与 hosts 文件两步，便于系统信任与域名导流一次到位。
         </div>
       </div>
     </div>

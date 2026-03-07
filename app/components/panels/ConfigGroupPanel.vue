@@ -415,7 +415,7 @@ const moveDown = async () => {
       </div>
       <div class="rounded-xl bg-slate-50 px-4 py-3">
         <p class="text-[11px] uppercase tracking-wide text-slate-400">当前选中</p>
-        <p class="mt-1 text-sm text-slate-900">{{ selectedGroupSummary.name }}</p>
+        <p class="mt-1 break-all text-sm text-slate-900">{{ selectedGroupSummary.name }}</p>
       </div>
     </div>
 
@@ -435,7 +435,7 @@ const moveDown = async () => {
 
   <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.95fr)]">
     <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">配置组列表</p>
           <p class="mt-1 text-xs text-slate-600">
@@ -469,11 +469,11 @@ const moveDown = async () => {
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <p class="text-base font-medium text-slate-900">
+                <p class="break-all text-base font-medium text-slate-900">
                   {{ getDisplayName(group, index) }}
                 </p>
                 <span
-                  class="rounded-full px-2.5 py-1 text-[11px]"
+                  class="shrink-0 rounded-full px-2.5 py-1 text-[11px]"
                   :class="
                     selectedIndex === index
                       ? 'bg-indigo-600 text-white'
@@ -483,13 +483,13 @@ const moveDown = async () => {
                   {{ selectedIndex === index ? "当前生效" : `#${index + 1}` }}
                 </span>
               </div>
-              <p class="mt-1 text-sm text-slate-600">
+              <p class="mt-1 break-all text-sm text-slate-600">
                 {{ getProtocolLabel(group) }}
                 <span v-if="group.middle_route"> · {{ group.middle_route }}</span>
               </p>
             </div>
             <span
-              class="rounded-full px-2.5 py-1 text-[11px]"
+              class="shrink-0 rounded-full px-2.5 py-1 text-[11px]"
               :class="
                 group.protocol === 'anthropic_messages'
                   ? 'bg-amber-100 text-amber-700'
@@ -524,7 +524,7 @@ const moveDown = async () => {
             </div>
           </div>
 
-          <div class="mt-4 flex items-center justify-between gap-3">
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
             <span class="text-xs text-slate-500">切换后会保存并热应用当前配置组</span>
             <span
               class="inline-flex items-center rounded-full px-2 py-1 text-[11px]"
@@ -542,7 +542,7 @@ const moveDown = async () => {
 
       <div
         v-else
-        class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-400"
+        class="mt-4 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-400"
       >
         暂无配置组
       </div>
@@ -556,7 +556,7 @@ const moveDown = async () => {
             <p class="mt-1 text-xs text-slate-600">这里汇总当前真正生效的上游参数，方便快速确认</p>
           </div>
           <span
-            class="rounded-full px-3 py-1 text-xs"
+            class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs"
             :class="hasSelection ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-500'"
           >
             {{ hasSelection ? "已选择" : "等待选择" }}
@@ -610,13 +610,13 @@ const moveDown = async () => {
       </div>
 
       <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-sm font-medium text-slate-900">快捷操作</p>
             <p class="mt-1 text-xs text-slate-600">新增、维护顺序或对当前组做编辑与测活</p>
           </div>
           <button
-            class="btn btn-xs btn-outline rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 tooltip mtga-tooltip"
+            class="btn btn-xs btn-outline shrink-0 rounded-lg border-slate-200 px-3 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 tooltip mtga-tooltip"
             :data-tip="testTooltip"
             style="--mtga-tooltip-max: 250px"
             @click="requestTest"
@@ -634,7 +634,7 @@ const moveDown = async () => {
         </div>
 
         <p class="mt-3 text-xs text-slate-500">
-          删除、修改、排序都会基于当前选中的配置组执行；删除时仍至少保留一个配置组。
+          删除、修改、排序都会基于当前选中的配置组执行；删除时仍会至少保留一个配置组。
         </p>
       </div>
     </div>
