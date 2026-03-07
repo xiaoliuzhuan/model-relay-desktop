@@ -2,10 +2,12 @@
 const props = withDefaults(
   defineProps<{
     logs?: string[];
+    logText?: string;
     emptyText?: string;
   }>(),
   {
     logs: () => [],
+    logText: "",
     emptyText: "日志输出占位",
   },
 );
@@ -14,9 +16,12 @@ const logBox = ref<HTMLDivElement | null>(null);
 
 const logCount = computed(() => props.logs?.length ?? 0);
 
-const formattedLogs = computed(() =>
-  props.logs && props.logs.length ? props.logs.join("\n") : props.emptyText,
-);
+const formattedLogs = computed(() => {
+  if (props.logText) {
+    return props.logText;
+  }
+  return props.logs && props.logs.length ? props.logs.join("\n") : props.emptyText;
+});
 
 const scrollToLatestLog = () => {
   if (!logBox.value) {

@@ -8,6 +8,7 @@ import {
 
 const {
   logs,
+  logText,
   init,
   appInfo,
   hasNewVersion,
@@ -252,7 +253,12 @@ onBeforeUnmount(() => {
                 <ConfigGroupPanel v-if="activeTab === 'config-group'" />
                 <GlobalConfigPanel v-if="activeTab === 'global-config'" />
                 <MainTabs v-if="activeTab === 'main-tabs'" />
-                <LogPanel v-if="activeTab === 'run-logs'" :logs="logs" class="h-full" />
+                <LogPanel
+                  v-if="activeTab === 'run-logs'"
+                  :logs="logs"
+                  :log-text="logText"
+                  class="h-full"
+                />
                 <SettingsPanel v-if="activeTab === 'settings'" />
               </div>
             </Transition>

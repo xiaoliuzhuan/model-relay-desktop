@@ -138,6 +138,7 @@ export const useMtgaStore = () => {
     ...DEFAULT_RUNTIME_OPTIONS,
   }));
   const logs = useState<string[]>("mtga-logs", () => []);
+  const logText = useState<string>("mtga-log-text", () => "");
   const logCursor = useState<number>("mtga-log-cursor", () => 0);
   const logStreamActive = useState<boolean>("mtga-log-stream-active", () => false);
   const appInfo = useState<AppInfo>("mtga-app-info", () => ({ ...DEFAULT_APP_INFO }));
@@ -160,6 +161,10 @@ export const useMtgaStore = () => {
   let logEventUnlisten: (() => void) | null = null;
   let proxyStepUnlisten: (() => void) | null = null;
 
+  const rebuildLogText = () => {
+    logText.value = logs.value.join("\n");
+  };
+
   const applySnapshotState = () => {
     const config = createSnapshotConfigPayload();
     const update = createSnapshotUpdate();
@@ -178,6 +183,7 @@ export const useMtgaStore = () => {
       streamMode: "true",
     };
     logs.value = createSnapshotLogs();
+    rebuildLogText();
     logCursor.value = logs.value.length;
     logStreamActive.value = false;
     appInfo.value = {
@@ -241,7 +247,10 @@ export const useMtgaStore = () => {
     const overflow = logs.value.length - FRONTEND_LOG_LIMIT;
     if (overflow > 0) {
       logs.value.splice(0, overflow);
+      rebuildLogText();
+      return;
     }
+    logText.value = logText.value ? `${logText.value}\n${message}` : message;
   };
 
   const handleProxyStep = (payload: unknown) => {
@@ -264,7 +273,12 @@ export const useMtgaStore = () => {
     if (!entries || !entries.length) {
       return;
     }
-    entries.forEach((entry) => appendLog(entry));
+    logs.value.push(...entries);
+    const overflow = logs.value.length - FRONTEND_LOG_LIMIT;
+    if (overflow > 0) {
+      logs.value.splice(0, overflow);
+    }
+    rebuildLogText();
   };
 
   const applyInvokeResult = (result: InvokeResult | null, fallbackMessage: string) => {
@@ -820,6 +834,7 @@ export const useMtgaStore = () => {
     mtgaAuthKey,
     runtimeOptions,
     logs,
+    logText,
     logCursor,
     appInfo,
     hasNewVersion,
