@@ -2,6 +2,7 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { pyInvoke } from "tauri-plugin-pytauri-api";
 
 import type { AppInfo, ConfigPayload, InvokeResult, LogPullResult } from "./mtgaTypes";
+import { useMtgaSnapshot } from "./mtgaSnapshot";
 
 type InvokePayload = Record<string, unknown>;
 
@@ -24,47 +25,55 @@ const safeInvoke = async <T>(
 };
 
 export const useMtgaApi = () => {
+  const snapshot = useMtgaSnapshot();
   let proxyStepChannel: Channel<string> | null = null;
   type ProxyStepChannelOptions = {
     reset?: boolean;
     startFromLatest?: boolean;
   };
-  const loadConfig = () => safeInvoke<ConfigPayload>("load_config");
-  const saveConfig = (payload: ConfigPayload) => safeInvoke<boolean>("save_config", payload, false);
-  const getAppInfo = () => safeInvoke<AppInfo>("get_app_info");
-  const getStartupStatus = () => safeInvoke<InvokeResult>("startup_status");
+  const safeClientInvoke = <T>(command: string, payload?: InvokePayload, fallback?: T) => {
+    if (snapshot.value.enabled) {
+      return Promise.resolve(fallback ?? null);
+    }
+    return safeInvoke<T>(command, payload, fallback);
+  };
+  const loadConfig = () => safeClientInvoke<ConfigPayload>("load_config");
+  const saveConfig = (payload: ConfigPayload) =>
+    safeClientInvoke<boolean>("save_config", payload, false);
+  const getAppInfo = () => safeClientInvoke<AppInfo>("get_app_info");
+  const getStartupStatus = () => safeClientInvoke<InvokeResult>("startup_status");
   const hostsModify = (payload: {
     mode: "add" | "backup" | "restore" | "remove";
     domain?: string;
     ip?: string[] | string;
-  }) => safeInvoke<InvokeResult>("hosts_modify", payload);
-  const hostsOpen = () => safeInvoke<InvokeResult>("hosts_open");
-  const generateCertificates = () => safeInvoke<InvokeResult>("generate_certificates");
-  const installCaCert = () => safeInvoke<InvokeResult>("install_ca_cert");
+  }) => safeClientInvoke<InvokeResult>("hosts_modify", payload);
+  const hostsOpen = () => safeClientInvoke<InvokeResult>("hosts_open");
+  const generateCertificates = () => safeClientInvoke<InvokeResult>("generate_certificates");
+  const installCaCert = () => safeClientInvoke<InvokeResult>("install_ca_cert");
   const clearCaCert = (payload: { ca_common_name?: string } = {}) =>
-    safeInvoke<InvokeResult>("clear_ca_cert", payload);
+    safeClientInvoke<InvokeResult>("clear_ca_cert", payload);
   const proxyStart = (payload: {
     debug_mode: boolean;
     disable_ssl_strict_mode: boolean;
     force_stream: boolean;
     stream_mode?: string | null;
-  }) => safeInvoke<InvokeResult>("proxy_start", payload);
+  }) => safeClientInvoke<InvokeResult>("proxy_start", payload);
   const proxyApplyCurrentConfig = (payload: {
     debug_mode: boolean;
     disable_ssl_strict_mode: boolean;
     force_stream: boolean;
     stream_mode?: string | null;
-  }) => safeInvoke<InvokeResult>("proxy_apply_current_config", payload);
-  const proxyStop = () => safeInvoke<InvokeResult>("proxy_stop");
-  const proxyCheckNetwork = () => safeInvoke<InvokeResult>("proxy_check_network");
+  }) => safeClientInvoke<InvokeResult>("proxy_apply_current_config", payload);
+  const proxyStop = () => safeClientInvoke<InvokeResult>("proxy_stop");
+  const proxyCheckNetwork = () => safeClientInvoke<InvokeResult>("proxy_check_network");
   const proxyStartAll = (payload: {
     debug_mode: boolean;
     disable_ssl_strict_mode: boolean;
     force_stream: boolean;
     stream_mode?: string | null;
-  }) => safeInvoke<InvokeResult>("proxy_start_all", payload);
+  }) => safeClientInvoke<InvokeResult>("proxy_start_all", payload);
   const configGroupTest = (payload: { index: number; mode?: "chat" | "models" }) =>
-    safeInvoke<InvokeResult>("config_group_test", payload);
+    safeClientInvoke<InvokeResult>("config_group_test", payload);
   const configGroupModels = (payload: {
     api_url: string;
     api_key?: string;
@@ -72,23 +81,23 @@ export const useMtgaApi = () => {
     model_id?: string;
     protocol?: "openai" | "anthropic_messages";
     anthropic_version?: string;
-  }) => safeInvoke<InvokeResult>("config_group_models", payload);
-  const userDataOpenDir = () => safeInvoke<InvokeResult>("user_data_open_dir");
-  const userDataBackup = () => safeInvoke<InvokeResult>("user_data_backup");
-  const userDataRestoreLatest = () => safeInvoke<InvokeResult>("user_data_restore_latest");
-  const userDataClear = () => safeInvoke<InvokeResult>("user_data_clear");
-  const checkUpdates = () => safeInvoke<InvokeResult>("check_updates");
+  }) => safeClientInvoke<InvokeResult>("config_group_models", payload);
+  const userDataOpenDir = () => safeClientInvoke<InvokeResult>("user_data_open_dir");
+  const userDataBackup = () => safeClientInvoke<InvokeResult>("user_data_backup");
+  const userDataRestoreLatest = () => safeClientInvoke<InvokeResult>("user_data_restore_latest");
+  const userDataClear = () => safeClientInvoke<InvokeResult>("user_data_clear");
+  const checkUpdates = () => safeClientInvoke<InvokeResult>("check_updates");
   const pullLogs = (payload: {
     after_id?: number | null;
     timeout_ms?: number;
     max_items?: number;
-  }) => safeInvoke<LogPullResult>("pull_logs_command", payload);
+  }) => safeClientInvoke<LogPullResult>("pull_logs_command", payload);
 
   const startProxyStepChannel = async (
     onMessage: (payload: unknown) => void,
     options?: ProxyStepChannelOptions,
   ): Promise<boolean> => {
-    if (!canInvoke()) {
+    if (snapshot.value.enabled || !canInvoke()) {
       return false;
     }
     try {

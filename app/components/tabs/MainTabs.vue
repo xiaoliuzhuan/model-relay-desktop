@@ -22,7 +22,8 @@ const tabs: { key: MainTabKey; label: string; description: string; badge: string
   },
 ];
 
-const activeTab = ref<MainTabKey>("cert");
+const snapshot = useMtgaSnapshot();
+const activeTab = ref<MainTabKey>(snapshot.value.enabled ? snapshot.value.mainTab : "cert");
 const direction = ref<"right" | "left">("right");
 const { mainTabTarget, mainTabSignal } = useMtgaStore();
 const activeTabMeta = computed(() => tabs.find((tab) => tab.key === activeTab.value) ?? tabs[0]!);
@@ -54,7 +55,7 @@ watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-start justify-between gap-3">
+  <div :data-active-main-tab="activeTab" class="flex flex-wrap items-start justify-between gap-3">
     <div>
       <h2 class="mtga-card-title">主要流程</h2>
       <p class="mtga-card-subtitle">证书、hosts 与代理服务的标准操作流程</p>

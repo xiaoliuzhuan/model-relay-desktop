@@ -111,6 +111,38 @@ pnpm rs:check
 pnpm app:check
 ```
 
+### 轻量视觉快照
+
+- 更新基线截图：
+
+```bash
+pnpm visual:update
+```
+
+- 校验当前界面是否与基线一致：
+
+```bash
+pnpm visual:check
+```
+
+- 首次运行如果缺少 Chromium，可执行：
+
+```bash
+pnpm visual:install
+```
+
+- 手动预览快照模式时，可先启动：
+
+```bash
+pnpm snapshot:build && pnpm snapshot:serve
+```
+
+然后访问例如：
+
+```text
+http://127.0.0.1:4173/?snapshot=1&panel=main-tabs&mainTab=proxy
+```
+
 ## Pull Request 规范
 
 提交 PR 时请确保：

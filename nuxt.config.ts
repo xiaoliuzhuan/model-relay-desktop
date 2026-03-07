@@ -5,6 +5,11 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   modules: ["@nuxt/eslint"],
+  runtimeConfig: {
+    public: {
+      mtgaSnapshot: process.env.MTGA_SNAPSHOT ?? process.env.NUXT_PUBLIC_MTGA_SNAPSHOT ?? "",
+    },
+  },
   components: {
     dirs: [{ path: "~/components", pathPrefix: false }],
   },

@@ -8,10 +8,14 @@ dist
 
 # Node dependencies
 node_modules
+.pnpm-store
+.playwright-browsers
 
 # Logs
 logs
 *.log
+playwright-report
+test-results
 
 # Misc
 .DS_Store

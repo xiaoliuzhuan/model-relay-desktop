@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ICONS } from "./composables/icons";
-import { applyThemeConfig, loadThemeFromStorage } from "./composables/themeConfig";
+import {
+  DEFAULT_THEME_CONFIG,
+  applyThemeConfig,
+  loadThemeFromStorage,
+} from "./composables/themeConfig";
 
 const {
   logs,
@@ -21,18 +25,23 @@ const {
   panelNavSignal,
   runProxyStartAll,
 } = useMtgaStore();
+const snapshot = useMtgaSnapshot();
 
 if (import.meta.client) {
-  const savedTheme = loadThemeFromStorage();
-  if (savedTheme) {
-    applyThemeConfig(savedTheme);
+  if (snapshot.value.enabled) {
+    applyThemeConfig(DEFAULT_THEME_CONFIG);
+  } else {
+    const savedTheme = loadThemeFromStorage();
+    if (savedTheme) {
+      applyThemeConfig(savedTheme);
+    }
   }
 }
 
 /**
  * 当前选中的左侧面板 ID
  */
-const activeTab = ref("config-group");
+const activeTab = ref<string>(snapshot.value.panel);
 const direction = ref<"down" | "up">("down");
 
 /**
@@ -145,7 +154,9 @@ watch(
 
 onMounted(async () => {
   await init();
-  await runCheckUpdatesOnce();
+  if (!snapshot.value.enabled) {
+    await runCheckUpdatesOnce();
+  }
 });
 
 onBeforeUnmount(() => {
@@ -155,7 +166,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div @mouseover="handleGlobalMouseOver">
+  <div
+    :data-active-panel="activeTab"
+    :data-snapshot-enabled="snapshot.enabled ? 'true' : 'false'"
+    @mouseover="handleGlobalMouseOver"
+  >
     <AppShell :right-hidden="true">
       <template #left>
         <div class="flex items-stretch h-full min-h-0">

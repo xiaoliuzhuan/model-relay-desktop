@@ -14,6 +14,7 @@ import {
 } from "~/composables/themeConfig";
 
 const store = useMtgaStore();
+const snapshot = useMtgaSnapshot();
 const appInfo = store.appInfo;
 
 const clearConfirmOpen = ref(false);
@@ -23,7 +24,7 @@ const clearConfirmMessage =
 const themeDialogOpen = ref(false);
 
 const themeConfig = reactive<ThemeConfig>({ ...DEFAULT_THEME_CONFIG });
-if (import.meta.client) {
+if (import.meta.client && !snapshot.value.enabled) {
   const savedTheme = loadThemeFromStorage();
   if (savedTheme) {
     copyThemeConfig(themeConfig, savedTheme);

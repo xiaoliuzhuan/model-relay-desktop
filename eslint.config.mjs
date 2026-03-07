@@ -9,6 +9,8 @@ export default withNuxt(
   {
     ignores: [
       "node_modules",
+      ".pnpm-store",
+      ".playwright-browsers",
       ".nuxt",
       ".output",
       "dist",

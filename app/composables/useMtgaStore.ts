@@ -1,6 +1,14 @@
 import { useMtgaApi } from "./useMtgaApi";
 import { listen } from "@tauri-apps/api/event";
 import { isBundledRuntime, isTauriRuntime } from "./runtime";
+import {
+  createSnapshotAppInfo,
+  createSnapshotConfigPayload,
+  createSnapshotLogs,
+  createSnapshotModels,
+  createSnapshotUpdate,
+  useMtgaSnapshot,
+} from "./mtgaSnapshot";
 import type {
   AppInfo,
   ConfigGroup,
@@ -120,6 +128,7 @@ const clampIndex = (value: number, max: number) => {
 
 export const useMtgaStore = () => {
   const api = useMtgaApi();
+  const snapshot = useMtgaSnapshot();
 
   const configGroups = useState<ConfigGroup[]>("mtga-config-groups", () => []);
   const currentConfigIndex = useState<number>("mtga-current-config-index", () => 0);
@@ -150,6 +159,43 @@ export const useMtgaStore = () => {
   let logPollTimer: ReturnType<typeof setTimeout> | null = null;
   let logEventUnlisten: (() => void) | null = null;
   let proxyStepUnlisten: (() => void) | null = null;
+
+  const applySnapshotState = () => {
+    const config = createSnapshotConfigPayload();
+    const update = createSnapshotUpdate();
+
+    configGroups.value = config.config_groups;
+    currentConfigIndex.value = clampIndex(
+      config.current_config_index ?? 0,
+      configGroups.value.length,
+    );
+    mappedModelId.value = coerceText(config.mapped_model_id);
+    mtgaAuthKey.value = coerceText(config.mtga_auth_key);
+    runtimeOptions.value = {
+      ...DEFAULT_RUNTIME_OPTIONS,
+      debugMode: true,
+      disableSslStrict: true,
+      streamMode: "true",
+    };
+    logs.value = createSnapshotLogs();
+    logCursor.value = logs.value.length;
+    logStreamActive.value = false;
+    appInfo.value = {
+      ...DEFAULT_APP_INFO,
+      ...createSnapshotAppInfo(),
+    };
+    updateVersionLabel.value = snapshot.value.showUpdateDialog ? update.versionLabel : "";
+    updateNotesHtml.value = snapshot.value.showUpdateDialog ? update.notesHtml : "";
+    updateReleaseUrl.value = snapshot.value.showUpdateDialog ? update.releaseUrl : "";
+    hasNewVersion.value = snapshot.value.showUpdateDialog;
+    updateDialogOpen.value = snapshot.value.showUpdateDialog;
+    updateAutoChecked.value = true;
+    panelNavTarget.value = snapshot.value.panel;
+    mainTabTarget.value = snapshot.value.mainTab;
+    proxyStepListenerActive.value = false;
+    proxyStepQueue.value = [];
+    proxyStepProcessing.value = false;
+  };
 
   const drainProxyStepQueue = async () => {
     if (proxyStepProcessing.value) {
@@ -223,6 +269,10 @@ export const useMtgaStore = () => {
 
   const applyInvokeResult = (result: InvokeResult | null, fallbackMessage: string) => {
     if (!result) {
+      if (snapshot.value.enabled) {
+        appendLog(`${fallbackMessage}（快照模式，仅展示界面）`);
+        return true;
+      }
       appendLog(`${fallbackMessage}失败：无法连接后端`);
       return false;
     }
@@ -233,6 +283,10 @@ export const useMtgaStore = () => {
   };
 
   const startLogStream = () => {
+    if (snapshot.value.enabled) {
+      logStreamActive.value = false;
+      return;
+    }
     if (logStreamActive.value) {
       return;
     }
@@ -344,6 +398,10 @@ export const useMtgaStore = () => {
   };
 
   const startProxyStepListener = () => {
+    if (snapshot.value.enabled) {
+      proxyStepListenerActive.value = false;
+      return;
+    }
     if (proxyStepListenerActive.value) {
       return;
     }
@@ -398,6 +456,10 @@ export const useMtgaStore = () => {
   };
 
   const loadConfig = async () => {
+    if (snapshot.value.enabled) {
+      applySnapshotState();
+      return true;
+    }
     const result = await api.loadConfig();
     if (!result) {
       return false;
@@ -413,6 +475,9 @@ export const useMtgaStore = () => {
   };
 
   const saveConfig = async () => {
+    if (snapshot.value.enabled) {
+      return true;
+    }
     const clampedIndex = clampIndex(currentConfigIndex.value, configGroups.value.length);
     currentConfigIndex.value = clampedIndex;
     const payload: ConfigPayload = {
@@ -426,6 +491,13 @@ export const useMtgaStore = () => {
   };
 
   const loadAppInfo = async () => {
+    if (snapshot.value.enabled) {
+      appInfo.value = {
+        ...DEFAULT_APP_INFO,
+        ...createSnapshotAppInfo(),
+      };
+      return true;
+    }
     const info = await api.getAppInfo();
     if (!info) {
       return false;
@@ -485,6 +557,9 @@ export const useMtgaStore = () => {
   };
 
   const loadStartupStatus = async () => {
+    if (snapshot.value.enabled) {
+      return true;
+    }
     const result = await api.getStartupStatus();
     if (!result) {
       appendLog("启动日志加载失败：无法连接后端");
@@ -497,6 +572,11 @@ export const useMtgaStore = () => {
   };
 
   const init = async () => {
+    if (snapshot.value.enabled) {
+      initialized.value = true;
+      applySnapshotState();
+      return;
+    }
     if (initialized.value) {
       startLogStream();
       startProxyStepListener();
@@ -550,6 +630,10 @@ export const useMtgaStore = () => {
   };
 
   const runProxyApplyCurrentConfig = async () => {
+    if (snapshot.value.enabled) {
+      appendLog("已应用当前配置组到运行中代理（快照模式）");
+      return true;
+    }
     const result = await api.proxyApplyCurrentConfig(buildProxyPayload());
     navigateProxyMissingConfigPanel(result?.message);
     if (!result) {
@@ -624,6 +708,10 @@ export const useMtgaStore = () => {
     protocol?: "openai" | "anthropic_messages";
     anthropic_version?: string;
   }) => {
+    if (snapshot.value.enabled) {
+      appendLog("已载入示例模型列表（快照模式）");
+      return normalizeModelList([payload.model_id, ...createSnapshotModels(payload.protocol)]);
+    }
     const result = await api.configGroupModels(payload);
     const ok = applyInvokeResult(result, "获取模型列表");
     if (!ok || !result) {
@@ -653,6 +741,15 @@ export const useMtgaStore = () => {
   };
 
   const runCheckUpdates = async () => {
+    if (snapshot.value.enabled) {
+      const update = createSnapshotUpdate();
+      hasNewVersion.value = snapshot.value.showUpdateDialog;
+      updateDialogOpen.value = snapshot.value.showUpdateDialog;
+      updateVersionLabel.value = snapshot.value.showUpdateDialog ? update.versionLabel : "";
+      updateNotesHtml.value = snapshot.value.showUpdateDialog ? update.notesHtml : "";
+      updateReleaseUrl.value = snapshot.value.showUpdateDialog ? update.releaseUrl : "";
+      return true;
+    }
     const result = await api.checkUpdates();
     const ok = applyInvokeResult(result, "检查更新");
     if (!result || !isRecord(result.details)) {
