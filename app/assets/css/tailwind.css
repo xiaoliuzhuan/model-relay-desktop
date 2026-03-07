@@ -251,6 +251,38 @@
     @apply rounded-xl border border-slate-200/80 p-3;
   }
 
+  .mtga-panel-banner {
+    @apply rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm;
+  }
+
+  .mtga-panel-card {
+    @apply rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm;
+  }
+
+  .mtga-panel-card-soft {
+    @apply rounded-2xl border border-slate-200/70 bg-white/45 p-2 shadow-sm;
+  }
+
+  .mtga-panel-tile {
+    @apply rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3;
+  }
+
+  .mtga-panel-accent-card {
+    @apply rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4 shadow-sm;
+  }
+
+  .mtga-status-pill {
+    @apply inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700;
+  }
+
+  .mtga-status-pill-soft {
+    @apply rounded-full bg-white/80 px-2.5 py-1 text-[11px] text-indigo-700 shadow-sm;
+  }
+
+  .mtga-terminal-frame {
+    @apply flex flex-1 min-h-0 flex-col overflow-hidden rounded-xl border border-slate-800/90 bg-slate-950/95 shadow-inner shadow-slate-950/35;
+  }
+
   /**
    * 用于点击的长条形子样式
    * 继承自 mtga-soft-panel 的基础样式，具有较小的高度和全宽

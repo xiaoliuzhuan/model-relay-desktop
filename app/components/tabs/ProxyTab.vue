@@ -31,30 +31,27 @@ const handleCheck = () => {
 
 <template>
   <div class="space-y-4">
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <div class="text-sm font-medium text-slate-900">代理运行摘要</div>
           <div class="mt-1 text-xs text-slate-600">先确认运行时选项，再启动服务并检查网络环境</div>
         </div>
-        <span
-          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
-          >步骤 3</span
-        >
+        <span class="mtga-status-pill">步骤 3</span>
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-3">
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">调试模式</p>
           <p class="mt-1 text-sm text-slate-900">{{ options.debugMode ? "开启" : "关闭" }}</p>
         </div>
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">SSL 严格模式</p>
           <p class="mt-1 text-sm text-slate-900">
             {{ options.disableSslStrict ? "已关闭" : "保持开启" }}
           </p>
         </div>
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">流式输出</p>
           <p class="mt-1 text-sm text-slate-900">{{ streamModeSummary }}</p>
         </div>
@@ -62,7 +59,7 @@ const handleCheck = () => {
     </div>
 
     <div class="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div>
           <div class="text-sm font-medium text-slate-900">运行时选项</div>
           <div class="mt-1 text-xs text-slate-600">控制代理运行行为、日志粒度与流式输出策略</div>
@@ -137,7 +134,7 @@ const handleCheck = () => {
         </div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div>
           <div class="text-sm font-medium text-slate-900">代理服务</div>
           <div class="mt-1 text-xs text-slate-600">启动、停止与网络检查入口集中在同一张卡片里</div>

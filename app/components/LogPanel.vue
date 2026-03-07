@@ -67,18 +67,14 @@ onMounted(() => {
       <span class="mtga-chip shrink-0">实时输出</span>
     </div>
 
-    <div
-      class="mt-5 shrink-0 rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
-    >
+    <div class="mt-5 shrink-0 mtga-panel-banner">
       <p class="font-medium text-slate-900">运行状态会持续追加到这里</p>
       <p class="mt-1 text-slate-600">
         保持终端式可读性；新日志到达后自动滚动到最新位置，便于快速确认执行结果。
       </p>
     </div>
 
-    <div
-      class="mt-4 flex flex-1 min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm"
-    >
+    <div class="mt-4 flex flex-1 min-h-0 flex-col mtga-panel-card">
       <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">日志控制台</p>
@@ -98,9 +94,7 @@ onMounted(() => {
         </span>
       </div>
 
-      <div
-        class="mt-4 flex flex-1 min-h-0 flex-col overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950/95 shadow-inner shadow-slate-950/25"
-      >
+      <div class="mt-4 mtga-terminal-frame">
         <div
           class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800/90 px-4 py-2 text-[11px] text-slate-400"
         >

@@ -54,7 +54,7 @@ watch(inputCommonName, (val) => {
 
 <template>
   <div class="space-y-4">
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <div class="text-sm font-medium text-slate-900">证书管理</div>
@@ -62,19 +62,15 @@ watch(inputCommonName, (val) => {
             为本地代理建立 CA 信任链，并在需要时做安全清理
           </div>
         </div>
-        <span
-          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
-        >
-          Common Name：{{ caCommonName }}
-        </span>
+        <span class="mtga-status-pill"> Common Name：{{ caCommonName }} </span>
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-2">
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">推荐流程</p>
           <p class="mt-1 text-sm text-slate-900">先生成证书，再安装 CA 到系统信任存储</p>
         </div>
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">适用场景</p>
           <p class="mt-1 text-sm text-slate-900">首次配置、证书重置或切换到新环境时使用</p>
         </div>
@@ -82,7 +78,7 @@ watch(inputCommonName, (val) => {
     </div>
 
     <div class="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div>
           <div class="text-sm font-medium text-slate-900">生成与安装</div>
           <div class="mt-1 text-xs text-slate-600">主流程集中在这里，适合按顺序完成初始化</div>

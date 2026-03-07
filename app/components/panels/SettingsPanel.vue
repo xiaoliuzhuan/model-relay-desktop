@@ -188,24 +188,20 @@ const handleThemeSave = (value: ThemeConfig) => {
   </div>
 
   <div class="mt-5 space-y-4">
-    <div
-      class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
-    >
+    <div class="mtga-panel-banner">
       <p class="font-medium text-slate-900">本页维护本地状态</p>
       <p class="mt-1 text-slate-600">
         用户数据操作会影响当前设备的配置与备份；主题配置只调整界面外观，不改变代理协议和运行流程。
       </p>
     </div>
 
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">用户数据</p>
           <p class="mt-1 text-xs text-slate-600">目录位置、备份范围与恢复入口都在这里集中处理</p>
         </div>
-        <span
-          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
-        >
+        <span class="mtga-status-pill">
           {{ userDataModeLabel }}
         </span>
       </div>
@@ -241,9 +237,7 @@ const handleThemeSave = (value: ThemeConfig) => {
           </div>
         </div>
 
-        <div
-          class="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4 shadow-sm"
-        >
+        <div class="mtga-panel-accent-card">
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-sm font-medium text-slate-900">主要操作</p>
@@ -251,11 +245,7 @@ const handleThemeSave = (value: ThemeConfig) => {
                 保留现有四个动作，用更清晰的主操作区统一展示
               </p>
             </div>
-            <span
-              class="rounded-full bg-white/80 px-2.5 py-1 text-[11px] text-indigo-700 shadow-sm"
-            >
-              执行区
-            </span>
+            <span class="mtga-status-pill-soft"> 执行区 </span>
           </div>
 
           <div class="mt-4 grid gap-2 sm:grid-cols-2">
@@ -295,7 +285,7 @@ const handleThemeSave = (value: ThemeConfig) => {
       </div>
     </div>
 
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">主题配置</p>
@@ -415,19 +405,13 @@ const handleThemeSave = (value: ThemeConfig) => {
           </div>
         </div>
 
-        <div
-          class="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-sky-50 p-4 shadow-sm"
-        >
+        <div class="mtga-panel-accent-card">
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-sm font-medium text-slate-900">主题编辑</p>
               <p class="mt-1 text-xs text-slate-600">继续使用现有对话框调整颜色、字体与背景资源</p>
             </div>
-            <span
-              class="rounded-full bg-white/80 px-2.5 py-1 text-[11px] text-indigo-700 shadow-sm"
-            >
-              外观
-            </span>
+            <span class="mtga-status-pill-soft"> 外观 </span>
           </div>
 
           <div

@@ -20,24 +20,21 @@ const handleOpen = () => {
 
 <template>
   <div class="space-y-4">
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <div class="text-sm font-medium text-slate-900">hosts 文件</div>
           <div class="mt-1 text-xs text-slate-600">系统级导流入口，适合先备份再修改</div>
         </div>
-        <span
-          class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
-          >步骤 2</span
-        >
+        <span class="mtga-status-pill">步骤 2</span>
       </div>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-2">
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">主操作</p>
           <p class="mt-1 text-sm text-slate-900">写入或更新代理所需的 hosts 映射</p>
         </div>
-        <div class="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
+        <div class="mtga-panel-tile">
           <p class="text-[11px] uppercase tracking-wide text-slate-400">维护建议</p>
           <p class="mt-1 text-sm text-slate-900">修改前先备份，必要时可直接打开文件核对内容</p>
         </div>
@@ -45,7 +42,7 @@ const handleOpen = () => {
     </div>
 
     <div class="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div>
           <div class="text-sm font-medium text-slate-900">主操作</div>
           <div class="mt-1 text-xs text-slate-600">按当前应用需求快速完成 hosts 导流修改</div>
@@ -58,7 +55,7 @@ const handleOpen = () => {
         </div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div>
           <div class="text-sm font-medium text-slate-900">维护与查看</div>
           <div class="mt-1 text-xs text-slate-600">备份、恢复和直接打开文件入口集中在这里</div>

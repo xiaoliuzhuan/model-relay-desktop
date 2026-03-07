@@ -390,16 +390,14 @@ const moveDown = async () => {
     <span class="mtga-chip">配置组管理</span>
   </div>
 
-  <div
-    class="mt-5 rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
-  >
+  <div class="mt-5 mtga-panel-banner">
     <p class="font-medium text-slate-900">配置组决定真正生效的上游协议</p>
     <p class="mt-1 text-slate-600">
       Trae / Cursor 入口参数在全局页维护；真正走 OpenAI 还是 Anthropic，由这里当前选中的配置组决定。
     </p>
   </div>
 
-  <div class="mt-4 rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+  <div class="mt-4 mtga-panel-card">
     <div class="grid gap-3 sm:grid-cols-4">
       <div class="rounded-xl bg-slate-50 px-4 py-3">
         <p class="text-[11px] uppercase tracking-wide text-slate-400">配置组总数</p>
@@ -434,7 +432,7 @@ const moveDown = async () => {
   </div>
 
   <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.95fr)]">
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">配置组列表</p>
@@ -549,7 +547,7 @@ const moveDown = async () => {
     </div>
 
     <div class="space-y-4">
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-sm font-medium text-slate-900">当前选中配置组</p>
@@ -609,7 +607,7 @@ const moveDown = async () => {
         </div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+      <div class="mtga-panel-card">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-sm font-medium text-slate-900">快捷操作</p>

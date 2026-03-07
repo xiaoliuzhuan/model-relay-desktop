@@ -364,16 +364,14 @@ const handleSave = async () => {
   </div>
 
   <div class="mt-5 space-y-4">
-    <div
-      class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
-    >
+    <div class="mtga-panel-banner">
       <p class="font-medium text-slate-900">这一页只做两件事</p>
       <p class="mt-1 text-slate-600">
         维护客户端统一入口模型名与访问密钥，不承载上游 API URL、上游模型ID、上游 API Key。
       </p>
     </div>
 
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-center justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">Trae / Cursor 双端接入</p>
@@ -454,7 +452,7 @@ const handleSave = async () => {
       </div>
     </div>
 
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-center justify-between gap-3 mb-3">
         <div>
           <p class="text-sm font-medium text-slate-900">当前运行摘要</p>
@@ -499,7 +497,7 @@ const handleSave = async () => {
       生效（{{ protocolMixNotice.activeProtocolLabel }}）。
     </div>
 
-    <div class="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+    <div class="mtga-panel-card">
       <div class="flex items-center justify-between gap-3">
         <div>
           <p class="text-sm font-medium text-slate-900">统一入口参数</p>

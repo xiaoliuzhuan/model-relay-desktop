@@ -62,16 +62,14 @@ watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
     <span class="mtga-chip shrink-0">标准流程</span>
   </div>
 
-  <div
-    class="mt-5 rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-sky-50 to-indigo-50 px-4 py-3 text-sm text-slate-700 shadow-sm"
-  >
+  <div class="mt-5 mtga-panel-banner">
     <p class="font-medium text-slate-900">建议顺序</p>
     <p class="mt-1 text-slate-600">
       先处理证书，再确认 hosts 文件，最后启动代理服务并检查网络环境。
     </p>
   </div>
 
-  <div class="mt-4 rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-sm">
+  <div class="mt-4 mtga-panel-card">
     <div class="flex items-start justify-between gap-3">
       <div>
         <p class="text-sm font-medium text-slate-900">流程导航</p>
@@ -79,11 +77,7 @@ watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
           按步骤切换操作页，视觉上与全局配置保持同一套卡片语言
         </p>
       </div>
-      <span
-        class="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700"
-      >
-        当前：{{ activeTabMeta.label }}
-      </span>
+      <span class="mtga-status-pill"> 当前：{{ activeTabMeta.label }} </span>
     </div>
 
     <div role="tablist" class="mt-4 grid gap-3 lg:grid-cols-3">
@@ -119,7 +113,7 @@ watch(mainTabSignal, () => applyMainTabTarget(mainTabTarget.value), {
     </div>
   </div>
 
-  <div class="mt-4 rounded-2xl border border-slate-200/70 bg-white/45 p-2 shadow-sm">
+  <div class="mt-4 mtga-panel-card-soft">
     <Transition
       enter-active-class="transition duration-200 ease-out"
       :enter-from-class="
