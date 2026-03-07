@@ -2,7 +2,7 @@
 
 ## 背景
 
-- 项目：mtga-tauri（Tauri + Nuxt SPA）。
+- 项目：Model Relay Desktop（Tauri + Nuxt SPA）。
 - 目标：解决“启动白屏”和“过渡页不稳定/不出现”，并稳定后端连接。
 
 ## 现状（已实现方案）

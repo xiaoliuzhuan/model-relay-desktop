@@ -1,6 +1,6 @@
 # Contributing Guide
 
-感谢你为 MTGA 项目做贡献。
+感谢你为 Model Relay Desktop 项目做贡献。
 
 本文档面向社区贡献者，说明从环境准备到提交 PR 的完整流程。
 
