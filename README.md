@@ -49,6 +49,8 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
   - [开源与来源说明](#开源与来源说明)
   - [目录](#目录)
   - [更新日志](#更新日志)
+  - [最近变更摘要](#最近变更摘要)
+  - [界面截图](#界面截图)
   - [快速开始](#快速开始)
     - [安装](#安装)
       - [Windows](#windows)
@@ -77,6 +79,58 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 历史日志归档： [CHANGELOG.md](CHANGELOG.md)
 
 ---
+
+## 最近变更摘要
+
+最近一轮主要围绕“统一 UI 语言 + 提升可维护性 + 补足视觉校验链路”展开，重点包括：
+
+- **代理配置组重构**：将旧的“按钮条 + 表格”界面收敛为“摘要卡 + 配置组卡片列表 + 当前选中详情 + 快捷操作”结构。
+- **主要流程统一**：证书、`hosts`、代理三个子页改为同一套卡片化操作流，并补充步骤提示与摘要信息。
+- **设置页重做**：`用户数据` 与 `主题配置` 区域改为更清晰的摘要卡 + 操作卡布局。
+- **日志区视觉统一**：保留终端质感与自动滚动，同时统一到项目新的面板视觉体系。
+- **Node 24 统一**：补充 `.nvmrc` 与开发文档，确保本地与 CI 的 Node 版本一致。
+- **共享样式基元抽取**：新增面板 banner / card / tile / status pill / terminal frame 等共享 class，降低重复样式维护成本。
+- **视觉快照校验**：新增基于 snapshot mode + Playwright 的轻量视觉回归流程，可稳定截图并做像素级校验。
+- **日志性能优化**：将日志拼接文本转为 store 增量维护，减少 `LogPanel` 在长日志场景下的重复 `join()` 开销。
+- **组件拆分**：将 `ConfigGroupPanel` 与 `SettingsPanel` 按分区拆成更小组件，便于后续继续维护。
+
+> 当前这套刷新后的 UI 已有配套视觉基线，可通过 `pnpm visual:check` 做回归校验。
+
+## 界面截图
+
+以下截图来自仓库内置的 snapshot mode 与 Playwright 视觉基线，便于快速了解当前界面结构。
+
+### 1. 代理配置组
+
+<img width="88%" alt="代理配置组" src="./tests/visual/__screenshots__/panels.spec.ts/config-group-panel.png" />
+
+### 2. 全局入口配置
+
+<img width="88%" alt="全局入口配置" src="./tests/visual/__screenshots__/panels.spec.ts/global-config-panel.png" />
+
+### 3. 主要流程 - 证书管理
+
+<img width="88%" alt="主要流程-证书管理" src="./tests/visual/__screenshots__/panels.spec.ts/main-tabs-cert.png" />
+
+### 4. 主要流程 - hosts 文件
+
+<img width="88%" alt="主要流程-hosts 文件" src="./tests/visual/__screenshots__/panels.spec.ts/main-tabs-hosts.png" />
+
+### 5. 主要流程 - 代理服务
+
+<img width="88%" alt="主要流程-代理服务" src="./tests/visual/__screenshots__/panels.spec.ts/main-tabs-proxy.png" />
+
+### 6. 运行日志
+
+<img width="88%" alt="运行日志" src="./tests/visual/__screenshots__/panels.spec.ts/run-logs-panel.png" />
+
+### 7. 应用设置
+
+<img width="88%" alt="应用设置" src="./tests/visual/__screenshots__/panels.spec.ts/settings-panel.png" />
+
+### 8. 更新弹窗
+
+<img width="88%" alt="更新弹窗" src="./tests/visual/__screenshots__/panels.spec.ts/update-dialog.png" />
 
 ## 快速开始
 
