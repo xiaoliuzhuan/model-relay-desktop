@@ -102,35 +102,35 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 ### 1. 代理配置组
 
-<img width="88%" alt="代理配置组" src="./tests/visual/__screenshots__/panels.spec.ts/config-group-panel.png" />
+<img width="88%" alt="代理配置组" src="./images/ui/config-group-panel.png" />
 
 ### 2. 全局入口配置
 
-<img width="88%" alt="全局入口配置" src="./tests/visual/__screenshots__/panels.spec.ts/global-config-panel.png" />
+<img width="88%" alt="全局入口配置" src="./images/ui/global-config-panel.png" />
 
 ### 3. 主要流程 - 证书管理
 
-<img width="88%" alt="主要流程-证书管理" src="./tests/visual/__screenshots__/panels.spec.ts/main-tabs-cert.png" />
+<img width="88%" alt="主要流程-证书管理" src="./images/ui/main-tabs-cert.png" />
 
 ### 4. 主要流程 - hosts 文件
 
-<img width="88%" alt="主要流程-hosts 文件" src="./tests/visual/__screenshots__/panels.spec.ts/main-tabs-hosts.png" />
+<img width="88%" alt="主要流程-hosts 文件" src="./images/ui/main-tabs-hosts.png" />
 
 ### 5. 主要流程 - 代理服务
 
-<img width="88%" alt="主要流程-代理服务" src="./tests/visual/__screenshots__/panels.spec.ts/main-tabs-proxy.png" />
+<img width="88%" alt="主要流程-代理服务" src="./images/ui/main-tabs-proxy.png" />
 
 ### 6. 运行日志
 
-<img width="88%" alt="运行日志" src="./tests/visual/__screenshots__/panels.spec.ts/run-logs-panel.png" />
+<img width="88%" alt="运行日志" src="./images/ui/run-logs-panel.png" />
 
 ### 7. 应用设置
 
-<img width="88%" alt="应用设置" src="./tests/visual/__screenshots__/panels.spec.ts/settings-panel.png" />
+<img width="88%" alt="应用设置" src="./images/ui/settings-panel.png" />
 
 ### 8. 更新弹窗
 
-<img width="88%" alt="更新弹窗" src="./tests/visual/__screenshots__/panels.spec.ts/update-dialog.png" />
+<img width="88%" alt="更新弹窗" src="./images/ui/update-dialog.png" />
 
 ## 快速开始
 

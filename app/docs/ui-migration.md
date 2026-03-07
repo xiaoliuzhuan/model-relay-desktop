@@ -1,6 +1,8 @@
-# UI 迁移总览（Nuxt + Tailwind + daisyUI）
+# UI 演进总览（Nuxt + Tailwind + daisyUI）
 
-本文件合并原有分析/计划/配置说明，用于指导从 Tkinter UI 迁移到 `mtga-tauri/app/`。
+本文件保留 UI 从 Tkinter 迁移到当前 Nuxt/Tauri 结构的历史脉络，同时补充当前已完成状态，便于后续维护与继续演进。
+
+> 注：文档后半部分仍保留部分 `mtga-tauri/...` 历史路径示例，主要用于解释迁移过程；当前仓库实际入口以根目录下的 `app/`、`src-tauri/`、`python-src/` 为准。
 
 ## 迁移目标与组件拆分
 
@@ -36,29 +38,28 @@ app/
       ConfirmDialog.vue
 ```
 
-## 迁移顺序建议
+## 演进顺序（已完成）
 
 1. 布局 + 日志面板
 2. 配置组 / 全局配置 / 运行时选项
 3. Tabs 功能区
 4. 更新弹窗与确认弹窗
+5. 统一视觉语言、共享样式基元、快照校验与组件拆分
 
-## 当前进度摘要（便于恢复上下文）
+## 当前状态摘要
 
-- 已确定 UI 技术选型：Tailwind + daisyUI（基于 daisyUI 5 / Tailwind v4 的 CSS-first 配置方式）。
-- 已搭建组件骨架：`AppShell`、`LogPanel`、`FooterActions`、`panels/*`、`tabs/*`、`dialogs/*`。
-- 已在 `mtga-tauri/app/app.vue` 挂载骨架布局：左侧面板 + Tabs，右侧日志面板，底部按钮。
-- 交互方式确认：前端通过 `pyInvoke` 调用 Python 后端命令（pytauri-wheel）。
+- UI 技术栈已稳定为 `Nuxt + Tailwind CSS v4 + daisyUI 5`。
+- 主界面已完成统一视觉刷新：`ConfigGroupPanel`、`GlobalConfigPanel`、`MainTabs`、`CertTab`、`HostsTab`、`ProxyTab`、`SettingsPanel`、`LogPanel` 均已收口到同一套面板语言。
+- 已补齐共享样式基元（panel banner / card / tile / status pill / terminal frame），降低重复 class 维护成本。
+- 已补齐 snapshot mode 与 Playwright 视觉回归链路，可通过 `pnpm visual:check` 稳定校验关键面板。
+- `ConfigGroupPanel` 与 `SettingsPanel` 已拆成更小的分区组件，便于后续继续维护。
+- 前端仍通过 `pyInvoke` / Tauri 事件与 Python 后端协作，当前结构已从“迁移期”进入“维护迭代期”。
 
-## TODO（下一步执行清单）
+## 当前维护重点
 
-- [x] 安装并启用 Tailwind + daisyUI（创建 `mtga-tauri/app/assets/css/tailwind.css`，在 `mtga-tauri/nuxt.config.ts` 引入）。
-- [x] `MainTabs` 支持切换并挂载各 Tab 内容（证书/hosts/代理/数据/关于）。
-- [x] `ConfigGroupPanel` 改为可交互：列表数据、选中状态、增删改弹窗。
-- [x] `GlobalConfigPanel` 与 `RuntimeOptionsPanel` 接入真实数据与保存逻辑。
-- [x] `LogPanel` 支持追加日志流（从后端或前端事件）。
-- [x] `UpdateDialog`、确认弹窗完善交互与 HTML 内容渲染。
-- [x] 用 `pyInvoke` 串起最小功能链路（例如 `greet` -> 日志输出）。
+- UI 改动默认先跑 `pnpm app:check`，涉及视觉变化时再跑 `pnpm visual:check`。
+- README 展示截图与 Playwright 基线截图已分离：`images/ui/` 用于文档展示，`tests/visual/__screenshots__/` 用于回归测试。
+- 如继续扩展面板，请优先复用 `app/assets/css/tailwind.css` 中的共享面板基元，并延续 `app/components/panels/parts/` 的拆分方式。
 
 ## 现有 UI 功能梳理
 

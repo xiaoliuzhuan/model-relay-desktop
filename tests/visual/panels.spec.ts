@@ -66,9 +66,16 @@ const scenarios: Scenario[] = [
 
 const waitForSnapshotPage = async (page: Page, scenario: Scenario) => {
   await page.goto(scenario.path);
+  await page.waitForLoadState("networkidle");
   await expect(
     page.locator(`[data-snapshot-enabled="true"][data-active-panel="${scenario.panel}"]`),
   ).toBeVisible();
+  await page.waitForFunction(() => {
+    const backgroundImage = getComputedStyle(document.body).backgroundImage;
+    return (
+      backgroundImage.includes("radial-gradient") || backgroundImage.includes("linear-gradient")
+    );
+  });
   if (scenario.mainTab) {
     await expect(page.locator(`[data-active-main-tab="${scenario.mainTab}"]`)).toBeVisible();
   }

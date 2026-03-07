@@ -64,6 +64,12 @@ jobs:
       - name: App Gate
         run: pnpm gate -- app
 
+      - name: 安装 Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Visual Check
+        run: pnpm visual:check
+
       - name: Python Gate
         run: pnpm gate -- py
 

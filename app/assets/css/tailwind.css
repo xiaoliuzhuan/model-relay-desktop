@@ -7,6 +7,7 @@
 */
 @plugin "daisyui" {
   themes: light --default;
+  exclude: radialprogress;
 }
 
 /* 
