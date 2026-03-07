@@ -4,7 +4,7 @@
 
 ## 前置依赖
 
-- Node.js 版本需满足仓库要求（见根目录 `package.json` 的 `engines.node`）。
+- Node.js 24（推荐在仓库根目录执行 `nvm use`，版本来源于 `.nvmrc`）。
 - 已安装 `pnpm`。
 - 使用 `gitflow.mjs` 时需安装 [git-flow-next](https://github.com/gittower/git-flow-next) 且 `git-flow` 在 `PATH` 中可用。
 - 使用 `ci-gate.mjs` 的 `py` 目标时需安装 `uv`。

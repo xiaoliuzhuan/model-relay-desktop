@@ -295,7 +295,8 @@ Model Relay Desktop 是一个面向开发者的本地代理桌面工具，用于
 
 ## 贡献
 
-请查阅 [贡献指南](CONTRIBUTING.md)
+- 开发前建议先在仓库根目录执行 `nvm use`，统一到 `.nvmrc` 指定的 Node.js 24 版本。
+- 具体贡献流程请查阅 [贡献指南](CONTRIBUTING.md)
 
 ## 架构与依赖约束
 

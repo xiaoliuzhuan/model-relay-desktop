@@ -15,7 +15,7 @@
 
 ### 必要工具
 
-- Node.js（见 `package.json` 中 `engines.node` 约束）
+- Node.js 24（推荐直接使用仓库根目录 `.nvmrc`）
 - pnpm
 - uv（Python 依赖与运行）
 - Rust toolchain（用于 `src-tauri/`）
@@ -23,8 +23,15 @@
 ### 初始化依赖
 
 ```bash
+nvm use
 pnpm i
 uv sync --project python-src
+```
+
+如未安装对应版本，可先执行：
+
+```bash
+nvm install
 ```
 
 ### Python 运行约束
